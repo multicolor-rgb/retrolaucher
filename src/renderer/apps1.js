@@ -3,7 +3,7 @@ const games = [];
 
 let config = {
   platforms: [
-    { key: 'psp', label: 'PlayStation Portable', color: '#ffb450', icon: '🎮', extensions: ['.iso', '.cso', '.pbp'], aspect: 'psp' },
+    { key: 'psp', label: 'PlayStation Portable', color: '#ffb450', icon: '🎮', extensions: ['.iso', '.cso', '.pbp','.chd'], aspect: 'psp' },
     { key: 'ps2', label: 'PlayStation 2', color: '#64b4ff', icon: '🔒️', extensions: ['.iso', '.bin'], aspect: 'standard' },
     { key: 'psx', label: 'PlayStation (PSX)', color: '#c88cff', icon: '💕', extensions: ['.bin', '.cue', '.img'], aspect: 'standard' },
     { key: 'ps3', label: 'PlayStation 3', color: '#78ffb4', icon: '📀', extensions: ['.iso', '.pkg'], aspect: 'wide' },
@@ -37,10 +37,14 @@ function normalizeGameName(name) {
     .replace(/[_\.]+/g, " ")
     .replace(/\([^)]+\)/g, "")
     .replace(/\[[^\]]+\]/g, "")
-    .replace(/:\d+$/g, "")            // usuwa :1, :2 itd.
+    .replace(/:\d+$/g, "")
     .replace(/[-–—]\s*(USA|EUR|PAL|NTSC).*$/i, "")
     .replace(/\b(v\d+(\.\d+)*)\b/gi, "")
     .replace(/\s+/g, " ")
+    .replace(/^disney\s+/i, "")
+    .replace(/^dreamworks\s+/i, "")
+    .replace(/^DreamWorks\s+/i, "")
+    .replace(/\b(HD|Remastered|Collection|Deluxe|Definitive)\b/gi, "")
     .trim();
 }
 
@@ -101,7 +105,8 @@ async function fetchSteamGridMetadataByName(name) {
   const apiKey = config.apiKeys?.steamgrid?.trim();
   if (!apiKey) return { ok: false, error: "Brak klucza SteamGridDB API w ustawieniach." };
 
-  const query = encodeURIComponent(normalizeGameName(name));
+  const rawName = String(name || "").trim();
+  const query = encodeURIComponent(normalizeGameName(rawName));
   const searchRes = await fetch(`${STEAMGRIDBASE}/search/autocomplete/${query}`, {
     headers: { Authorization: `Bearer ${apiKey}` }
   });
@@ -111,25 +116,83 @@ async function fetchSteamGridMetadataByName(name) {
   }
 
   const searchData = await searchRes.json();
-  const first = searchData?.data?.[0];
+  const q = normalizeGameName(rawName).toLowerCase();
+  const qWords = q.split(/\s+/).filter(w => w.length >= 3);
+  const candidates = (searchData?.data || []).slice(0, 12);
 
-  if (!first) {
+  if (!candidates.length) {
     return { ok: false, error: "Nie znaleziono gry w SteamGridDB." };
   }
 
-  const params = new URLSearchParams({
-    dimensions: "600x900"
-  });
+ function scoreCandidate(item) {
+  const n = String(item?.name || "").toLowerCase();
+  if (!n) return -999;
 
+  let score = 0;
+  const qTokens = q
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter(w => w.length >= 3);
+
+  const nTokens = n
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (n === q) score += 300;
+  if (n.startsWith(q)) score += 120;
+  if (n.includes(q)) score += 90;
+
+  let matched = 0;
+  for (const token of qTokens) {
+    if (n.includes(token)) {
+      score += 25;
+      matched += 1;
+    }
+  }
+
+  const coverage = qTokens.length ? matched / qTokens.length : 0;
+  score += Math.round(coverage * 100);
+
+  const lengthPenalty = Math.abs(nTokens.length - qTokens.length) * 6;
+  score -= lengthPenalty;
+
+  const badWords = [
+    'brave', 'frozen', 'cars', 'up', 'wall-e',
+    'inside out', 'monsters university', 'wreck-it ralph', 'big hero 6'
+  ];
+
+  for (const bad of badWords) {
+    if (q.includes('toy story') && n.includes(bad)) score -= 60;
+  }
+
+  if (q.includes('toy story') && n.includes('toy story')) score += 60;
+
+  return score;
+}
+
+const ranked = candidates
+  .map(item => ({ item, score: scoreCandidate(item) }))
+  .sort((a, b) => b.score - a.score);
+
+const best = ranked[0];
+if (!best || best.score < 140) {
+  return { ok: false, error: "Nie udało się dobrać trafnego wyniku w SteamGridDB." };
+}
+
+const first = best.item;
+
+  if (!first || ranked[0].score < 10) {
+    return { ok: false, error: "Nie udało się dobrać trafnego wyniku w SteamGridDB." };
+  }
+
+  const params = new URLSearchParams({ dimensions: "600x900" });
   const coverRes = await fetch(
     `${STEAMGRIDBASE}/grids/game/${encodeURIComponent(first.id)}?${params.toString()}`,
-    {
-      headers: { Authorization: `Bearer ${apiKey}` }
-    }
+    { headers: { Authorization: `Bearer ${apiKey}` } }
   );
 
   let cover = null;
-
   if (coverRes.ok) {
     const coverData = await coverRes.json();
     cover = coverData?.data?.[0]?.url ?? null;
@@ -138,7 +201,7 @@ async function fetchSteamGridMetadataByName(name) {
   return {
     ok: true,
     data: {
-      title: first.name || normalizeGameName(name),
+      title: first.name || normalizeGameName(rawName),
       description: "Gra dopasowana automatycznie w SteamGridDB.",
       cover,
       source: "SteamGridDB",
@@ -152,37 +215,47 @@ async function enrichPlatformMetadata(platformKey, force = false) {
   const progressBar = document.getElementById('bulk-progress-bar');
   const progressText = document.getElementById('bulk-progress-text');
   const platformGames = games.filter(g => g.platform === platformKey && g.rom);
+
   if (!platformGames.length) {
     showToast('Brak gier do pobrania metadanych', true);
     return;
   }
+
+  if (force) {
+    config.metadata[platformKey] = {};
+    await saveStoredConfig();
+  }
+
   let updated = 0;
   let processed = 0;
+
   if (progressEl) progressEl.hidden = false;
   if (progressBar) progressBar.style.width = '0%';
   if (progressText) progressText.textContent = '0 / ' + platformGames.length;
 
-
   for (const game of platformGames) {
     processed += 1;
     const existing = (((config.metadata || {})[platformKey] || {})[game.id]) || {};
+
     if (!force && existing.cover && existing.description) {
       if (progressBar) progressBar.style.width = `${Math.round((processed / platformGames.length) * 100)}%`;
       if (progressText) progressText.textContent = `${processed} / ${platformGames.length}`;
       continue;
     }
+
     const result = await fetchSteamGridMetadataByName(game.title || game.name || game.file || game.rom);
     await delay(250);
+
     if (result.ok) {
       if (!config.metadata[platformKey]) config.metadata[platformKey] = {};
       config.metadata[platformKey][game.id] = result.data;
       updated += 1;
       await saveStoredConfig();
     }
+
     if (progressBar) progressBar.style.width = `${Math.round((processed / platformGames.length) * 100)}%`;
     if (progressText) progressText.textContent = `${processed} / ${platformGames.length}`;
   }
-
 
   setTimeout(() => { if (progressEl) progressEl.hidden = true; }, 800);
   renderShelf();
@@ -457,21 +530,21 @@ async function refreshLibrary() {
           const gameId = rom.id || `${p.key}-${index}-${rom.title}`;
           const meta = (((config.metadata || {})[p.key] || {})[gameId]) || {};
           const manualCover = getManualCover(p.key, gameId);
-          merged.push({
-            id: gameId,
-            title: meta.title || rom.title,
-            platform: p.key,
-            rom: rom.rom,
-            file: rom.rom,
-            cover: manualCover || meta.cover || 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1vfw.jpg',
-            rating: 8.0,
-            ratingCount: 1,
-            genres: ['ROM'],
-            dev: meta.source || 'Twoja biblioteka',
-            year: new Date().getFullYear(),
-            desc: meta.description || 'Gra wykryta automatycznie z wybranego folderu ROM-ów.',
-            size: 'Lokalny plik'
-          });
+       merged.push({
+  id: gameId,
+  title: normalizeGameName(meta.title || rom.title),
+  platform: p.key,
+  rom: rom.rom,
+  file: rom.rom,
+  cover: manualCover || meta.cover || 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1vfw.jpg',
+  rating: 8.0,
+  ratingCount: 1,
+  genres: ['ROM'],
+  dev: meta.source || 'Twoja biblioteka',
+  year: new Date().getFullYear(),
+  desc: meta.description || 'Gra wykryta automatycznie z wybranego folderu ROM-ów.',
+  size: 'Lokalny plik'
+});
         });
       } catch (e) {
         console.warn('Nie udało się przeskanować folderu', p.key, e);
@@ -482,8 +555,10 @@ async function refreshLibrary() {
   games.push(...merged);
   const q = (searchInput?.value || '').trim().toLowerCase();
   let base = activePlatform === 'all' ? games : games.filter(g => g.platform === activePlatform);
-  if (q) base = base.filter(g => g.title.toLowerCase().includes(q));
-  filtered = base;
+if (q) {
+  const nq = normalizeGameName(q).toLowerCase();
+  base = base.filter(g => normalizeGameName(g.title).toLowerCase().includes(nq));
+}; filtered = base;
   if (current >= filtered.length) current = 0;
   renderTabs();
   renderShelf();
@@ -794,28 +869,38 @@ function renderSettings() {
   });
 
 
-  document.querySelectorAll('.browse-btn').forEach(btn => {
-    btn.onclick = async () => {
-      const type = btn.dataset.type;
-      const key = btn.dataset.key;
-      let picked = null;
-      if (window.launcherAPI) picked = type === 'rom' ? await window.launcherAPI.selectFolder() : await window.launcherAPI.selectExecutable();
-      else picked = type === 'rom' ? `/home/user/roms/${key}` : `/opt/emulators/${key}/run`;
-      if (!picked) return;
-      if (type === 'rom') {
-        config.romFolders[key] = picked;
-        await saveStoredConfig();
-        showToast('Zapisano folder z ROM-ami');
-        renderSettings();
-        await refreshLibrary();
-      } else {
-        config.emulators[key] = picked;
-        await saveStoredConfig();
-        showToast('Zapisano polecenie uruchomieniowe');
-        renderSettings();
-      }
-    };
-  });
+document.querySelectorAll('.browse-btn').forEach(btn => {
+  btn.onclick = async () => {
+    const type = btn.dataset.type;
+    const key = btn.dataset.key;
+    let picked = null;
+
+    if (window.launcherAPI) {
+      picked = type === 'rom'
+        ? await window.launcherAPI.selectFolder()
+        : await window.launcherAPI.selectExecutable();
+    } else {
+      picked = type === 'rom'
+        ? `/home/user/roms/${key}`
+        : `/opt/emulators/${key}/run`;
+    }
+
+    if (!picked) return;
+
+    if (type === 'rom') {
+      config.romFolders[key] = picked;
+      await saveStoredConfig();
+      await refreshLibrary();
+      renderSettings();
+      showToast('Zapisano folder z ROM-ami');
+    } else {
+      config.emulators[key] = picked;
+      await saveStoredConfig();
+      renderSettings();
+      showToast('Zapisano polecenie uruchomieniowe');
+    }
+  };
+});
 
 
   document.querySelectorAll('[data-emulator-input]').forEach(el => {
