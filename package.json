@@ -1,0 +1,17 @@
+{
+  "name": "retro-launcher",
+  "version": "1.0.0",
+  "description": "Retro game launcher z obsluga pada, emulatorow i animowanym interfejsem",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^31.7.7"
+  },
+  "author": "",
+  "license": "MIT",
+  "allowScripts": {
+    "electron@31.7.7": true
+  }
+}
