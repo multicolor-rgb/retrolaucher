@@ -67,14 +67,14 @@
             <div id="settings-warning" class="settings-warning"></div>
             <div class="settings-card-grid">
               <div class="settings-card">
-                <h3>RAWG API</h3>
-                <p class="settings-note">Tutaj wpisujesz klucz RAWG API do pobierania okładek i opisów gier.</p>
+                <h3>SteamGridDB API</h3>
+                <p class="settings-note">Tutaj wpisujesz klucz SteamGridDB API do pobierania okładek i opisów gier.</p>
                 <label class="field-row field-row-stack">
-                  <span class="field-label">Klucz RAWG API</span>
-                  <input id="rawg-api-key-input" type="text" class="field-textinput" placeholder="Wpisz klucz API do pobierania okładek" />
+                  <span class="field-label">Klucz SteamGridDB API</span>
+                  <input id="steamgrid-api-key-input" type="text" class="field-textinput" placeholder="Wpisz klucz API do pobierania okładek" />
                 </label>
                 <div class="settings-actions-row">
-                  <button type="button" id="save-rawg-api-key" class="btn-primary">Zapisz klucz</button>
+                  <button type="button" id="save-steamgrid-api-key" class="btn-primary">Zapisz klucz</button>
                 </div>
               </div>
             </div>
@@ -84,7 +84,7 @@
             <div class="settings-card-grid">
               <div class="settings-card">
                 <h3>Okładki i opisy</h3>
-                <p class="settings-note">Po zapisaniu klucza RAWG możesz pobrać dane dla aktualnej platformy albo wymusić ponowne odświeżenie.</p>
+                <p class="settings-note">Po zapisaniu klucza SteamGridDB możesz pobrać dane dla aktualnej platformy albo wymusić ponowne odświeżenie.</p>
                 <div class="settings-actions-row">
                   <button type="button" id="bulk-fetch-platform-meta" class="btn-secondary">Pobierz dla aktualnej platformy</button>
                   <button type="button" id="force-fetch-platform-meta" class="btn-primary">Wymuś odświeżenie</button>
@@ -210,6 +210,6 @@
     <div class="now-playing" id="nowPlaying">🎵 Teraz gra: <span class="np-title" id="npTitle">Retro Ambient</span></div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="apps.js"></script>
 </body>
 </html>

@@ -1,14 +1,15 @@
 const games = [];
 
+
 let config = {
   platforms: [
-    { key: 'psp', label: 'PlayStation Portable', color: '#ffb450', icon: 'đŽ', extensions: ['.iso', '.cso', '.pbp'], aspect: 'psp' },
-    { key: 'ps2', label: 'PlayStation 2', color: '#64b4ff', icon: 'đšď¸', extensions: ['.iso', '.bin'], aspect: 'standard' },
-    { key: 'psx', label: 'PlayStation (PSX)', color: '#c88cff', icon: 'đ˝', extensions: ['.bin', '.cue', '.img'], aspect: 'standard' },
-    { key: 'ps3', label: 'PlayStation 3', color: '#78ffb4', icon: 'đ', extensions: ['.iso', '.pkg'], aspect: 'wide' },
-    { key: 'snes', label: 'Super Nintendo', color: '#ff8ca8', icon: 'đť', extensions: ['.sfc', '.smc'], aspect: 'square' },
-    { key: 'nds', label: 'Nintendo DS', color: '#8cffe0', icon: 'đą', extensions: ['.nds'], aspect: 'psp' },
-    { key: 'xbox360', label: 'Xbox 360', color: '#9dff8c', icon: 'â', extensions: ['.iso', '.xex'], aspect: 'standard' }
+    { key: 'psp', label: 'PlayStation Portable', color: '#ffb450', icon: '🎮', extensions: ['.iso', '.cso', '.pbp'], aspect: 'psp' },
+    { key: 'ps2', label: 'PlayStation 2', color: '#64b4ff', icon: '🔒️', extensions: ['.iso', '.bin'], aspect: 'standard' },
+    { key: 'psx', label: 'PlayStation (PSX)', color: '#c88cff', icon: '💕', extensions: ['.bin', '.cue', '.img'], aspect: 'standard' },
+    { key: 'ps3', label: 'PlayStation 3', color: '#78ffb4', icon: '📀', extensions: ['.iso', '.pkg'], aspect: 'wide' },
+    { key: 'snes', label: 'Super Nintendo', color: '#ff8ca8', icon: '🔥', extensions: ['.sfc', '.smc'], aspect: 'square' },
+    { key: 'nds', label: 'Nintendo DS', color: '#8cffe0', icon: '📱', extensions: ['.nds'], aspect: 'psp' },
+    { key: 'xbox360', label: 'Xbox 360', color: '#9dff8c', icon: '❎', extensions: ['.iso', '.xex'], aspect: 'standard' }
   ],
   romFolders: {},
   emulators: {},
@@ -16,24 +17,30 @@ let config = {
   metadata: {},
   manualCovers: {},
   userRatings: {},
-  apiKeys: { rawg: '' },
+  apiKeys: { steamgrid: '' },
   uiState: { settingsOpen: false }
 };
 
+
 const CONFIG_STORAGE_KEY = 'retroLauncherConfig';
-const RAWG_API_BASE = 'https://api.rawg.io/api';
-const RAWG_ATTRIBUTION_URL = 'https://rawg.io';
+const STEAMGRIDBASE = 'https://www.steamgriddb.com/api/v2';
+const STEAMGRIDATTRIBUTIONURL = 'https://www.steamgriddb.com';
+const SteamGridDB_API_BASE = 'https://www.steamgriddb.com/api/v2';
+const SteamGridDB_ATTRIBUTION_URL = 'https://www.steamgriddb.com';
 const DEFAULT_LAUNCH_PLACEHOLDER = 'Np. pcsx2-qt | flatpak run net.pcsx2.PCSX2 | /home/user/Emulator.AppImage | C:\\Emu\\emu.exe';
-const DEFAULT_PLATFORM_ICON = 'đŽ';
+const DEFAULT_PLATFORM_ICON = '🎮';
+
 
 function normalizeGameName(name) {
-  return String(name || '')
-    .replace(/\.[a-z0-9]{2,5}$/i, '')
-    .replace(/[_\.]+/g, ' ')
-    .replace(/\([^\)]*\)/g, ' ')
-    .replace(/\[[^\]]*\]/g, ' ')
-    .replace(/\b(usa|europe|japan|rev\s*[a-z0-9]+|v\d+(?:\.\d+)*)\b/gi, ' ')
-    .replace(/\s+/g, ' ')
+  return String(name || "")
+    .replace(/\.[a-z0-9]{2,5}$/i, "")
+    .replace(/[_\.]+/g, " ")
+    .replace(/\([^)]+\)/g, "")
+    .replace(/\[[^\]]+\]/g, "")
+    .replace(/:\d+$/g, "")            // usuwa :1, :2 itd.
+    .replace(/[-–—]\s*(USA|EUR|PAL|NTSC).*$/i, "")
+    .replace(/\b(v\d+(\.\d+)*)\b/gi, "")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
@@ -46,39 +53,96 @@ function parseArgString(raw) {
 }
 function mod(n, m) { return ((n % m) + m) % m; }
 
+
 function getAspectVars(aspect) {
   switch (aspect) {
     case 'psp':
-      return { width: 180, ratio: '0.68 / 1' };
-    case 'square':
-      return { width: 180, ratio: '1 / 1' };
-    case 'wide':
-      return { width: 180, ratio: '0.78 / 1' };
-    default:
+      return { width: 180, ratio: '0.62 / 1' };
+    case 'ps2':
       return { width: 180, ratio: '0.72 / 1' };
+    case 'psx':
+      return { width: 180, ratio: '0.70 / 1' };
+    case 'ps3':
+      return { width: 180, ratio: '0.78 / 1' };
+    case 'ps4':
+      return { width: 180, ratio: '0.78 / 1' };
+    case 'ps5':
+      return { width: 180, ratio: '0.78 / 1' };
+    case 'wiiu':
+      return { width: 180, ratio: '0.78 / 1' };
+    case 'switch':
+      return { width: 180, ratio: '0.78 / 1' };
+    case 'xbox':
+      return { width: 180, ratio: '0.78 / 1' };
+    case 'xbox360':
+      return { width: 180, ratio: '0.72 / 1' };
+    case 'xboxone':
+      return { width: 180, ratio: '0.78 / 1' };
+    case 'xsx':
+      return { width: 180, ratio: '0.78 / 1' };
+    case 'nes':
+    case 'snes':
+    case 'n64':
+    case 'gamecube':
+    case 'wii':
+    case 'gb':
+    case 'gbc':
+    case 'gba':
+    case 'nds':
+    case '3ds':
+      return { width: 180, ratio: '1 / 1' };
+    default:
+      return { width: 180, ratio: '0.70 / 1' };
   }
 }
 
-async function fetchRawgMetadataByName(name) {
-  const apiKey = (config.apiKeys?.rawg || '').trim();
-  if (!apiKey) return { ok: false, error: 'Brak klucza RAWG API w ustawieniach.' };
+
+async function fetchSteamGridMetadataByName(name) {
+  const apiKey = config.apiKeys?.steamgrid?.trim();
+  if (!apiKey) return { ok: false, error: "Brak klucza SteamGridDB API w ustawieniach." };
+
   const query = encodeURIComponent(normalizeGameName(name));
-  const listRes = await fetch(`${RAWG_API_BASE}/games?key=${encodeURIComponent(apiKey)}&search=${query}&search_precise=true&page_size=1`);
-  if (!listRes.ok) return { ok: false, error: 'Nie udaĹo siÄ wyszukaÄ gry w RAWG.' };
-  const listData = await listRes.json();
-  const first = listData?.results?.[0];
-  if (!first) return { ok: false, error: 'Nie znaleziono gry w RAWG.' };
-  const detailsRes = await fetch(`${RAWG_API_BASE}/games/${encodeURIComponent(first.slug || first.id)}?key=${encodeURIComponent(apiKey)}`);
-  if (!detailsRes.ok) return { ok: false, error: 'Nie udaĹo siÄ pobraÄ szczegĂłĹĂłw gry z RAWG.' };
-  const details = await detailsRes.json();
+  const searchRes = await fetch(`${STEAMGRIDBASE}/search/autocomplete/${query}`, {
+    headers: { Authorization: `Bearer ${apiKey}` }
+  });
+
+  if (!searchRes.ok) {
+    return { ok: false, error: "Nie udało się wyszukać gry w SteamGridDB." };
+  }
+
+  const searchData = await searchRes.json();
+  const first = searchData?.data?.[0];
+
+  if (!first) {
+    return { ok: false, error: "Nie znaleziono gry w SteamGridDB." };
+  }
+
+  const params = new URLSearchParams({
+    dimensions: "600x900"
+  });
+
+  const coverRes = await fetch(
+    `${STEAMGRIDBASE}/grids/game/${encodeURIComponent(first.id)}?${params.toString()}`,
+    {
+      headers: { Authorization: `Bearer ${apiKey}` }
+    }
+  );
+
+  let cover = null;
+
+  if (coverRes.ok) {
+    const coverData = await coverRes.json();
+    cover = coverData?.data?.[0]?.url ?? null;
+  }
+
   return {
     ok: true,
     data: {
-      title: details.name || first.name || normalizeGameName(name),
-      description: String(details.description || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
-      cover: details.background_image || first.background_image || '',
-      source: 'RAWG',
-      sourceUrl: RAWG_ATTRIBUTION_URL
+      title: first.name || normalizeGameName(name),
+      description: "Gra dopasowana automatycznie w SteamGridDB.",
+      cover,
+      source: "SteamGridDB",
+      sourceUrl: STEAMGRIDATTRIBUTIONURL
     }
   };
 }
@@ -98,6 +162,7 @@ async function enrichPlatformMetadata(platformKey, force = false) {
   if (progressBar) progressBar.style.width = '0%';
   if (progressText) progressText.textContent = '0 / ' + platformGames.length;
 
+
   for (const game of platformGames) {
     processed += 1;
     const existing = (((config.metadata || {})[platformKey] || {})[game.id]) || {};
@@ -106,7 +171,7 @@ async function enrichPlatformMetadata(platformKey, force = false) {
       if (progressText) progressText.textContent = `${processed} / ${platformGames.length}`;
       continue;
     }
-    const result = await fetchRawgMetadataByName(game.title || game.name || game.file || game.rom);
+    const result = await fetchSteamGridMetadataByName(game.title || game.name || game.file || game.rom);
     await delay(250);
     if (result.ok) {
       if (!config.metadata[platformKey]) config.metadata[platformKey] = {};
@@ -118,10 +183,12 @@ async function enrichPlatformMetadata(platformKey, force = false) {
     if (progressText) progressText.textContent = `${processed} / ${platformGames.length}`;
   }
 
+
   setTimeout(() => { if (progressEl) progressEl.hidden = true; }, 800);
   renderShelf();
-  showToast(updated ? `Pobrano metadane dla ${updated} gier` : 'Nie byĹo nowych metadanych do pobrania');
+  showToast(updated ? `Pobrano metadane dla ${updated} gier` : 'Nie było nowych metadanych do pobrania');
 }
+
 
 function ensurePresetEmulators() {
   config.platforms.forEach(p => {
@@ -132,9 +199,10 @@ function ensurePresetEmulators() {
     if (!config.userRatings[p.key]) config.userRatings[p.key] = {};
     if (!p.aspect) p.aspect = 'standard';
   });
-  if (!config.apiKeys || typeof config.apiKeys.rawg !== 'string') config.apiKeys = { rawg: '' };
+  if (!config.apiKeys || typeof config.apiKeys.steamgrid !== 'string') config.apiKeys = { steamgrid: '' };
   if (!config.uiState) config.uiState = { settingsOpen: false };
 }
+
 
 async function loadStoredConfig() {
   try {
@@ -167,10 +235,11 @@ async function loadStoredConfig() {
       }
     }
   } catch (e) {
-    console.warn('Nie udalo sie wczytac ustawien:', e);
+    console.warn('Nie udało się wczytać ustawień:', e);
   }
   ensurePresetEmulators();
 }
+
 
 async function saveStoredConfig() {
   const payload = {
@@ -188,17 +257,20 @@ async function saveStoredConfig() {
     if (window.launcherAPI?.saveConfig) await window.launcherAPI.saveConfig(payload);
     else localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(payload));
   } catch (e) {
-    console.warn('Nie udalo sie zapisac ustawien:', e);
+    console.warn('Nie udało się zapisać ustawień:', e);
   }
 }
 
+
 function getPlatform(key) {
-  return config.platforms.find(p => p.key === key) || { key, label: key.toUpperCase(), color: '#38e0ff', icon: 'đŽ', extensions: [], aspect: 'standard' };
+  return config.platforms.find(p => p.key === key) || { key, label: key.toUpperCase(), color: '#38e0ff', icon: '🎮', extensions: [], aspect: 'standard' };
 }
+
 
 function getManualCover(platformKey, gameId) {
   return (((config.manualCovers || {})[platformKey] || {})[gameId]) || '';
 }
+
 
 function setManualCover(platformKey, gameId, value) {
   if (!config.manualCovers[platformKey]) config.manualCovers[platformKey] = {};
@@ -206,9 +278,11 @@ function setManualCover(platformKey, gameId, value) {
   else delete config.manualCovers[platformKey][gameId];
 }
 
+
 function getCoverForGame(game) {
   return getManualCover(game.platform, game.id) || game.cover || 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1vfw.jpg';
 }
+
 
 function openManualCoverEditorForGame(game) {
   if (!game) return;
@@ -225,6 +299,7 @@ function openManualCoverEditorForGame(game) {
     if (input) input.focus();
   }, 60);
 }
+
 
 const shelf = document.getElementById('shelf');
 const shelfViewport = document.getElementById('shelfViewport');
@@ -244,10 +319,12 @@ const overlay = document.getElementById('overlay');
 const platformBlocks = document.getElementById('platformBlocks');
 const settingsPanel = document.getElementById('settings-panel');
 
+
 let current = 0;
 let activePlatform = 'all';
 let filtered = games;
 let viewMode = 'flat';
+
 
 const colorCache = {};
 function getDominantColor(src, cb) {
@@ -277,6 +354,7 @@ function getDominantColor(src, cb) {
   img.src = src;
 }
 
+
 function applyGradient(rgb) {
   const { r, g, b } = rgb;
   const c1 = `rgb(${r},${g},${b})`;
@@ -287,18 +365,22 @@ function applyGradient(rgb) {
   playBtn.style.color = (r + g + b) / 3 > 150 ? '#05060a' : '#fff';
 }
 
+
 function moveHighlight(tabEl) {
   if (!tabEl) return;
   tabHighlight.style.left = tabEl.offsetLeft + 'px';
   tabHighlight.style.width = tabEl.offsetWidth + 'px';
 }
 
+
 function usedPlatforms() {
   const usedKeys = new Set(games.map(g => g.platform));
   return config.platforms.filter(p => usedKeys.has(p.key));
 }
 
+
 function closeDropdown() { document.getElementById('platformDropdown').classList.remove('open'); }
+
 
 function renderPlatformDropdown() {
   const menu = document.getElementById('platformDropdownMenu');
@@ -317,6 +399,7 @@ function renderPlatformDropdown() {
   dropdownBtn.classList.toggle('active', activePlatform !== 'all');
 }
 
+
 function renderTabs() {
   tabsContainer.innerHTML = '';
   tabsContainer.appendChild(tabHighlight);
@@ -331,6 +414,7 @@ function renderTabs() {
   if (activeTab) moveHighlight(activeTab);
   renderPlatformDropdown();
 }
+
 
 function applyFilter(platform, tabEl) {
   if (platform === activePlatform) return;
@@ -354,10 +438,12 @@ function applyFilter(platform, tabEl) {
   }, 260);
 }
 
+
 function starString(rating) {
   const full = Math.round(rating / 2);
-  return 'â'.repeat(full) + 'â'.repeat(5 - full);
+  return '★'.repeat(full) + '☆'.repeat(5 - full);
 }
+
 
 async function refreshLibrary() {
   const merged = [];
@@ -383,12 +469,12 @@ async function refreshLibrary() {
             genres: ['ROM'],
             dev: meta.source || 'Twoja biblioteka',
             year: new Date().getFullYear(),
-            desc: meta.description || 'Gra wykryta automatycznie z wybranego folderu ROM-Ăłw.',
+            desc: meta.description || 'Gra wykryta automatycznie z wybranego folderu ROM-ów.',
             size: 'Lokalny plik'
           });
         });
       } catch (e) {
-        console.warn('Nie udalo sie przeskanowac folderu', p.key, e);
+        console.warn('Nie udało się przeskanować folderu', p.key, e);
       }
     }
   }
@@ -403,6 +489,7 @@ async function refreshLibrary() {
   renderShelf();
 }
 
+
 function applyCoverGeometry(el, platformKey, focused = false) {
   const platform = getPlatform(platformKey);
   const vars = getAspectVars(platform.aspect || 'standard');
@@ -410,13 +497,15 @@ function applyCoverGeometry(el, platformKey, focused = false) {
   el.style.setProperty('--cover-ratio', vars.ratio);
 }
 
+
 function renderShelf() {
   shelf.innerHTML = '';
   const range = 3;
   const len = filtered.length;
 
+
   if (len === 0) {
-    shelfViewport.innerHTML = '<div class="empty-state">Brak gier dla tej platformy â skonfiguruj folder i emulator w Ustawieniach</div>';
+    shelfViewport.innerHTML = '<div class="empty-state">Brak gier dla tej platformy — skonfiguruj folder i emulator w Ustawieniach</div>';
     titleEl.textContent = '';
     platEl.textContent = '';
     ratingMini.textContent = '';
@@ -424,8 +513,10 @@ function renderShelf() {
   }
   if (!shelf.parentElement) shelfViewport.appendChild(shelf);
 
+
   shelf.className = 'shelf mode-' + viewMode;
   shelfViewport.className = 'shelf-viewport mode-' + viewMode;
+
 
   for (let offset = -range; offset <= range; offset++) {
     const idx = mod(current + offset, len);
@@ -436,24 +527,27 @@ function renderShelf() {
     el.dataset.offset = offset;
     applyCoverGeometry(el, g.platform, offset === 0);
     const coverSrc = getCoverForGame(g);
-    el.innerHTML = `<img src="${coverSrc}" alt="${g.title}"/><div class="sh-tag">${pf.label}</div><div class="bp-status-title">${g.title}</div>`;
+    el.innerHTML = `<img src="${coverSrc}" alt="${g.title}"/> `;
     el.addEventListener('click', () => { current = idx; renderShelf(); });
     el.addEventListener('dblclick', () => launchGame(g));
     shelf.appendChild(el);
   }
 
+
   const g = filtered[current];
   const pf = getPlatform(g.platform);
   titleEl.textContent = g.title;
   platEl.textContent = pf.label;
-  ratingMini.textContent = `â ${g.rating.toFixed(1)} (${g.ratingCount.toLocaleString('pl-PL')} ocen)`;
+  ratingMini.textContent = `★ ${g.rating.toFixed(1)} (${g.ratingCount.toLocaleString('pl-PL')} ocen)`;
   const activeCover = getCoverForGame(g);
   bgBlur.style.backgroundImage = `url('${activeCover}')`;
   getDominantColor(activeCover, applyGradient);
 }
 
+
 function next() { if (filtered.length) { current = mod(current + 1, filtered.length); renderShelf(); } }
 function prev() { if (filtered.length) { current = mod(current - 1, filtered.length); renderShelf(); } }
+
 
 function showToast(msg, isError) {
   const toast = document.getElementById('toast');
@@ -464,21 +558,23 @@ function showToast(msg, isError) {
   setTimeout(() => toast.classList.remove('show'), 2500);
 }
 
+
 async function launchGame(game) {
   const emulatorPath = config.emulators[game.platform] || '';
   const rawArgs = config.launchArgs[game.platform] || '';
   const extraArgs = parseArgString(rawArgs);
   if (!validatePathExists(emulatorPath)) { showToast('Brak polecenia uruchomieniowego dla tej platformy', true); return; }
-  if (!validatePathExists(game.rom)) { showToast('Brak ĹcieĹźki do pliku gry', true); return; }
-  if (/flatpak run/.test(emulatorPath) && /^\/media\//.test(game.rom)) showToast('JeĹli gra nie startuje, nadaj Flatpakowi dostÄp do /media', true);
+  if (!validatePathExists(game.rom)) { showToast('Brak ścieżki do pliku gry', true); return; }
+  if (/flatpak run/.test(emulatorPath) && /^\/media\//.test(game.rom)) showToast('Jeśli gra nie startuje, nadaj Flatpakowi dostęp do /media', true);
   if (window.launcherAPI?.launchGame) {
     const result = await window.launcherAPI.launchGame({ emulatorPath, romPath: game.rom, extraArgs });
-    if (!result.ok) showToast('BĹÄd: ' + result.error, true);
+    if (!result.ok) showToast('Błąd: ' + result.error, true);
     else showToast('Uruchamiam: ' + game.title);
   } else {
     showToast('Demo: uruchomienie ' + game.title);
   }
 }
+
 
 function openDetails(g) {
   const pf = getPlatform(g.platform);
@@ -490,7 +586,7 @@ function openDetails(g) {
   document.getElementById('modalTitle').textContent = g.title;
   document.getElementById('modalScore').textContent = g.rating.toFixed(1);
   document.getElementById('modalStars').textContent = starString(g.rating);
-  document.getElementById('modalCount').textContent = `na podstawie ${g.ratingCount.toLocaleString('pl-PL')} ocen uĹźytkownikĂłw`;
+  document.getElementById('modalCount').textContent = `na podstawie ${g.ratingCount.toLocaleString('pl-PL')} ocen użytkowników`;
   document.getElementById('modalTags').innerHTML = (g.genres || []).map(t => `<span class="tag">${t}</span>`).join('');
   document.getElementById('modalDesc').textContent = g.desc || '';
   document.getElementById('modalDev').textContent = g.dev || '';
@@ -501,11 +597,13 @@ function openDetails(g) {
   overlay.currentGame = g;
 }
 
+
 function renderSettingsWarning() {
   const warning = document.getElementById('settings-warning');
   if (!warning) return;
-  warning.textContent = 'OkĹadki i opisy sÄ pobierane z RAWG. Dla kaĹźdej platformy moĹźesz teĹź ustawiÄ wĹasny typ proporcji okĹadki oraz rÄcznie podmieniÄ cover wybranej gry.';
+  warning.textContent = 'Okładki i opisy są pobierane z SteamGridDB. Dla każdej platformy możesz też ustawić własny typ proporcji okładki oraz ręcznie podmienić cover wybranej gry.';
 }
+
 
 function populateManualCoverGameSelect() {
   const select = document.getElementById('manual-cover-game');
@@ -515,7 +613,7 @@ function populateManualCoverGameSelect() {
   if (!platformGames.length) {
     const opt = document.createElement('option');
     opt.value = '';
-    opt.textContent = activePlatform === 'all' ? 'Najpierw wybierz platformÄ u gĂłry' : 'Brak gier dla tej platformy';
+    opt.textContent = activePlatform === 'all' ? 'Najpierw wybierz platformę u góry' : 'Brak gier dla tej platformy';
     select.appendChild(opt);
     return [];
   }
@@ -529,6 +627,7 @@ function populateManualCoverGameSelect() {
   return platformGames;
 }
 
+
 function renderManualCoverPreview() {
   const preview = document.getElementById('manual-cover-preview');
   const select = document.getElementById('manual-cover-game');
@@ -537,7 +636,9 @@ function renderManualCoverPreview() {
   const game = games.find(g => g.id === select.value && g.platform === activePlatform);
   if (!game) {
     preview.classList.add('empty');
-    preview.innerHTML = activePlatform === 'all' ? 'Wybierz konkretnÄ platformÄ, aby edytowaÄ rÄczne okĹadki.' : 'Wybierz grÄ z listy.';
+    preview.innerHTML = activePlatform === 'all'
+      ? 'Wybierz konkretną platformę, aby edytować ręczne okładki.'
+      : 'Wybierz grę z listy.';
     input.value = '';
     return;
   }
@@ -548,19 +649,20 @@ function renderManualCoverPreview() {
     <img src="${getCoverForGame(game)}" alt="${game.title}" />
     <div class="manual-cover-meta">
       <strong>${game.title}</strong>
-      <span>${manual ? 'ĹšrĂłdĹo: rÄczne' : 'ĹšrĂłdĹo: RAWG / automatyczne'}</span>
-      <span>${manual || 'Brak rÄcznego URL lub pliku.'}</span>
+      <span>${manual ? 'Źródło: ręczne' : 'Źródło: SteamGridDB / automatyczne'}</span>
+      <span>${manual || 'Brak ręcznego URL lub pliku.'}</span>
     </div>
   `;
 }
 
+
 async function saveManualCoverFromUrl() {
-  if (activePlatform === 'all') { showToast('Najpierw wybierz konkretnÄ platformÄ', true); return; }
+  if (activePlatform === 'all') { showToast('Najpierw wybierz konkretną platformę', true); return; }
   const select = document.getElementById('manual-cover-game');
   const input = document.getElementById('manual-cover-url');
   const gameId = select?.value || '';
   const value = (input?.value || '').trim();
-  if (!gameId || !value) { showToast('Wybierz grÄ i wpisz URL okĹadki', true); return; }
+  if (!gameId || !value) { showToast('Wybierz grę i wpisz URL okładki', true); return; }
   const game = games.find(g => g.id === gameId && g.platform === activePlatform);
   if (!game) { showToast('Nie znaleziono gry', true); return; }
   setManualCover(game.platform, game.id, value);
@@ -569,37 +671,68 @@ async function saveManualCoverFromUrl() {
   populateManualCoverGameSelect();
   document.getElementById('manual-cover-game').value = gameId;
   renderManualCoverPreview();
-  showToast('Zapisano rÄczny URL okĹadki');
+  showToast('Zapisano ręczny URL okładki');
 }
 
+
 async function pickManualCoverFile() {
-  if (activePlatform === 'all') { showToast('Najpierw wybierz konkretnÄ platformÄ', true); return; }
+  if (activePlatform === 'all') {
+    showToast('Najpierw wybierz konkretną platformę', true);
+    return;
+  }
+
   const select = document.getElementById('manual-cover-game');
-  const gameId = select?.value || '';
-  if (!gameId) { showToast('Najpierw wybierz grÄ', true); return; }
+  const gameId = select?.value;
+  if (!gameId) {
+    showToast('Najpierw wybierz grę', true);
+    return;
+  }
+
   const game = games.find(g => g.id === gameId && g.platform === activePlatform);
-  if (!game) { showToast('Nie znaleziono gry', true); return; }
-  let picked = null;
-  if (window.launcherAPI?.selectImageFile) picked = await window.launcherAPI.selectImageFile();
-  else if (window.launcherAPI?.selectFile) picked = await window.launcherAPI.selectFile();
-  else picked = prompt('Podaj ĹcieĹźkÄ do pliku obrazu');
+  if (!game) {
+    showToast('Nie znaleziono gry', true);
+    return;
+  }
+
+  const api = window.launcherAPI;
+  const picker = api?.selectImageFile || api?.selectFile;
+
+  if (!picker) {
+    showToast('Brak natywnego okna wyboru pliku w launcherAPI', true);
+    return;
+  }
+
+  let picked;
+  try {
+    picked = await picker.call(api);
+  } catch (e) {
+    showToast('Nie udało się otworzyć okna wyboru pliku', true);
+    return;
+  }
+
   if (!picked) return;
-  let normalized = picked;
-  if (!/^https?:\/\//i.test(normalized) && !/^file:\/\//i.test(normalized)) normalized = 'file://' + normalized;
+
+  const normalized = /^https?:/i.test(picked) || /^file:/i.test(picked)
+    ? picked
+    : `file://${picked}`;
+
   setManualCover(game.platform, game.id, normalized);
   await saveStoredConfig();
   await refreshLibrary();
-  populateManualCoverGameSelect();
-  document.getElementById('manual-cover-game').value = gameId;
+
+  const manualCoverSelect = document.getElementById('manual-cover-game');
+  if (manualCoverSelect) manualCoverSelect.value = gameId;
+
   renderManualCoverPreview();
-  showToast('Zapisano rÄczny plik okĹadki');
+  showToast('Zapisano ręczny plik okładki');
 }
 
+
 async function clearManualCover() {
-  if (activePlatform === 'all') { showToast('Najpierw wybierz konkretnÄ platformÄ', true); return; }
+  if (activePlatform === 'all') { showToast('Najpierw wybierz konkretną platformę', true); return; }
   const select = document.getElementById('manual-cover-game');
   const gameId = select?.value || '';
-  if (!gameId) { showToast('Najpierw wybierz grÄ', true); return; }
+  if (!gameId) { showToast('Najpierw wybierz grę', true); return; }
   const game = games.find(g => g.id === gameId && g.platform === activePlatform);
   if (!game) { showToast('Nie znaleziono gry', true); return; }
   setManualCover(game.platform, game.id, '');
@@ -608,13 +741,15 @@ async function clearManualCover() {
   populateManualCoverGameSelect();
   document.getElementById('manual-cover-game').value = gameId;
   renderManualCoverPreview();
-  showToast('UsuniÄto rÄcznÄ okĹadkÄ');
+  showToast('Usunięto ręczną okładkę');
 }
+
 
 function renderSettings() {
   renderSettingsWarning();
-  const rawgInput = document.getElementById('rawg-api-key-input');
-  if (rawgInput) rawgInput.value = config.apiKeys?.rawg || '';
+  const steamgridInput = document.getElementById('steamgrid-api-key-input');
+  if (steamgridInput) steamgridInput.value = config.apiKeys?.steamgrid || '';
+
 
   platformBlocks.innerHTML = '';
   config.platforms.forEach(p => {
@@ -628,28 +763,28 @@ function renderSettings() {
       <div class="platform-header">
         <span class="platform-badge" style="background:${p.color}33;color:${p.color}">${p.label}</span>
         <span class="ext-hint">${(p.extensions || []).join(', ')}</span>
-        <button type="button" class="remove-platform-btn" data-key="${p.key}" title="UsuĹ platformÄ">â</button>
+        <button type="button" class="remove-platform-btn" data-key="${p.key}" title="Usuń platformę">✕</button>
       </div>
       <div class="field-row">
         <div class="field-label">Folder z ROM-ami</div>
         <div class="field-input ${romPath ? '' : 'empty'}">${romPath || 'Nie ustawiono'}</div>
-        <button type="button" class="browse-btn" data-type="rom" data-key="${p.key}">Wybierz folderâŚ</button>
+        <button type="button" class="browse-btn" data-type="rom" data-key="${p.key}">Wybierz folder…</button>
       </div>
       <div class="field-row field-row-stack">
         <div class="field-label">Polecenie uruchomieniowe</div>
         <input type="text" class="field-textinput" data-emulator-input="${p.key}" value="${emuPath || ''}" placeholder="${DEFAULT_LAUNCH_PLACEHOLDER}" />
-        <button type="button" class="browse-btn" data-type="emu" data-key="${p.key}">Wybierz plikâŚ</button>
+        <button type="button" class="browse-btn" data-type="emu" data-key="${p.key}">Wybierz plik…</button>
       </div>
       <div class="field-row field-row-stack">
-        <div class="field-label">DomyĹlne argumenty</div>
+        <div class="field-label">Domyślne argumenty</div>
         <input type="text" class="field-textinput" data-args-input="${p.key}" value="${launchArgs || ''}" placeholder="Np. --fullscreen --fastboot" />
         <button type="button" class="test-launch-btn" data-key="${p.key}">Testuj</button>
       </div>
       <div class="field-row field-row-stack">
-        <div class="field-label">Typ okĹadki</div>
+        <div class="field-label">Typ okładki</div>
         <select class="field-select" data-aspect-input="${p.key}">
           <option value="standard" ${aspect === 'standard' ? 'selected' : ''}>Standard</option>
-          <option value="psp" ${aspect === 'psp' ? 'selected' : ''}>PSP / wÄska</option>
+          <option value="psp" ${aspect === 'psp' ? 'selected' : ''}>PSP / wąska</option>
           <option value="square" ${aspect === 'square' ? 'selected' : ''}>Kwadrat</option>
           <option value="wide" ${aspect === 'wide' ? 'selected' : ''}>Szeroka</option>
         </select>
@@ -657,6 +792,7 @@ function renderSettings() {
     `;
     platformBlocks.appendChild(block);
   });
+
 
   document.querySelectorAll('.browse-btn').forEach(btn => {
     btn.onclick = async () => {
@@ -681,6 +817,7 @@ function renderSettings() {
     };
   });
 
+
   document.querySelectorAll('[data-emulator-input]').forEach(el => {
     el.oninput = () => { config.emulators[el.dataset.emulatorInput] = el.value; saveStoredConfig(); };
   });
@@ -694,9 +831,10 @@ function renderSettings() {
       platform.aspect = el.value;
       await saveStoredConfig();
       renderShelf();
-      showToast('Zapisano typ okĹadki');
+      showToast('Zapisano typ okładki');
     };
   });
+
 
   document.querySelectorAll('.test-launch-btn').forEach(btn => {
     btn.onclick = async () => {
@@ -712,26 +850,34 @@ function renderSettings() {
     };
   });
 
+
   document.querySelectorAll('.remove-platform-btn').forEach(btn => {
     btn.onclick = async () => {
       const key = btn.dataset.key;
       config.platforms = config.platforms.filter(p => p.key !== key);
-      delete config.romFolders[key]; delete config.emulators[key]; delete config.launchArgs[key]; delete config.metadata[key]; delete config.manualCovers[key]; delete config.userRatings[key];
+      delete config.romFolders[key];
+      delete config.emulators[key];
+      delete config.launchArgs[key];
+      delete config.metadata[key];
+      delete config.manualCovers[key];
+      delete config.userRatings[key];
       await saveStoredConfig();
-      showToast('UsuniÄto platformÄ');
+      showToast('Usunięto platformę');
       renderSettings();
       renderTabs();
       if (activePlatform === key) { activePlatform = 'all'; await refreshLibrary(); }
     };
   });
 
-  const rawgSaveBtn = document.getElementById('save-rawg-api-key');
-  if (rawgSaveBtn) rawgSaveBtn.onclick = async () => {
-    const input = document.getElementById('rawg-api-key-input');
-    config.apiKeys.rawg = (input?.value || '').trim();
+
+  const steamgridSaveBtn = document.getElementById('save-steamgrid-api-key');
+  if (steamgridSaveBtn) steamgridSaveBtn.onclick = async () => {
+    const input = document.getElementById('steamgrid-api-key-input');
+    config.apiKeys.steamgrid = (input?.value || '').trim();
     await saveStoredConfig();
-    showToast('Zapisano klucz RAWG API');
+    showToast('Zapisano klucz SteamGridDB API');
   };
+
 
   const manualCoverSelect = document.getElementById('manual-cover-game');
   const platformGames = populateManualCoverGameSelect();
@@ -744,20 +890,23 @@ function renderSettings() {
   if (manualCoverFileBtn) manualCoverFileBtn.onclick = pickManualCoverFile;
   if (manualCoverClearBtn) manualCoverClearBtn.onclick = clearManualCover;
 
+
   const bulkMetaBtn = document.getElementById('bulk-fetch-platform-meta');
   if (bulkMetaBtn) bulkMetaBtn.onclick = async () => {
-    if (activePlatform === 'all') { showToast('Najpierw wybierz konkretnÄ platformÄ', true); return; }
+    if (activePlatform === 'all') { showToast('Najpierw wybierz konkretną platformę', true); return; }
     await enrichPlatformMetadata(activePlatform, false);
     await refreshLibrary();
   };
 
+
   const forceMetaBtn = document.getElementById('force-fetch-platform-meta');
   if (forceMetaBtn) forceMetaBtn.onclick = async () => {
-    if (activePlatform === 'all') { showToast('Najpierw wybierz konkretnÄ platformÄ', true); return; }
+    if (activePlatform === 'all') { showToast('Najpierw wybierz konkretną platformę', true); return; }
     await enrichPlatformMetadata(activePlatform, true);
     await refreshLibrary();
   };
 }
+
 
 function activateSettingsSubtab(name) {
   const tabs = [...document.querySelectorAll('.settings-subtab')];
@@ -768,6 +917,7 @@ function activateSettingsSubtab(name) {
   });
   panels.forEach(p => p.classList.toggle('active', p.dataset.subpanel === name));
 }
+
 
 function switchToPage(page) {
   const shelfView = document.querySelector('[data-view="shelf"]');
@@ -781,6 +931,7 @@ function switchToPage(page) {
   location.hash = page === 'settings' ? '#settings' : '#home';
 }
 
+
 function slugify(str) { return str.toLowerCase().trim().replace(/[^a-z0-9]+/g, ''); }
 function toggleFullscreen() {
   if (window.launcherAPI?.toggleFullscreen) window.launcherAPI.toggleFullscreen();
@@ -790,20 +941,24 @@ function toggleFullscreen() {
   }
 }
 
+
 const addPlatformForm = document.getElementById('addPlatformForm');
 const newPlatformName = document.getElementById('newPlatformName');
 const newPlatformExts = document.getElementById('newPlatformExts');
 const newPlatformColor = document.getElementById('newPlatformColor');
 const newPlatformAspect = document.getElementById('newPlatformAspect');
 
+
 addPlatformForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const label = newPlatformName.value.trim();
   if (!label) return;
   const key = slugify(label) || ('platform' + Date.now());
-  if (config.platforms.some(p => p.key === key)) { showToast('Platforma o tym identyfikatorze juĹź istnieje', true); return; }
+  if (config.platforms.some(p => p.key === key)) { showToast('Platforma o tym identyfikatorze już istnieje', true); return; }
   const extsRaw = newPlatformExts.value.trim();
-  const extensions = extsRaw ? extsRaw.split(',').map(x => x.trim()).filter(Boolean).map(x => x.startsWith('.') ? x : '.' + x) : [];
+  const extensions = extsRaw
+    ? extsRaw.split(',').map(x => x.trim()).filter(Boolean).map(x => (x.startsWith('.') ? x : '.' + x))
+    : [];
   config.platforms.push({ key, label, color: newPlatformColor.value, icon: DEFAULT_PLATFORM_ICON, extensions, aspect: newPlatformAspect.value || 'standard' });
   newPlatformName.value = '';
   newPlatformExts.value = '';
@@ -811,18 +966,34 @@ addPlatformForm.addEventListener('submit', async (e) => {
   await saveStoredConfig();
   renderSettings();
   renderTabs();
-  showToast('Dodano platformÄ: ' + label);
+  showToast('Dodano platformę: ' + label);
 });
 
-document.getElementById('saveBtn').addEventListener('click', async () => { await saveStoredConfig(); await refreshLibrary(); showToast('Zapisano ustawienia â'); });
-document.getElementById('resetBtn').addEventListener('click', async () => {
-  config.romFolders = {}; config.emulators = {}; config.launchArgs = {};
-  await saveStoredConfig(); renderSettings(); await refreshLibrary();
+
+document.getElementById('saveBtn').addEventListener('click', async () => {
+  await saveStoredConfig();
+  await refreshLibrary();
+  showToast('Zapisano ustawienia ✔');
 });
+document.getElementById('resetBtn').addEventListener('click', async () => {
+  config.romFolders = {};
+  config.emulators = {};
+  config.launchArgs = {};
+  await saveStoredConfig();
+  renderSettings();
+  await refreshLibrary();
+});
+
 
 document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
-document.getElementById('platformDropdownBtn').addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('platformDropdown').classList.toggle('open'); });
-document.addEventListener('click', (e) => { if (!document.getElementById('platformDropdown').contains(e.target)) closeDropdown(); });
+document.getElementById('platformDropdownBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  document.getElementById('platformDropdown').classList.toggle('open');
+});
+document.addEventListener('click', (e) => {
+  if (!document.getElementById('platformDropdown').contains(e.target)) closeDropdown();
+});
+
 
 document.querySelectorAll('.vm-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -833,24 +1004,49 @@ document.querySelectorAll('.vm-btn').forEach(btn => {
   });
 });
 
-playBtn.addEventListener('click', () => { const g = filtered[current]; if (g) launchGame(g); });
-detailsBtn.addEventListener('click', () => { const g = filtered[current]; if (g) openDetails(g); });
+
+playBtn.addEventListener('click', () => {
+  const g = filtered[current];
+  if (g) launchGame(g);
+});
+detailsBtn.addEventListener('click', () => {
+  const g = filtered[current];
+  if (g) openDetails(g);
+});
 document.getElementById('closeBtn').addEventListener('click', () => overlay.classList.remove('open'));
 overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('open'); });
-document.getElementById('modalPlayBtn').addEventListener('click', () => { if (overlay.currentGame) launchGame(overlay.currentGame); overlay.classList.remove('open'); });
-document.getElementById('modalCoverBtn').addEventListener('click', () => { if (overlay.currentGame) { overlay.classList.remove('open'); openManualCoverEditorForGame(overlay.currentGame); } });
+document.getElementById('modalPlayBtn').addEventListener('click', () => {
+  if (overlay.currentGame) launchGame(overlay.currentGame);
+  overlay.classList.remove('open');
+});
+document.getElementById('modalCoverBtn').addEventListener('click', () => {
+  if (overlay.currentGame) {
+    overlay.classList.remove('open');
+    openManualCoverEditorForGame(overlay.currentGame);
+  }
+});
 searchInput.addEventListener('input', refreshLibrary);
 
+
 document.getElementById('navHome').addEventListener('click', () => switchToPage('home'));
-document.getElementById('navSettings').addEventListener('click', () => { switchToPage('settings'); activateSettingsSubtab('general'); });
+document.getElementById('navSettings').addEventListener('click', () => {
+  switchToPage('settings');
+  activateSettingsSubtab('general');
+});
 document.getElementById('settings-close-btn').addEventListener('click', () => switchToPage('home'));
-document.querySelectorAll('.settings-subtab').forEach(t => t.addEventListener('click', () => activateSettingsSubtab(t.dataset.subtab)));
+document.querySelectorAll('.settings-subtab').forEach(t =>
+  t.addEventListener('click', () => activateSettingsSubtab(t.dataset.subtab))
+);
+
 
 window.addEventListener('hashchange', () => {
   const page = location.hash.replace('#', '') || 'home';
-  if (page === 'settings') { switchToPage('settings'); activateSettingsSubtab('general'); }
-  else switchToPage('home');
+  if (page === 'settings') {
+    switchToPage('settings');
+    activateSettingsSubtab('general');
+  } else switchToPage('home');
 });
+
 
 window.addEventListener('keydown', (e) => {
   const settingsActive = !settingsPanel.hidden;
@@ -862,8 +1058,12 @@ window.addEventListener('keydown', (e) => {
   if (settingsActive) return;
   if (e.key === 'ArrowRight') next();
   if (e.key === 'ArrowLeft') prev();
-  if (e.key === 'Enter') { const g = filtered[current]; if (g) launchGame(g); }
+  if (e.key === 'Enter') {
+    const g = filtered[current];
+    if (g) launchGame(g);
+  }
 });
+
 
 async function init() {
   await loadStoredConfig();
@@ -871,8 +1071,185 @@ async function init() {
   renderTabs();
   renderSettings();
   await refreshLibrary();
-  if (location.hash === '#settings') { switchToPage('settings'); activateSettingsSubtab('general'); }
-  else switchToPage('home');
+  if (location.hash === '#settings') {
+    switchToPage('settings');
+    activateSettingsSubtab('general');
+  } else switchToPage('home');
 }
 
+
 init();
+
+
+
+// ---------- Obsluga pada (Gamepad API) ----------
+let gamepadIndex = null;
+let gamepadLoopActive = false;
+const gpState = { lastMove: 0, lastAction: 0 };
+const GP_MOVE_COOLDOWN = 260;
+const GP_ACTION_COOLDOWN = 400;
+const GP_DEADZONE = 0.4;
+
+window.addEventListener('gamepadconnected', (e) => {
+  gamepadIndex = e.gamepad.index;
+  const ind = document.getElementById('gamepadIndicator');
+  if (ind) ind.classList.add('connected');
+  showToast('Pad podlaczony: ' + e.gamepad.id);
+  if (!gamepadLoopActive) { gamepadLoopActive = true; requestAnimationFrame(gamepadLoop); }
+});
+
+window.addEventListener('gamepaddisconnected', (e) => {
+  if (gamepadIndex === e.gamepad.index) {
+    gamepadIndex = null;
+    const ind2 = document.getElementById('gamepadIndicator');
+    if (ind2) ind2.classList.remove('connected');
+    showToast('Pad odlaczony', true);
+  }
+});
+
+function isSettingsActive() {
+  const view = document.querySelector('.view[data-view="settings"]');
+  if (view) return view.classList.contains('active');
+  return settingsPanel ? !settingsPanel.hidden : false;
+}
+
+function gamepadLoop() {
+  if (gamepadIndex !== null) {
+    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    const gp = pads[gamepadIndex];
+    if (gp) handleGamepadInput(gp);
+  }
+  requestAnimationFrame(gamepadLoop);
+}
+
+function handleGamepadInput(gp) {
+  const now = performance.now();
+  const axisX = gp.axes[0] || 0;
+  const dpadLeft = gp.buttons[14] && gp.buttons[14].pressed;
+  const dpadRight = gp.buttons[15] && gp.buttons[15].pressed;
+  const dpadUp = gp.buttons[12] && gp.buttons[12].pressed;
+  const dpadDown = gp.buttons[13] && gp.buttons[13].pressed;
+  const btnA = gp.buttons[0] && gp.buttons[0].pressed;
+  const btnB = gp.buttons[1] && gp.buttons[1].pressed;
+  const btnY = gp.buttons[3] && gp.buttons[3].pressed;
+  const btnStart = gp.buttons[9] && gp.buttons[9].pressed;
+  const shoulderL = gp.buttons[4] && gp.buttons[4].pressed;
+  const shoulderR = gp.buttons[5] && gp.buttons[5].pressed;
+
+  if (overlay.classList.contains('open')) {
+    if ((btnB || btnStart) && now - gpState.lastAction > GP_ACTION_COOLDOWN) {
+      overlay.classList.remove('open');
+      gpState.lastAction = now;
+    }
+    if (btnA && now - gpState.lastAction > GP_ACTION_COOLDOWN) {
+      if (overlay.currentGame) launchGame(overlay.currentGame);
+      overlay.classList.remove('open');
+      gpState.lastAction = now;
+    }
+    return;
+  }
+
+  if (isSettingsActive()) {
+    if (btnB && now - gpState.lastAction > GP_ACTION_COOLDOWN) {
+      switchView('shelf');
+      document.getElementById('settingsBtn').classList.remove('active-view');
+      gpState.lastAction = now;
+    }
+    return;
+  }
+
+  const dropdownEl = document.getElementById('platformDropdown');
+  const isDropdownOpen = dropdownEl && dropdownEl.classList.contains('open');
+
+  if (isDropdownOpen) {
+    const items = Array.from(document.querySelectorAll('.pd-item'));
+    if (items.length === 0) { closeDropdown(); return; }
+    if (typeof gpState.pdIndex !== 'number') {
+      gpState.pdIndex = Math.max(0, items.findIndex(i => i.classList.contains('active')));
+    }
+    const wantUp = dpadUp || (gp.axes[1] || 0) < -GP_DEADZONE;
+    const wantDown = dpadDown || (gp.axes[1] || 0) > GP_DEADZONE;
+
+    if ((wantUp || wantDown) && now - gpState.lastMove > GP_MOVE_COOLDOWN) {
+      if (wantUp) gpState.pdIndex = mod(gpState.pdIndex - 1, items.length);
+      if (wantDown) gpState.pdIndex = mod(gpState.pdIndex + 1, items.length);
+      items.forEach((it, i) => it.classList.toggle('pd-focus', i === gpState.pdIndex));
+      items[gpState.pdIndex].scrollIntoView({ block: 'nearest' });
+      sfxHover();
+      gpState.lastMove = now;
+    }
+
+    if (btnA && now - gpState.lastAction > GP_ACTION_COOLDOWN) {
+      items[gpState.pdIndex].click();
+      gpState.pdIndex = null;
+      gpState.lastAction = now;
+    }
+
+    if ((btnB || btnStart) && now - gpState.lastAction > GP_ACTION_COOLDOWN) {
+      closeDropdown();
+      gpState.pdIndex = null;
+      gpState.lastAction = now;
+    }
+    return;
+  }
+
+  const wantLeft = dpadLeft || axisX < -GP_DEADZONE;
+  const wantRight = dpadRight || axisX > GP_DEADZONE;
+
+  if ((wantLeft || wantRight) && now - gpState.lastMove > GP_MOVE_COOLDOWN) {
+    if (wantLeft) prev(); else next();
+    gpState.lastMove = now;
+  }
+
+  if ((shoulderL || shoulderR) && now - gpState.lastAction > GP_ACTION_COOLDOWN) {
+    const plats = usedPlatforms();
+    const keys = ['all', ...plats.map(p => p.key)];
+    const activeIdx = keys.indexOf(activePlatform);
+    let newIdx = activeIdx;
+    if (shoulderL) newIdx = mod(activeIdx - 1, keys.length);
+    if (shoulderR) newIdx = mod(activeIdx + 1, keys.length);
+    const newKey = keys[newIdx];
+    if (newKey === 'all') applyFilter('all', document.querySelector('.tab[data-platform="all"]'));
+    else applyFilter(newKey, null);
+    gpState.lastAction = now;
+  }
+
+  if (dpadUp && now - gpState.lastAction > GP_ACTION_COOLDOWN) {
+    document.getElementById('platformDropdown').classList.add('open');
+    gpState.pdIndex = null;
+    sfxTab();
+    gpState.lastAction = now;
+  }
+
+  if (btnA && now - gpState.lastAction > GP_ACTION_COOLDOWN) {
+    const g = filtered[current];
+    if (g) launchGame(g);
+    gpState.lastAction = now;
+  }
+
+  if (btnY && now - gpState.lastAction > GP_ACTION_COOLDOWN) {
+    const g = filtered[current];
+    if (g) openDetails(g);
+    gpState.lastAction = now;
+  }
+
+  if (btnStart && now - gpState.lastAction > GP_ACTION_COOLDOWN) {
+    switchView('settings');
+    document.getElementById('settingsBtn').classList.add('active-view');
+    gpState.lastAction = now;
+  }
+}
+
+function checkExistingGamepads() {
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  for (const gp of pads) {
+    if (gp) {
+      gamepadIndex = gp.index;
+      const ind3 = document.getElementById('gamepadIndicator');
+      if (ind3) ind3.classList.add('connected');
+      if (!gamepadLoopActive) { gamepadLoopActive = true; requestAnimationFrame(gamepadLoop); }
+      break;
+    }
+  }
+}
+checkExistingGamepads();
