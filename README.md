@@ -19,24 +19,8 @@ Retro Launcher to desktopowy launcher gier retro inspirowany trybem Steam Big Pi
 
 Projekt jest przeznaczony dla osób, które chcą mieć jeden interfejs do uruchamiania gier retro z różnych emulatorów, najlepiej z poziomu kanapy, kontrolera albo mini-PC pod telewizorem.
 
-## Wymagania
 
-- Node.js i npm.
-- Zainstalowane emulatory, z których launcher będzie korzystał.
-- ROM-y zapisane w folderach przypisanych do konkretnych platform.
-- Opcjonalnie klucz API SteamGridDB, jeśli mają działać automatyczne okładki i opisy.
 
-## Instalacja
-
-```bash
-npm install
-```
-
-## Uruchomienie
-
-```bash
-npm start
-```
 
 ## Szybki start
 
@@ -133,32 +117,7 @@ W ustawieniach każdej platformy można użyć przycisku `Testuj`, aby sprawdzi�
 ## Flatpak i Linux
 
 Przy uruchamianiu w Flatpaku niektóre emulatory lub foldery spoza sandboxa mogą wymagać dodatkowych uprawnień. Jeśli emulator działa na hoście, a launcher jest zamknięty w sandboxie, może być potrzebne uruchamianie przez `flatpak-spawn --host` albo nadanie dostępu do systemu plików.
-
-## Budowanie paczek
-
-Przykładowe komendy:
-
-```bash
-npm run dist
-npm run dist:linux
-npm run dist:win
-```
-
-Uwagi:
-
-- Linux zwykle korzysta z zestawu ikon PNG dla `deb` i `AppImage`.
-- Windows najlepiej budować z ikoną `.ico`.
-- Build dla Windows uruchamiany z Linuxa może wymagać Wine lub budowania na Windowsie.
-
-## Struktura projektu
-
-```text
-src/
-  main/main.js       - proces główny Electron: okna, IPC, dialogi, uruchamianie emulatorów
-  preload/preload.js - bezpieczny mostek API do renderera
-  renderer/          - interfejs użytkownika: HTML, CSS i logika UI
-```
-
+ 
 ## Najczęstszy scenariusz użycia
 
 1. Dodanie platformy, na przykład PSP.
@@ -189,9 +148,7 @@ Sprawdź:
 - czy aplikacja ma dostęp do pliku,
 - czy dla Linux/Flatpak nie brakuje uprawnień do odczytu plików.
 
-### Nie działa wybór pliku lub emulatora
-
-Sprawdź, czy preload i IPC są poprawnie podłączone oraz czy renderer korzysta z metod wystawionych przez `window.launcherAPI`.
+ 
 
 ## Status projektu
 
