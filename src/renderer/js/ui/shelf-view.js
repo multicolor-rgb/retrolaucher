@@ -1,0 +1,342 @@
+// Render półki, szczegółów gry i akcje związane z biblioteką.
+
+let wheelNavigationLocked = false;
+let wheelNavigationBound = false;
+let shelfInfoAnimating = false;
+
+function getAllowedShelfViewModes() {
+  return ['flat', 'arc', 'stack', 'cascade'];
+}
+
+function getSavedShelfViewMode() {
+  const saved = config?.uiState?.shelfViewMode;
+  return getAllowedShelfViewModes().includes(saved) ? saved : 'flat';
+}
+
+function syncViewModeButtons() {
+  const switcher = document.getElementById('viewModeSwitch');
+  if (!switcher) return;
+
+  switcher.querySelectorAll('.vm-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === viewMode);
+  });
+}
+
+async function setShelfViewMode(mode) {
+  if (!getAllowedShelfViewModes().includes(mode)) return;
+  if (viewMode === mode) return;
+
+  viewMode = mode;
+
+  if (!config.uiState || typeof config.uiState !== 'object') {
+    config.uiState = {};
+  }
+
+  config.uiState.shelfViewMode = mode;
+  syncViewModeButtons();
+  renderShelf();
+  await saveStoredConfig();
+}
+
+function bindViewModeSwitch() {
+  const switcher = document.getElementById('viewModeSwitch');
+  if (!switcher || switcher.dataset.bound === 'true') return;
+
+  switcher.querySelectorAll('.vm-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const mode = btn.dataset.mode;
+      await setShelfViewMode(mode);
+    });
+  });
+
+  switcher.dataset.bound = 'true';
+}
+
+function animateShelfInfoChange() {
+  const shelfInfo = document.getElementById('shelfInfo');
+  if (!shelfInfo || shelfInfoAnimating) return;
+
+  shelfInfoAnimating = true;
+  shelfInfo.classList.remove('shelf-info-swap');
+  void shelfInfo.offsetWidth;
+  shelfInfo.classList.add('shelf-info-swap');
+
+  setTimeout(() => {
+    shelfInfo.classList.remove('shelf-info-swap');
+    shelfInfoAnimating = false;
+  }, 320);
+}
+
+function applyCoverGeometry(el, platformKey, focused = false) {
+  const platform = getPlatform(platformKey);
+  const vars = getAspectVars(platform?.aspect || 'standard');
+
+  el.style.setProperty('--cover-width', `${vars.width || 180}px`);
+  el.style.setProperty('--cover-ratio', vars.ratio || '0.70 / 1');
+
+  if (focused) el.classList.add('focus');
+  else el.classList.remove('focus');
+}
+
+function bindShelfWheelNavigation() {
+  if (wheelNavigationBound) return;
+  if (!shelfViewport) return;
+
+  shelfViewport.addEventListener('wheel', onShelfWheel, { passive: false });
+  wheelNavigationBound = true;
+}
+
+function onShelfWheel(e) {
+  if (!filtered.length) return;
+  if (overlay?.classList?.contains('open')) return;
+  if (settingsPanel && !settingsPanel.hidden) return;
+
+  const absY = Math.abs(e.deltaY);
+  const absX = Math.abs(e.deltaX);
+
+  if (absY < 10 && absX < 10) return;
+
+  e.preventDefault();
+
+  if (wheelNavigationLocked) return;
+  wheelNavigationLocked = true;
+
+  const primaryDelta = absY >= absX ? e.deltaY : e.deltaX;
+
+  if (primaryDelta > 0) next();
+  else if (primaryDelta < 0) prev();
+
+  setTimeout(() => {
+    wheelNavigationLocked = false;
+  }, 220);
+}
+
+function formatBytes(bytes) {
+  const value = Number(bytes);
+  if (!Number.isFinite(value) || value <= 0) return 'Brak danych';
+
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const index = Math.min(
+    Math.floor(Math.log(value) / Math.log(1024)),
+    units.length - 1
+  );
+
+  const formatted = value / Math.pow(1024, index);
+  const decimals = formatted >= 100 ? 0 : formatted >= 10 ? 1 : 2;
+
+  return `${formatted.toFixed(decimals)} ${units[index]}`;
+}
+
+function formatHltb(value) {
+  if (value == null || value === '') return 'Brak danych';
+
+  const hours = Number(value);
+  if (!Number.isFinite(hours) || hours <= 0) return String(value);
+
+  if (hours < 1) return `${Math.round(hours * 60)} min`;
+  return `${hours.toFixed(hours >= 10 ? 0 : 1)} h`;
+}
+
+function getGameLocation(game) {
+  return game.location || game.rom || game.path || game.filePath || 'Brak danych';
+}
+
+function getGameFileSize(game) {
+  return game.fileSize ?? game.sizeBytes ?? game.bytes ?? game.size ?? null;
+}
+
+function getGameMetacritic(game) {
+  return game.metacritic ?? game.metaScore ?? game.metacriticScore ?? null;
+}
+
+function getGameHltb(game) {
+  if (game.hltb && typeof game.hltb === 'object') {
+    return game.hltb.main ?? game.hltb.story ?? game.hltb.mainStory ?? null;
+  }
+  return game.hltb ?? game.hltbMain ?? game.hltbHours ?? null;
+}
+
+function renderShelfSubinfo(game) {
+  const metacritic = getGameMetacritic(game);
+  const hltb = getGameHltb(game);
+
+  const parts = [];
+
+  if (metacritic != null && metacritic !== '') {
+    parts.push(`Metacritic: ${metacritic}/100`);
+  }
+
+  if (hltb != null && hltb !== '') {
+    parts.push(`HLTB: ${formatHltb(hltb)}`);
+  }
+
+  return parts.join(' • ');
+}
+
+function renderShelf() {
+  shelf.innerHTML = '';
+  const range = 3;
+  const len = filtered.length;
+
+  bindShelfWheelNavigation();
+  bindViewModeSwitch();
+
+  if (!viewMode || !getAllowedShelfViewModes().includes(viewMode)) {
+    viewMode = getSavedShelfViewMode();
+  }
+
+  syncViewModeButtons();
+
+  if (len === 0) {
+    shelfViewport.innerHTML = '<div class="empty-state">Brak gier dla tej platformy — skonfiguruj folder i emulator w Ustawieniach</div>';
+    titleEl.textContent = '';
+    platEl.textContent = '';
+    if (ratingMini) ratingMini.textContent = '';
+    return;
+  }
+
+  if (!shelf.parentElement) {
+    shelfViewport.innerHTML = '';
+    shelfViewport.appendChild(shelf);
+  }
+
+  shelf.className = 'shelf mode-' + viewMode;
+  shelfViewport.className = 'shelf-viewport mode-' + viewMode;
+
+  for (let offset = -range; offset <= range; offset++) {
+    const idx = mod(current + offset, len);
+    const g = filtered[idx];
+    const el = document.createElement('div');
+
+    el.className = 'sh-item' + (offset === 0 ? ' focus' : '');
+    el.dataset.offset = offset;
+    el.dataset.gameId = g.id;
+    el.dataset.platform = g.platform;
+
+    applyCoverGeometry(el, g.platform, offset === 0);
+
+    const coverSrc = getCoverForGame(g);
+    el.innerHTML = `<img src="${coverSrc}" alt="${g.title}"/>`;
+
+    el.addEventListener('click', () => {
+      if (current === idx) return;
+      current = idx;
+      renderShelf();
+    });
+
+    el.addEventListener('dblclick', () => launchGame(g));
+    shelf.appendChild(el);
+  }
+
+  const g = filtered[current];
+  const pf = getPlatform(g.platform) || { label: g.platform || 'Nieznana platforma' };
+
+  titleEl.textContent = g.title || 'Nieznana gra';
+  platEl.textContent = pf.label;
+
+  if (ratingMini) {
+    ratingMini.textContent = renderShelfSubinfo(g);
+  }
+
+  animateShelfInfoChange();
+
+  const activeCover = getCoverForGame(g);
+  bgBlur.style.backgroundImage = `url('${activeCover}')`;
+  getDominantColor(activeCover, applyGradient);
+}
+
+function next() {
+  if (filtered.length) {
+    current = mod(current + 1, filtered.length);
+    renderShelf();
+    if (typeof sfxMove === 'function') sfxMove();
+  }
+}
+
+function prev() {
+  if (filtered.length) {
+    current = mod(current - 1, filtered.length);
+    renderShelf();
+    if (typeof sfxMove === 'function') sfxMove();
+  }
+}
+
+function showToast(msg, isError) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+
+  toast.textContent = msg;
+  toast.style.borderColor = isError ? '#ff5c5c' : '#38e0ff';
+  toast.style.color = isError ? '#ff5c5c' : '#38e0ff';
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+async function launchGame(game) {
+  const emulatorPath = config.emulators[game.platform] || '';
+  const rawArgs = config.launchArgs[game.platform] || '';
+  const extraArgs = parseArgString(rawArgs);
+
+  if (!validatePathExists(emulatorPath)) {
+    showToast('Brak polecenia uruchomieniowego dla tej platformy', true);
+    return;
+  }
+
+  if (!validatePathExists(game.rom)) {
+    showToast('Brak ścieżki do pliku gry', true);
+    return;
+  }
+
+  if (/flatpak run/.test(emulatorPath) && /^\/media\//.test(game.rom)) {
+    showToast('Jeśli gra nie startuje, nadaj Flatpakowi dostęp do /media', true);
+  }
+
+  if (window.launcherAPI?.launchGame) {
+    const result = await window.launcherAPI.launchGame({
+      emulatorPath,
+      romPath: game.rom,
+      extraArgs
+    });
+
+    if (!result.ok) showToast('Błąd: ' + result.error, true);
+    else showToast('Uruchamiam: ' + game.title);
+  } else {
+    showToast('Demo: uruchomienie ' + game.title);
+  }
+}
+
+function openDetails(g) {
+  const pf = getPlatform(g.platform) || {
+    label: g.platform || 'Nieznana platforma',
+    color: '#38e0ff'
+  };
+
+  const metacritic = getGameMetacritic(g);
+  const hltb = getGameHltb(g);
+  const fileSize = getGameFileSize(g);
+  const location = getGameLocation(g);
+
+  document.getElementById('modalCoverImg').src = getCoverForGame(g);
+
+  const platEl2 = document.getElementById('modalPlatform');
+  platEl2.textContent = pf.label;
+  platEl2.style.background = pf.color + '33';
+  platEl2.style.color = pf.color;
+
+  document.getElementById('modalTitle').textContent = g.title || 'Nieznana gra';
+  document.getElementById('modalTags').innerHTML =
+    (g.genres || []).map(t => `<span class="tag">${t}</span>`).join('');
+  document.getElementById('modalDesc').textContent =
+    g.desc || g.description || 'Brak opisu dla tej gry.';
+
+  document.getElementById('modalFileSize').textContent = formatBytes(fileSize);
+  document.getElementById('modalLocation').textContent = location;
+  document.getElementById('modalMetacritic').textContent =
+    metacritic != null && metacritic !== ''
+      ? `${metacritic}/100`
+      : 'Brak danych';
+  document.getElementById('modalHltb').textContent = formatHltb(hltb);
+
+  overlay.classList.add('open');
+  overlay.currentGame = g;
+}

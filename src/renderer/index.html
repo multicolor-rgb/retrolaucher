@@ -1,10 +1,11 @@
-
 <!DOCTYPE html>
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
   <title>Retro Launcher</title>
-  <link rel="stylesheet" href="style.css" />
+    <link rel="icon" type="image/png" href="./build/icon.png">
+
+  <link rel="stylesheet" href="style.css?v=20260730-1333434" />
 </head>
 <body>
   <div id="app">
@@ -24,7 +25,7 @@
         <button class="icon-btn active-view" id="navHome" title="Biblioteka">⌂</button>
         <button class="icon-btn" id="navSettings" title="Ustawienia">⚙</button>
         <input id="search" type="text" placeholder="Szukaj..." />
-        <button class="icon-btn" id="fullscreenBtn" title="Pełny ekran (F11)">⛶</button>
+        <button class="icon-btn" id="fullscreenBtn" title="Pełny ekran (F11) / Alt + Enter">⛶</button>
         <span class="gamepad-indicator" id="gamepadIndicator" title="Status pada">🎮</span>
       </div>
     </header>
@@ -48,11 +49,66 @@
       </div>
     </main>
 
+    <footer class="bp-footer">
+      <span class="hint"><b>◄ ►</b> Nawigacja</span>
+      <span class="hint"><b>▲</b> Platformy</span>
+      <span class="hint"><b>LB/RB</b> Zmień platformę</span>
+      <span class="hint"><b>Enter</b> Uruchom</span>
+      <span class="hint"><b>F11/Alt + Enter</b> Pełny ekran</span>
+      <span class="hint"><b>Esc</b> Zamknij</span>
+    </footer>
+
+    <div class="modal-overlay" id="overlay">
+      <div class="modal-card">
+        <button class="close-btn" id="closeBtn">✕</button>
+        <div class="modal-cover">
+          <img id="modalCoverImg" src="" alt="cover" />
+        </div>
+        <div class="modal-content">
+          <div class="modal-platform" id="modalPlatform">PSP</div>
+          <h1 class="modal-title" id="modalTitle">Tytuł gry</h1>
+          <div class="tags-row" id="modalTags"></div>
+          <p class="description" id="modalDesc"></p>
+
+          <div class="meta-grid">
+            <div class="meta-item">
+              <div class="meta-label">Waga pliku</div>
+              <div class="meta-value" id="modalFileSize"></div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Lokalizacja</div>
+              <div class="meta-value" id="modalLocation"></div>
+            </div>
+            <div class="meta-item" style="display:none;">
+              <div class="meta-label">Metacritic</div>
+              <div class="meta-value" id="modalMetacritic"></div>
+            </div>
+            <div class="meta-item" style="display:none;">
+              <div class="meta-label">HLTB</div>
+              <div class="meta-value" id="modalHltb"></div>
+            </div>
+          </div>
+
+          <button class="modal-play-btn" id="modalPlayBtn">▶ Uruchom grę</button>
+          <button class="modal-secondary-btn" id="modalCoverBtn">🖼 Ustaw okładkę</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast">Zapisano ✓</div>
+
+    <div class="view-mode-switch view-mode-floating" id="viewModeSwitch">
+      <button class="vm-btn active" data-mode="flat" title="Widok płaski">▭</button>
+      <button class="vm-btn" data-mode="arc" title="Widok łuku (coverflow)">◔</button>
+      <button class="vm-btn" data-mode="stack" title="Widok Big Picture">▤</button>
+      <button class="vm-btn" data-mode="cascade" title="Widok animowany">◫</button>
+    </div>
+
     <section id="settings-panel" class="settings-page" hidden>
       <div class="settings-shell">
         <div class="settings-head">
           <h2>Ustawienia</h2>
-          <button type="button" id="settings-close-btn" class="settings-close-btn" aria-label="Wróć do biblioteki">← Wróć</button>
+          <button type="button" id="settings-close-btn" class="settings-close-btn" aria-label="Wróć do biblioteki">←</button>
         </div>
 
         <div class="settings-subtabs" role="tablist" aria-label="Ustawienia aplikacji">
@@ -65,16 +121,49 @@
         <div class="settings-panels">
           <section class="settings-subpanel active" data-subpanel="general">
             <div id="settings-warning" class="settings-warning"></div>
+
             <div class="settings-card-grid">
               <div class="settings-card">
+                <h3>Start aplikacji</h3>
+                <p class="settings-note">
+                  Ustaw, czy launcher ma uruchamiać się od razu w trybie pełnoekranowym.
+                </p>
+
+                <label class="field-row field-row-stack">
+                  <span class="field-label">Fullscreen przy uruchomieniu</span>
+                  <select id="fullscreen-on-launch" class="field-select">
+                    <option value="true">Włączony</option>
+                    <option value="false">Wyłączony</option>
+                  </select>
+                </label>
+
+                <div class="settings-actions-row">
+                  <button type="button" id="save-startup-settings" class="btn-primary">
+                    Zapisz ustawienia startu
+                  </button>
+                </div>
+              </div>
+
+              <div class="settings-card">
                 <h3>SteamGridDB API</h3>
-                <p class="settings-note">Tutaj wpisujesz klucz SteamGridDB API do pobierania okładek i opisów gier.</p>
+                <p class="settings-note">
+                  Wpisz własny klucz API, aby pobierać okładki i opisy automatycznie.
+                </p>
+
                 <label class="field-row field-row-stack">
                   <span class="field-label">Klucz SteamGridDB API</span>
-                  <input id="steamgrid-api-key-input" type="text" class="field-textinput" placeholder="Wpisz klucz API do pobierania okładek" />
+                  <input
+                    id="steamgrid-api-key-input"
+                    type="text"
+                    class="field-textinput"
+                    placeholder="Wpisz klucz API"
+                  />
                 </label>
+
                 <div class="settings-actions-row">
-                  <button type="button" id="save-steamgrid-api-key" class="btn-primary">Zapisz klucz</button>
+                  <button type="button" id="save-steamgrid-api-key" class="btn-primary">
+                    Zapisz klucz
+                  </button>
                 </div>
               </div>
             </div>
@@ -82,31 +171,61 @@
 
           <section class="settings-subpanel" data-subpanel="artwork">
             <div class="settings-card-grid">
-              <div class="settings-card">
+              <div class="settings-card settings-card-wide">
                 <h3>Okładki i opisy</h3>
-                <p class="settings-note">Po zapisaniu klucza SteamGridDB możesz pobrać dane dla aktualnej platformy albo wymusić ponowne odświeżenie.</p>
+                <p class="settings-note">
+                  Wybierz platformę do pobierania danych. Możesz pobrać metadata dla jednej platformy albo wszystkich.
+                </p>
+
+                <div class="field-row field-row-stack">
+                  <span class="field-label">Platforma do pobierania</span>
+                  <select id="artwork-platform-select" class="field-select"></select>
+                </div>
+
                 <div class="settings-actions-row">
-                  <button type="button" id="bulk-fetch-platform-meta" class="btn-secondary">Pobierz dla aktualnej platformy</button>
-                  <button type="button" id="force-fetch-platform-meta" class="btn-primary">Wymuś odświeżenie</button>
+                  <button type="button" id="bulk-fetch-platform-meta" class="btn-secondary">
+                    Pobierz okładki i opisy
+                  </button>
+                  <button type="button" id="force-fetch-platform-meta" class="btn-primary">
+                    Wymuś odświeżenie
+                  </button>
                 </div>
-                <div class="manual-cover-editor">
-                  <h4>Ręczna okładka dla gry</h4>
-                  <p class="settings-note">Możesz wkleić URL obrazka albo wskazać plik z dysku dla konkretnej gry z aktywnej platformy.</p>
-                  <div class="field-row field-row-stack">
-                    <span class="field-label">Gra</span>
-                    <select id="manual-cover-game" class="field-select"></select>
-                  </div>
-                  <div class="field-row field-row-stack">
-                    <span class="field-label">URL okładki</span>
-                    <input id="manual-cover-url" type="text" class="field-textinput" placeholder="https://example.com/cover.jpg" />
-                  </div>
-                  <div class="settings-actions-row">
-                    <button type="button" id="save-manual-cover-url" class="btn-primary">Zapisz URL</button>
-                    <button type="button" id="pick-manual-cover-file" class="btn-secondary">Wybierz plik z dysku</button>
-                    <button type="button" id="clear-manual-cover" class="btn-secondary">Usuń ręczną okładkę</button>
-                  </div>
-                  <div id="manual-cover-preview" class="manual-cover-preview"></div>
+              </div>
+
+              <div class="settings-card settings-card-wide">
+                <h3>Ręczna okładka</h3>
+                <p class="settings-note">
+                  Wybierz platformę i grę, a następnie podaj URL obrazka albo wskaż plik z dysku.
+                </p>
+
+                <div class="field-row field-row-stack">
+                  <span class="field-label">Platforma gry</span>
+                  <select id="manual-cover-platform" class="field-select"></select>
                 </div>
+
+                <div class="field-row field-row-stack">
+                  <span class="field-label">Gra</span>
+                  <select id="manual-cover-game" class="field-select"></select>
+                </div>
+
+                <div class="field-row field-row-stack">
+                  <span class="field-label">URL okładki</span>
+                  <input
+                    id="manual-cover-url"
+                    type="text"
+                    class="field-textinput"
+                    placeholder="https://example.com/cover.jpg"
+                  />
+                </div>
+
+                <div class="settings-actions-row">
+                  <button type="button" id="save-manual-cover-url" class="btn-primary">Zapisz URL</button>
+                  <button type="button" id="pick-manual-cover-file" class="btn-secondary">Wybierz plik z dysku</button>
+                  <button type="button" id="clear-manual-cover" class="btn-secondary">Usuń ręczną okładkę</button>
+                </div>
+
+                <div id="manual-cover-preview" class="manual-cover-preview"></div>
+
                 <div id="bulk-progress" class="bulk-progress" hidden>
                   <div class="bulk-progress-bar-wrap">
                     <div id="bulk-progress-bar" class="bulk-progress-bar"></div>
@@ -120,25 +239,39 @@
           <section class="settings-subpanel" data-subpanel="platforms">
             <div class="settings-card-grid">
               <div class="settings-card settings-card-wide">
-                <h3>Nowa platforma</h3>
+                <h3>Dodawanie platformy</h3>
+                <p class="settings-note">
+                  Dodaj nazwę platformy, rozszerzenia ROM-ów, kolor i typ okładki. Launcher sam utworzy wpis konfiguracji.
+                </p>
+
                 <form class="add-platform-form" id="addPlatformForm">
-                  <input type="text" name="platformName" id="newPlatformName" placeholder="Nazwa platformy (np. Dreamcast)" required />
-                  <input type="text" name="platformExts" id="newPlatformExts" placeholder="Rozszerzenia plików, np. .gdi, .cdi" />
+                  <input type="text" name="platformName" id="newPlatformName" placeholder="Nazwa platformy, np. Dreamcast" required />
+                  <input type="text" name="platformExts" id="newPlatformExts" placeholder="Rozszerzenia, np. .gdi, .cdi" />
                   <input type="color" id="newPlatformColor" value="#38e0ff" />
                   <select id="newPlatformAspect" class="field-select">
                     <option value="standard">Standard</option>
                     <option value="psp">PSP / wąska</option>
                     <option value="square">Kwadrat</option>
                     <option value="wide">Szeroka</option>
+                    <option value="bigpic">Steam Big Picture</option>
                   </select>
-                  <button type="submit" class="btn-primary">Dodaj</button>
+                  <button type="submit" class="btn-primary">Dodaj platformę</button>
                 </form>
+
+                <div class="settings-help-box">
+                  <strong>Szybka wskazówka:</strong>
+                  po dodaniu platformy ustaw folder ROM-ów, polecenie emulatora i opcjonalne argumenty startowe.
+                </div>
               </div>
 
               <div class="settings-card settings-card-wide">
-                <h3>Platformy, foldery ROM-ów i emulatory</h3>
-                <p class="settings-note">Każda platforma może mieć własny typ okładki, własny folder ROM-ów, komendę uruchomieniową i argumenty startowe.</p>
+                <h3>ROM-y i emulatory</h3>
+                <p class="settings-note">
+                  Każda platforma może mieć własny folder ROM-ów, emulator, argumenty i proporcje okładek.
+                </p>
+
                 <div id="platformBlocks"></div>
+
                 <div class="save-bar">
                   <button class="btn-secondary" id="resetBtn">Wyczyść ścieżki</button>
                   <button class="btn-primary" id="saveBtn">Zapisz zmiany</button>
@@ -150,66 +283,59 @@
           <section class="settings-subpanel" data-subpanel="system">
             <div class="settings-card-grid">
               <div class="settings-card">
-                <h3>System</h3>
-                <p class="settings-note">Jeśli emulator działa przez Flatpak i gry są na /media, nadaj uprawnienia do tego katalogu. Fullscreen działa z przycisku i skrótem F11.</p>
-                <div class="settings-note">Przykład dla PCSX2 Flatpak: <code>flatpak override --user --filesystem=/media net.pcsx2.PCSX2</code></div>
+                <h3>Windows</h3>
+                <p class="settings-note">
+                  Dla emulatora wybierz plik `.exe`, a dla ROM-ów folder z grami. Lokalne pliki okładek mogą wymagać poprawnego adresu `file:///`, szczególnie dla ścieżek dyskowych typu `C:\...`.
+                </p>
+                <div class="settings-note">
+                  Przykład emulatora: <code>C:\Emulatory\PPSSPP\PPSSPPWindows64.exe</code>
+                </div>
+                <div class="settings-note">
+                  Przykład okładki: <code>file:///C:/Retro/covers/god-of-war.jpg</code>
+                </div>
+              </div>
+
+              <div class="settings-card">
+                <h3>Linux</h3>
+                <p class="settings-note">
+                  Na Linuxie zwykle wybierasz binarkę emulatora albo komendę uruchomieniową, a przy Flatpaku mogą być potrzebne uprawnienia do katalogów spoza sandboxa, np. `/media` lub własnych folderów z ROM-ami.
+                </p>
+                <div class="settings-note">
+                  Przykład emulatora: <code>/usr/bin/retroarch</code>
+                </div>
+                <div class="settings-note">
+                  Przykład Flatpak: <code>flatpak run org.ppsspp.PPSSPP</code>
+                </div>
+                <div class="settings-note">
+                  Przykład uprawnień: <code>flatpak override --user --filesystem=/media org.ppsspp.PPSSPP</code>
+                </div>
+              </div>
+
+              <div class="settings-card settings-card-wide">
+                <h3>Jak dodać platformę i okładki</h3>
+                <p class="settings-note">
+                  1. Dodaj platformę w zakładce „Platformy”. 2. Ustaw folder ROM-ów i emulator. 3. W zakładce „Okładki” wybierz platformę i pobierz dane albo ustaw ręczną okładkę przez URL lub plik lokalny.
+                </p>
+                <p class="settings-note">
+                  Jeśli lokalna okładka nie pokazuje się poprawnie, sprawdź format ścieżki `file://` oraz to, czy aplikacja ma dostęp do pliku.
+                </p>
               </div>
             </div>
           </section>
         </div>
       </div>
     </section>
-
-    <div class="view-mode-switch view-mode-floating" id="viewModeSwitch">
-      <button class="vm-btn active" data-mode="flat" title="Widok płaski">▭</button>
-      <button class="vm-btn" data-mode="arc" title="Widok łuku (coverflow)">◔</button>
-      <button class="vm-btn" data-mode="stack" title="Widok Big Picture">▤</button>
-    </div>
-
-    <div class="sound-controls sound-controls-floating" id="soundControlsFloating">
-      <button class="sound-btn" id="muteBtn" title="Wycisz muzyke">🔊</button>
-      <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="35" title="Glosnosc muzyki" />
-    </div>
-
-    <footer class="bp-footer">
-      <span class="hint"><b>◄ ►</b> Nawigacja</span>
-      <span class="hint"><b>▲</b> Platformy</span>
-      <span class="hint"><b>LB/RB</b> Zmień platformę</span>
-      <span class="hint"><b>Enter</b> Uruchom</span>
-      <span class="hint"><b>F11</b> Pełny ekran</span>
-      <span class="hint"><b>Esc</b> Zamknij</span>
-    </footer>
-
-    <div class="modal-overlay" id="overlay">
-      <div class="modal-card">
-        <button class="close-btn" id="closeBtn">✕</button>
-        <div class="modal-cover"><img id="modalCoverImg" src="" alt="cover"/></div>
-        <div class="modal-content">
-          <div class="modal-platform" id="modalPlatform">PSP</div>
-          <h1 class="modal-title" id="modalTitle">Tytuł gry</h1>
-          <div class="rating-row">
-            <div class="rating-score" id="modalScore">0.0</div>
-            <div class="stars" id="modalStars"></div>
-            <div class="rating-count" id="modalCount"></div>
-          </div>
-          <div class="tags-row" id="modalTags"></div>
-          <p class="description" id="modalDesc"></p>
-          <div class="meta-grid">
-            <div class="meta-item"><div class="meta-label">Deweloper</div><div class="meta-value" id="modalDev"></div></div>
-            <div class="meta-item"><div class="meta-label">Rok wydania</div><div class="meta-value" id="modalYear"></div></div>
-            <div class="meta-item"><div class="meta-label">Gatunek</div><div class="meta-value" id="modalGenre"></div></div>
-            <div class="meta-item"><div class="meta-label">Rozmiar</div><div class="meta-value" id="modalSize"></div></div>
-          </div>
-          <button class="modal-play-btn" id="modalPlayBtn">▶ Uruchom grę</button>
-          <button class="modal-secondary-btn" id="modalCoverBtn">🖼 Ustaw okładkę</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="toast" id="toast">Zapisano ✓</div>
-    <div class="now-playing" id="nowPlaying">🎵 Teraz gra: <span class="np-title" id="npTitle">Retro Ambient</span></div>
   </div>
 
-  <script src="apps1.js"></script>
+  <script src="./js/core/state.js"></script>
+  <script src="./js/core/utils.js"></script>
+  <script src="./js/data/metadata.js"></script>
+  <script src="./js/data/storage.js"></script>
+  <script src="./js/ui/dom.js"></script>
+  <script src="./js/ui/navigation.js"></script>
+  <script src="./js/data/library.js"></script>
+  <script src="./js/ui/shelf-view.js"></script>
+  <script src="./js/ui/settings-view.js"></script>
+  <script src="./js/system/audio-input.js"></script>
 </body>
 </html>

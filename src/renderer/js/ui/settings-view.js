@@ -1,0 +1,587 @@
+function getArtworkSettingsPlatform() {
+  const select = document.getElementById('artwork-platform-select');
+  return select?.value || 'all';
+}
+
+function getManualCoverPlatform() {
+  const select = document.getElementById('manual-cover-platform');
+  return select?.value || 'all';
+}
+
+function populateArtworkPlatformSelect() {
+  const select = document.getElementById('artwork-platform-select');
+  if (!select) return;
+
+  const current = select.value || 'all';
+  select.innerHTML = '';
+
+  const allOpt = document.createElement('option');
+  allOpt.value = 'all';
+  allOpt.textContent = 'Wszystkie platformy';
+  select.appendChild(allOpt);
+
+  config.platforms.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.key;
+    opt.textContent = p.label;
+    select.appendChild(opt);
+  });
+
+  const allowed = ['all', ...config.platforms.map(p => p.key)];
+  select.value = allowed.includes(current) ? current : 'all';
+}
+
+function populateManualCoverPlatformSelect() {
+  const select = document.getElementById('manual-cover-platform');
+  if (!select) return;
+
+  const preferred = select.value || activePlatform || 'all';
+  select.innerHTML = '';
+
+  const allOpt = document.createElement('option');
+  allOpt.value = 'all';
+  allOpt.textContent = 'Wybierz platformę';
+  select.appendChild(allOpt);
+
+  config.platforms.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.key;
+    opt.textContent = p.label;
+    select.appendChild(opt);
+  });
+
+  const allowed = ['all', ...config.platforms.map(p => p.key)];
+  select.value = allowed.includes(preferred) ? preferred : 'all';
+}
+
+function renderSettingsWarning() {
+  const warning = document.getElementById('settings-warning');
+  if (!warning) return;
+  warning.textContent = 'Okładki i opisy są pobierane z SteamGridDB. W ustawieniach możesz wybrać jedną platformę albo wszystkie naraz. Dla każdej platformy możesz też ustawić własny typ proporcji okładki oraz ręcznie podmienić cover wybranej gry.';
+}
+
+function populateManualCoverGameSelect() {
+  const select = document.getElementById('manual-cover-game');
+  const platformKey = getManualCoverPlatform();
+  if (!select) return [];
+
+  const platformGames = games.filter(g => platformKey !== 'all' ? g.platform === platformKey : false);
+  const previousValue = select.value || '';
+  select.innerHTML = '';
+
+  if (!platformGames.length) {
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = platformKey === 'all'
+      ? 'Najpierw wybierz platformę w panelu okładek'
+      : 'Brak gier dla tej platformy';
+    select.appendChild(opt);
+    return [];
+  }
+
+  platformGames.forEach(g => {
+    const opt = document.createElement('option');
+    opt.value = g.id;
+    opt.textContent = g.title;
+    select.appendChild(opt);
+  });
+
+  const exists = platformGames.some(g => g.id === previousValue);
+  select.value = exists ? previousValue : platformGames[0].id;
+  return platformGames;
+}
+
+function renderManualCoverPreview() {
+  const preview = document.getElementById('manual-cover-preview');
+  const platformKey = getManualCoverPlatform();
+  const select = document.getElementById('manual-cover-game');
+  const input = document.getElementById('manual-cover-url');
+  const saveUrlBtn = document.getElementById('save-manual-cover-url');
+  const pickFileBtn = document.getElementById('pick-manual-cover-file');
+  const clearBtn = document.getElementById('clear-manual-cover');
+
+  if (!preview || !select || !input) return;
+
+  const disableEditing = platformKey === 'all';
+  input.disabled = disableEditing;
+  select.disabled = disableEditing;
+  if (saveUrlBtn) saveUrlBtn.disabled = disableEditing;
+  if (pickFileBtn) pickFileBtn.disabled = disableEditing;
+  if (clearBtn) clearBtn.disabled = disableEditing;
+
+  if (disableEditing) {
+    preview.classList.add('empty');
+    preview.innerHTML = 'Wybierz konkretną platformę, aby edytować ręczne okładki.';
+    input.value = '';
+    return;
+  }
+
+  const game = games.find(g => g.id === select.value && g.platform === platformKey);
+  if (!game) {
+    preview.classList.add('empty');
+    preview.innerHTML = 'Wybierz grę z listy.';
+    input.value = '';
+    return;
+  }
+
+  const manual = getManualCover(game.platform, game.id);
+  input.value = manual || '';
+  preview.classList.remove('empty');
+  preview.innerHTML = `
+    <img src="${getCoverForGame(game)}" alt="${game.title}" />
+    <div class="manual-cover-meta">
+      <strong>${game.title}</strong>
+      <span>${manual ? 'Źródło: ręczne' : 'Źródło: SteamGridDB / automatyczne'}</span>
+      <span>${manual || 'Brak ręcznego URL lub pliku.'}</span>
+    </div>
+  `;
+}
+
+async function saveManualCoverFromUrl() {
+  const platformKey = getManualCoverPlatform();
+
+  if (platformKey === 'all') {
+    showToast('Najpierw wybierz konkretną platformę w panelu okładek', true);
+    return;
+  }
+
+  const select = document.getElementById('manual-cover-game');
+  const input = document.getElementById('manual-cover-url');
+  const gameId = select?.value || '';
+  const value = (input?.value || '').trim();
+
+  if (!gameId || !value) {
+    showToast('Wybierz grę i wpisz URL okładki', true);
+    return;
+  }
+
+  const game = games.find(g => g.id === gameId && g.platform === platformKey);
+  if (!game) {
+    showToast('Nie znaleziono gry', true);
+    return;
+  }
+
+  setManualCover(game.platform, game.id, value);
+  await saveStoredConfig();
+  await refreshLibrary();
+  populateManualCoverGameSelect();
+
+  const manualCoverSelect = document.getElementById('manual-cover-game');
+  if (manualCoverSelect) manualCoverSelect.value = gameId;
+
+  renderManualCoverPreview();
+  showToast('Zapisano ręczny URL okładki');
+}
+
+async function pickManualCoverFile() {
+  const platformKey = getManualCoverPlatform();
+
+  if (platformKey === 'all') {
+    showToast('Najpierw wybierz konkretną platformę w panelu okładek', true);
+    return;
+  }
+
+  const select = document.getElementById('manual-cover-game');
+  const gameId = select?.value || '';
+  if (!gameId) {
+    showToast('Najpierw wybierz grę', true);
+    return;
+  }
+
+  const game = games.find(g => g.id === gameId && g.platform === platformKey);
+  if (!game) {
+    showToast('Nie znaleziono gry', true);
+    return;
+  }
+
+  const api = window.launcherAPI;
+  const picker = api?.selectImageFile || api?.selectFile;
+
+  if (!picker) {
+    showToast('Brak natywnego okna wyboru pliku w launcherAPI', true);
+    return;
+  }
+
+  let picked;
+  try {
+    picked = await picker.call(api);
+  } catch (e) {
+    showToast('Nie udało się otworzyć okna wyboru pliku', true);
+    return;
+  }
+
+  if (!picked) return;
+
+  const normalized = /^https?:/i.test(picked) || /^file:/i.test(picked)
+    ? picked
+    : `file://${picked}`;
+
+  setManualCover(game.platform, game.id, normalized);
+  await saveStoredConfig();
+  await refreshLibrary();
+
+  const manualCoverSelect = document.getElementById('manual-cover-game');
+  if (manualCoverSelect) manualCoverSelect.value = gameId;
+
+  renderManualCoverPreview();
+  showToast('Zapisano ręczny plik okładki');
+}
+
+async function clearManualCover() {
+  const platformKey = getManualCoverPlatform();
+
+  if (platformKey === 'all') {
+    showToast('Najpierw wybierz konkretną platformę w panelu okładek', true);
+    return;
+  }
+
+  const select = document.getElementById('manual-cover-game');
+  const gameId = select?.value || '';
+  if (!gameId) {
+    showToast('Najpierw wybierz grę', true);
+    return;
+  }
+
+  const game = games.find(g => g.id === gameId && g.platform === platformKey);
+  if (!game) {
+    showToast('Nie znaleziono gry', true);
+    return;
+  }
+
+  setManualCover(game.platform, game.id, '');
+  await saveStoredConfig();
+  await refreshLibrary();
+  populateManualCoverGameSelect();
+
+  const manualCoverSelect = document.getElementById('manual-cover-game');
+  if (manualCoverSelect) manualCoverSelect.value = gameId;
+
+  renderManualCoverPreview();
+  showToast('Usunięto ręczną okładkę');
+}
+
+async function fetchMetadataForSelectedPlatforms(force = false) {
+  const selectedPlatform = getArtworkSettingsPlatform();
+
+  if (selectedPlatform === 'all') {
+    const platformKeys = config.platforms.map(p => p.key);
+    if (!platformKeys.length) {
+      showToast('Brak platform do pobrania', true);
+      return;
+    }
+
+    for (const platformKey of platformKeys) {
+      await enrichPlatformMetadata(platformKey, force);
+    }
+
+    await refreshLibrary();
+    showToast(
+      force
+        ? 'Odświeżono dane dla wszystkich platform'
+        : 'Pobrano dane dla wszystkich platform'
+    );
+    return;
+  }
+
+  await enrichPlatformMetadata(selectedPlatform, force);
+  await refreshLibrary();
+}
+
+function renderSettings() {
+  renderSettingsWarning();
+
+  const steamgridInput = document.getElementById('steamgrid-api-key-input');
+  if (steamgridInput) steamgridInput.value = config.apiKeys?.steamgrid || '';
+
+  const fsSel = document.getElementById('fullscreen-on-launch');
+  if (fsSel) fsSel.value = String(!!config.uiState?.fullscreenOnLaunch);
+
+  populateArtworkPlatformSelect();
+  populateManualCoverPlatformSelect();
+
+  platformBlocks.innerHTML = '';
+
+  config.platforms.forEach(p => {
+    const romPath = config.romFolders[p.key] || '';
+    const emuPath = config.emulators[p.key] || '';
+    const launchArgs = config.launchArgs[p.key] || '';
+    const aspect = p.aspect || 'standard';
+
+    const block = document.createElement('div');
+    block.className = 'platform-block';
+    block.innerHTML = `
+      <div class="platform-header">
+        <span class="platform-badge" style="background:${p.color}33;color:${p.color}">${p.label}</span>
+        <span class="ext-hint">${(p.extensions || []).join(', ')}</span>
+        <button type="button" class="remove-platform-btn" data-key="${p.key}" title="Usuń platformę">✕</button>
+      </div>
+      <div class="field-row">
+        <div class="field-label">Folder z ROM-ami</div>
+        <div class="field-input ${romPath ? '' : 'empty'}">${romPath || 'Nie ustawiono'}</div>
+        <button type="button" class="browse-btn" data-type="rom" data-key="${p.key}">Wybierz folder…</button>
+      </div>
+      <div class="field-row field-row-stack">
+        <div class="field-label">Polecenie uruchomieniowe</div>
+        <input
+          type="text"
+          class="field-textinput"
+          data-emulator-input="${p.key}"
+          value="${emuPath || ''}"
+          placeholder="${DEFAULT_LAUNCH_PLACEHOLDER}"
+        />
+        <button type="button" class="browse-btn" data-type="emu" data-key="${p.key}">Wybierz plik…</button>
+      </div>
+      <div class="field-row field-row-stack">
+        <div class="field-label">Domyślne argumenty</div>
+        <input
+          type="text"
+          class="field-textinput"
+          data-args-input="${p.key}"
+          value="${launchArgs || ''}"
+          placeholder="Np. --fullscreen --fastboot"
+        />
+        <button type="button" class="test-launch-btn" data-key="${p.key}">Testuj</button>
+      </div>
+      <div class="field-row field-row-stack">
+        <div class="field-label">Typ okładki</div>
+        <select class="field-select" data-aspect-input="${p.key}">
+          <option value="standard" ${aspect === 'standard' ? 'selected' : ''}>Standard</option>
+          <option value="psp" ${aspect === 'psp' ? 'selected' : ''}>PSP / wąska</option>
+          <option value="square" ${aspect === 'square' ? 'selected' : ''}>Kwadrat</option>
+          <option value="wide" ${aspect === 'wide' ? 'selected' : ''}>Szeroka</option>
+          <option value="bigpic" ${aspect === 'bigpic' ? 'selected' : ''}>Steam Big Picture</option>
+        </select>
+      </div>
+    `;
+    platformBlocks.appendChild(block);
+  });
+
+  const saveStartupBtn = document.getElementById('save-startup-settings');
+  if (saveStartupBtn) {
+    saveStartupBtn.onclick = async () => {
+      config.uiState.fullscreenOnLaunch =
+        document.getElementById('fullscreen-on-launch')?.value === 'true';
+      await saveStoredConfig();
+      showToast('Zapisano ustawienia startu');
+    };
+  }
+
+  document.querySelectorAll('.browse-btn').forEach(btn => {
+    btn.onclick = async () => {
+      const type = btn.dataset.type;
+      const key = btn.dataset.key;
+      let picked = null;
+
+      if (window.launcherAPI) {
+        picked = type === 'rom'
+          ? await window.launcherAPI.selectFolder()
+          : await window.launcherAPI.selectExecutable();
+      } else {
+        picked = type === 'rom'
+          ? `/home/user/roms/${key}`
+          : `/opt/emulators/${key}/run`;
+      }
+
+      if (!picked) return;
+
+      if (type === 'rom') {
+        config.romFolders[key] = picked;
+        await saveStoredConfig();
+        await refreshLibrary();
+        renderSettings();
+        showToast('Zapisano folder z ROM-ami');
+      } else {
+        config.emulators[key] = picked;
+        await saveStoredConfig();
+        renderSettings();
+        showToast('Zapisano polecenie uruchomieniowe');
+      }
+    };
+  });
+
+  document.querySelectorAll('[data-emulator-input]').forEach(el => {
+    el.oninput = () => {
+      config.emulators[el.dataset.emulatorInput] = el.value;
+      saveStoredConfig();
+    };
+  });
+
+  document.querySelectorAll('[data-args-input]').forEach(el => {
+    el.oninput = () => {
+      config.launchArgs[el.dataset.argsInput] = el.value;
+      saveStoredConfig();
+    };
+  });
+
+  document.querySelectorAll('[data-aspect-input]').forEach(el => {
+    el.onchange = async () => {
+      const key = el.dataset.aspectInput;
+      const platform = getPlatform(key);
+      if (!platform) return;
+      platform.aspect = el.value;
+      await saveStoredConfig();
+      renderShelf();
+      renderManualCoverPreview();
+      showToast('Zapisano typ okładki');
+    };
+  });
+
+  document.querySelectorAll('.test-launch-btn').forEach(btn => {
+    btn.onclick = async () => {
+      const key = btn.dataset.key;
+      const emulatorPath = config.emulators[key] || '';
+      const rawArgs = config.launchArgs[key] || '';
+      const extraArgs = parseArgString(rawArgs);
+      const api = window.api || window.launcherAPI;
+
+      if (!api?.invoke) {
+        showToast('Brak mostka IPC do testu uruchomienia', true);
+        return;
+      }
+
+      const result = await api.invoke('emulator:test', { emulatorPath, extraArgs });
+      if (result?.ok) showToast('Polecenie testowe uruchomione');
+      else showToast(result?.error || 'Test nieudany', true);
+    };
+  });
+
+  document.querySelectorAll('.remove-platform-btn').forEach(btn => {
+    btn.onclick = async () => {
+      const key = btn.dataset.key;
+      config.platforms = config.platforms.filter(p => p.key !== key);
+      delete config.romFolders[key];
+      delete config.emulators[key];
+      delete config.launchArgs[key];
+      delete config.metadata[key];
+      delete config.manualCovers[key];
+      delete config.userRatings[key];
+
+      await saveStoredConfig();
+      showToast('Usunięto platformę');
+
+      renderSettings();
+      renderTabs();
+
+      const artworkPlatformSelect = document.getElementById('artwork-platform-select');
+      const manualPlatformSelect = document.getElementById('manual-cover-platform');
+      const removedWasActive = activePlatform === key;
+
+      if (artworkPlatformSelect && artworkPlatformSelect.value === key) {
+        artworkPlatformSelect.value = 'all';
+      }
+
+      if (manualPlatformSelect && manualPlatformSelect.value === key) {
+        manualPlatformSelect.value = 'all';
+      }
+
+      if (removedWasActive) {
+        activePlatform = 'all';
+        await refreshLibrary();
+      } else {
+        renderManualCoverPreview();
+      }
+    };
+  });
+
+  const steamgridSaveBtn = document.getElementById('save-steamgrid-api-key');
+  if (steamgridSaveBtn) {
+    steamgridSaveBtn.onclick = async () => {
+      const input = document.getElementById('steamgrid-api-key-input');
+      config.apiKeys.steamgrid = (input?.value || '').trim();
+      await saveStoredConfig();
+      showToast('Zapisano klucz SteamGridDB API');
+    };
+  }
+
+  const artworkPlatformSelect = document.getElementById('artwork-platform-select');
+  if (artworkPlatformSelect) {
+    artworkPlatformSelect.onchange = () => {
+      const selected = artworkPlatformSelect.value || 'all';
+      const manualPlatformSelect = document.getElementById('manual-cover-platform');
+
+      if (manualPlatformSelect) {
+        manualPlatformSelect.value = selected;
+      }
+
+      populateManualCoverGameSelect();
+      renderManualCoverPreview();
+    };
+  }
+
+  const manualCoverPlatformSelect = document.getElementById('manual-cover-platform');
+  if (manualCoverPlatformSelect) {
+    manualCoverPlatformSelect.onchange = () => {
+      populateManualCoverGameSelect();
+      renderManualCoverPreview();
+    };
+  }
+
+  const manualCoverSelect = document.getElementById('manual-cover-game');
+  populateManualCoverGameSelect();
+
+  const manualCoverUrlBtn = document.getElementById('save-manual-cover-url');
+  const manualCoverFileBtn = document.getElementById('pick-manual-cover-file');
+  const manualCoverClearBtn = document.getElementById('clear-manual-cover');
+
+  renderManualCoverPreview();
+
+  if (manualCoverSelect) {
+    manualCoverSelect.onchange = () => renderManualCoverPreview();
+  }
+
+  if (manualCoverUrlBtn) manualCoverUrlBtn.onclick = saveManualCoverFromUrl;
+  if (manualCoverFileBtn) manualCoverFileBtn.onclick = pickManualCoverFile;
+  if (manualCoverClearBtn) manualCoverClearBtn.onclick = clearManualCover;
+
+  const bulkMetaBtn = document.getElementById('bulk-fetch-platform-meta');
+  if (bulkMetaBtn) {
+    bulkMetaBtn.onclick = async () => {
+      await fetchMetadataForSelectedPlatforms(false);
+    };
+  }
+
+  const forceMetaBtn = document.getElementById('force-fetch-platform-meta');
+  if (forceMetaBtn) {
+    forceMetaBtn.onclick = async () => {
+      await fetchMetadataForSelectedPlatforms(true);
+    };
+  }
+}
+
+function activateSettingsSubtab(name) {
+  const tabs = [...document.querySelectorAll('.settings-subtab')];
+  const panels = [...document.querySelectorAll('.settings-subpanel')];
+
+  tabs.forEach(t => {
+    t.classList.toggle('active', t.dataset.subtab === name);
+    t.setAttribute('aria-selected', String(t.dataset.subtab === name));
+  });
+
+  panels.forEach(p => p.classList.toggle('active', p.dataset.subpanel === name));
+}
+
+function switchToPage(page) {
+  const shelfView = document.querySelector('[data-view="shelf"]');
+  const navSettings = document.getElementById('navSettings');
+  const navHome = document.getElementById('navHome');
+  const overlay = document.getElementById('overlay');
+  const shelf = document.querySelector('.shelf');
+  const shelfInfo = document.querySelector('.shelf-info');
+
+  if (shelfView) shelfView.hidden = page === 'settings';
+  if (settingsPanel) settingsPanel.hidden = page !== 'settings';
+
+  if (page !== 'settings') {
+    overlay?.classList.remove('open');
+    shelf?.classList.remove('switching');
+    shelfInfo?.classList.remove('switching');
+    renderShelf?.();
+    renderManualCoverPreview?.();
+  }
+
+  if (navSettings) navSettings.classList.toggle('active-view', page === 'settings');
+  if (navHome) navHome.classList.toggle('active-view', page !== 'settings');
+
+  config.uiState.settingsOpen = page === 'settings';
+  location.hash = page === 'settings' ? '#settings' : '#home';
+}
