@@ -195,7 +195,7 @@ body { min-height:100vh; }
 
 .bp-footer{ display:flex; align-items:center; gap:30px; padding:0 40px; background:rgba(12,13,20,0.85); border-top:1px solid rgba(255,255,255,0.08); font-size:12px; color:rgba(255,255,255,0.5); z-index:10; backdrop-filter:blur(6px); }
 .bp-footer b{ color:#fff; margin-right:4px; }
-.toast{ position:fixed; top:20px; right:20px; background:#1c2030; border:1px solid #38e0ff; color:#38e0ff; padding:12px 20px; border-radius:10px; font-size:13px; opacity:0; transition:opacity .3s, transform .3s; transform:translateY(-10px); z-index:60; pointer-events:none; }
+.toast{ position:fixed; top:20px; right:20px; background:#1c2030; border:1px solid #38e0ff; color:#38e0ff; padding:12px 20px; border-radius:10px; font-size:13px; opacity:0; transition:opacity .3s, transform .3s; transform:translateY(-10px); z-index:99999; pointer-events:none; }
 .toast.show{ opacity:1; transform:translateY(0); }
 
 .platform-header{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }

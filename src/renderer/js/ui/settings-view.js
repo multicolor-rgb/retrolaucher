@@ -195,7 +195,8 @@ async function pickManualCoverFile() {
   }
 
   const api = window.launcherAPI;
-  const picker = api?.selectImageFile || api?.selectFile;
+ const picker = api?.selectImageFile || api?.selectFile;
+
 
   if (!picker) {
     showToast('Brak natywnego okna wyboru pliku w launcherAPI', true);
@@ -426,24 +427,27 @@ function renderSettings() {
     };
   });
 
-  document.querySelectorAll('.test-launch-btn').forEach(btn => {
-    btn.onclick = async () => {
-      const key = btn.dataset.key;
-      const emulatorPath = config.emulators[key] || '';
-      const rawArgs = config.launchArgs[key] || '';
-      const extraArgs = parseArgString(rawArgs);
-      const api = window.api || window.launcherAPI;
+ document.querySelectorAll('.test-launch-btn').forEach(btn => {
+  btn.onclick = async () => {
+    const key = btn.dataset.key;
+    const emulatorPath = config.emulators[key] || '';
+    const rawArgs = config.launchArgs[key] || '';
+    const extraArgs = parseArgString(rawArgs);
 
-      if (!api?.invoke) {
-        showToast('Brak mostka IPC do testu uruchomienia', true);
-        return;
-      }
+    if (!window.launcherAPI?.testEmulator) {
+      showToast('Brak mostka IPC do testu uruchomienia', true);
+      return;
+    }
 
-      const result = await api.invoke('emulator:test', { emulatorPath, extraArgs });
-      if (result?.ok) showToast('Polecenie testowe uruchomione');
-      else showToast(result?.error || 'Test nieudany', true);
-    };
-  });
+    const result = await window.launcherAPI.testEmulator({
+      emulatorPath,
+      extraArgs
+    });
+
+    if (result?.ok) showToast('Polecenie testowe uruchomione');
+    else showToast(result?.error || 'Test nieudany', true);
+  };
+});
 
   document.querySelectorAll('.remove-platform-btn').forEach(btn => {
     btn.onclick = async () => {

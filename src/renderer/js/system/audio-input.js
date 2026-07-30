@@ -268,7 +268,9 @@ const gpState = {
   lastButtons: {},
   pdIndex: 0,
   settingsIndex: 0,
-  modalIndex: 0
+  modalIndex: 0,
+  stickXActive: false,
+  stickXDir: 0
 };
 
 const GP_MOVE_COOLDOWN = 220;
@@ -369,6 +371,33 @@ function axisPressed(axisValue, direction, axisKey) {
   }
 
   return false;
+}
+
+function readHorizontalStickNavigation(gp, now) {
+  const x = gp.axes[0] || 0;
+  const absX = Math.abs(x);
+
+  if (absX < GP_DEADZONE) {
+    gpState.stickXActive = false;
+    gpState.stickXDir = 0;
+    return 0;
+  }
+
+  const dir = x < 0 ? -1 : 1;
+
+  if (!gpState.stickXActive || gpState.stickXDir !== dir) {
+    gpState.stickXActive = true;
+    gpState.stickXDir = dir;
+    gpState.lastMove = now;
+    return dir;
+  }
+
+  if (now - gpState.lastMove > GP_MOVE_COOLDOWN) {
+    gpState.lastMove = now;
+    return dir;
+  }
+
+  return 0;
 }
 
 function moveSettingsFocus(step) {
@@ -575,8 +604,13 @@ function handleDropdownGamepad(gp, now) {
 }
 
 function handleLibraryGamepad(gp, now) {
-  const left = justPressedButton(gp, 14) || axisPressed(gp.axes[0] || 0, 'negative', 'lastAxisX');
-  const right = justPressedButton(gp, 15) || axisPressed(gp.axes[0] || 0, 'positive', 'lastAxisX');
+  const dpadLeft = justPressedButton(gp, 14);
+  const dpadRight = justPressedButton(gp, 15);
+  const stickHorizontal = readHorizontalStickNavigation(gp, now);
+
+  const left = dpadLeft || stickHorizontal === -1;
+  const right = dpadRight || stickHorizontal === 1;
+
   const up = justPressedButton(gp, 12) || axisPressed(gp.axes[1] || 0, 'negative', 'lastAxisY');
   const a = justPressedButton(gp, 0);
   const y = justPressedButton(gp, 3);
@@ -586,15 +620,13 @@ function handleLibraryGamepad(gp, now) {
   const lt = justPressedButton(gp, 6);
   const rt = justPressedButton(gp, 7);
 
-  if (left && now - gpState.lastMove > GP_MOVE_COOLDOWN) {
+  if (left) {
     prev();
-    gpState.lastMove = now;
     return;
   }
 
-  if (right && now - gpState.lastMove > GP_MOVE_COOLDOWN) {
+  if (right) {
     next();
-    gpState.lastMove = now;
     return;
   }
 

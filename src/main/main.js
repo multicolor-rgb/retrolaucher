@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
@@ -54,6 +54,21 @@ async function downloadImageToBuffer(url) {
   return Buffer.from(arrayBuffer);
 }
 
+function isFlatpak() {
+  return !!process.env.FLATPAK_ID || fs.existsSync('/.flatpak-info');
+}
+
+function buildSpawnCommand(command, args = []) {
+  if (process.platform === 'linux' && isFlatpak()) {
+    return {
+      command: 'flatpak-spawn',
+      args: ['--host', command, ...args]
+    };
+  }
+
+  return { command, args };
+}
+
 function createWindow() {
   const storedConfig = readConfig() || {};
   const fullscreenOnLaunch = !!storedConfig?.uiState?.fullscreenOnLaunch;
@@ -63,17 +78,20 @@ function createWindow() {
     height: 800,
     minWidth: 960,
     minHeight: 600,
-      icon: path.join(__dirname, 'build', 'icon.png'),
-
+    icon: path.join(__dirname, '../../build/icons/512x512.png'),
     backgroundColor: '#05060a',
     autoHideMenuBar: true,
     fullscreen: fullscreenOnLaunch,
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload', 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      devTools: false
     }
   });
+
+  Menu.setApplicationMenu(null);
+  mainWindow.setMenuBarVisibility(false);
 
   mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
 
@@ -84,10 +102,30 @@ function createWindow() {
     const isF11 = isKeyDown && key === 'f11';
     const isAltEnter = isKeyDown && input.alt && key === 'enter';
 
+    const isF12 = isKeyDown && key === 'f12';
+    const isCtrlShiftI = isKeyDown && input.control && input.shift && key === 'i';
+    const isCtrlShiftJ = isKeyDown && input.control && input.shift && key === 'j';
+    const isCtrlU = isKeyDown && input.control && key === 'u';
+    const isAltOnly = isKeyDown && key === 'alt';
+
     if (isF11 || isAltEnter) {
       event.preventDefault();
       mainWindow.setFullScreen(!mainWindow.isFullScreen());
+      return;
     }
+
+    if (isF12 || isCtrlShiftI || isCtrlShiftJ || isCtrlU || isAltOnly) {
+      event.preventDefault();
+      return;
+    }
+  });
+
+  mainWindow.webContents.on('context-menu', (event) => {
+    event.preventDefault();
+  });
+
+  mainWindow.on('system-context-menu', (event) => {
+    event.preventDefault();
   });
 }
 
@@ -293,7 +331,11 @@ ipcMain.handle('game:launch', async (event, { emulatorPath, romPath, extraArgs }
       return { ok: false, error: 'Nieprawidłowe polecenie emulatora.' };
     }
 
-    const child = spawn(command, args, { detached: true, stdio: 'ignore' });
+    const prepared = buildSpawnCommand(command, args);
+    const child = spawn(prepared.command, prepared.args, {
+      detached: true,
+      stdio: 'ignore'
+    });
     child.unref();
 
     return { ok: true };
@@ -316,17 +358,56 @@ ipcMain.handle('emulator:test', async (event, { emulatorPath, extraArgs }) => {
       return { ok: false, error: 'Nieprawidłowe polecenie.' };
     }
 
-    const child = spawn(command, args, { stdio: 'ignore' });
-    child.on('error', () => {});
+    const prepared = buildSpawnCommand(command, args);
 
-    setTimeout(() => {
-      try {
-        if (!child.killed) child.kill('SIGTERM');
-      } catch (e) {}
-    }, 2500);
+    return await new Promise((resolve) => {
+      let finished = false;
 
-    return { ok: true };
+      const child = spawn(prepared.command, prepared.args, {
+        stdio: 'ignore'
+      });
+
+      child.on('spawn', () => {
+        setTimeout(() => {
+          try {
+            if (!child.killed) child.kill('SIGTERM');
+          } catch (e) {}
+          if (!finished) {
+            finished = true;
+            resolve({ ok: true });
+          }
+        }, 2500);
+      });
+
+      child.on('error', (err) => {
+        if (!finished) {
+          finished = true;
+          resolve({ ok: false, error: err.message });
+        }
+      });
+
+      child.on('exit', (code) => {
+        if (!finished && code && code !== 0) {
+          finished = true;
+          resolve({ ok: false, error: `Proces zakończył się kodem ${code}` });
+        }
+      });
+    });
   } catch (e) {
     return { ok: false, error: e.message };
   }
+});
+
+
+ipcMain.handle('dialog:selectImageFile', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openFile'],
+    filters: [
+      { name: 'Obrazy', extensions: ['png', 'jpg', 'jpeg', 'webp'] },
+      { name: 'Wszystkie pliki', extensions: ['*'] }
+    ]
+  });
+
+  if (result.canceled || result.filePaths.length === 0) return null;
+  return result.filePaths[0];
 });

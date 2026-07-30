@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('launcherAPI', {
 
   selectFolder: () => ipcRenderer.invoke('dialog:selectFolder'),
   selectExecutable: () => ipcRenderer.invoke('dialog:selectExecutable'),
+  selectImageFile: () => ipcRenderer.invoke('dialog:selectImageFile'),
 
   scanRoms: (folderPath, extensions) => ipcRenderer.invoke('roms:scan', folderPath, extensions),
   launchGame: (payload) => ipcRenderer.invoke('game:launch', payload),
