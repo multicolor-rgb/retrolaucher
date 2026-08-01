@@ -16,5 +16,18 @@ contextBridge.exposeInMainWorld('launcherAPI', {
   getFullscreenState: () => ipcRenderer.invoke('window:getFullscreenState'),
   setFullscreen: (value) => ipcRenderer.invoke('window:setFullscreen', value),
 
-  cacheRemoteImage: (payload) => ipcRenderer.invoke('image:cacheRemote', payload)
+  cacheRemoteImage: (payload) => ipcRenderer.invoke('image:cacheRemote', payload),
+
+  focusGame: () => ipcRenderer.invoke('game:focus'),
+  getLastLaunchedPid: () => ipcRenderer.invoke('game:lastPid'),
+  onWindowFocus: (cb) => {
+    const listener = (_event, data) => cb(data);
+    ipcRenderer.on('app:window-focus', listener);
+    return () => ipcRenderer.removeListener('app:window-focus', listener);
+  },
+  onWindowBlur: (cb) => {
+    const listener = (_event, data) => cb(data);
+    ipcRenderer.on('app:window-blur', listener);
+    return () => ipcRenderer.removeListener('app:window-blur', listener);
+  }
 });
