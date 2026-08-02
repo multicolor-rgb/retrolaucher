@@ -3,6 +3,8 @@
 let wheelNavigationLocked = false;
 let wheelNavigationBound = false;
 let shelfInfoAnimating = false;
+let playtimeRefreshTimer = null;
+let playtimeCache = {};
 
 function getAllowedShelfViewModes() {
   return ['flat', 'arc', 'stack', 'cascade'];
@@ -156,11 +158,21 @@ function getGameHltb(game) {
   return game.hltb ?? game.hltbMain ?? game.hltbHours ?? null;
 }
 
+function getGamePlaytimeText(game) {
+  if (!game?.id) return 'Brak danych';
+  return playtimeCache[game.id] || 'Brak danych';
+}
+
 function renderShelfSubinfo(game) {
   const metacritic = getGameMetacritic(game);
   const hltb = getGameHltb(game);
+  const playtime = getGamePlaytimeText(game);
 
   const parts = [];
+
+  if (playtime && playtime !== 'Brak danych') {
+    parts.push(`Czas gry: ${playtime}`);
+  }
 
   if (metacritic != null && metacritic !== '') {
     parts.push(`Metacritic: ${metacritic}/100`);
@@ -171,6 +183,45 @@ function renderShelfSubinfo(game) {
   }
 
   return parts.join(' • ');
+}
+
+async function refreshCurrentGamePlaytime() {
+  const g = filtered[current];
+  if (!g || !g.id || !window.launcherAPI?.getPlaytime) return;
+
+  try {
+    const res = await window.launcherAPI.getPlaytime(g.id);
+    if (!res || !res.ok) return;
+
+    playtimeCache[g.id] = res.formatted;
+
+    const active = filtered[current];
+    if (active && active.id === g.id) {
+      const mini = document.getElementById('ratingMini');
+      if (mini) mini.textContent = renderShelfSubinfo(active);
+
+      if (overlay?.classList?.contains('open') && overlay.currentGame?.id === g.id) {
+        updateGameDetailsPlaytime(active, res.formatted);
+      }
+    }
+  } catch (_) {}
+}
+
+function startPlaytimeAutoRefresh() {
+  stopPlaytimeAutoRefresh();
+  playtimeRefreshTimer = setInterval(refreshCurrentGamePlaytime, 5000);
+}
+
+function stopPlaytimeAutoRefresh() {
+  if (playtimeRefreshTimer) {
+    clearInterval(playtimeRefreshTimer);
+    playtimeRefreshTimer = null;
+  }
+}
+
+function updateGameDetailsPlaytime(g, formatted) {
+  const el = document.getElementById('modalPlaytime');
+  if (el) el.textContent = formatted || playtimeCache[g.id] || 'Brak danych';
 }
 
 function renderShelf() {
@@ -192,6 +243,7 @@ function renderShelf() {
     titleEl.textContent = '';
     platEl.textContent = '';
     if (ratingMini) ratingMini.textContent = '';
+    stopPlaytimeAutoRefresh();
     return;
   }
 
@@ -243,6 +295,9 @@ function renderShelf() {
   const activeCover = getCoverForGame(g);
   bgBlur.style.backgroundImage = `url('${activeCover}')`;
   getDominantColor(activeCover, applyGradient);
+
+  refreshCurrentGamePlaytime();
+  startPlaytimeAutoRefresh();
 }
 
 function next() {
@@ -293,6 +348,7 @@ async function launchGame(game) {
 
   if (window.launcherAPI?.launchGame) {
     const result = await window.launcherAPI.launchGame({
+      gameId: game.id,
       emulatorPath,
       romPath: game.rom,
       extraArgs
@@ -323,7 +379,9 @@ function openDetails(g) {
   platEl2.style.background = pf.color + '33';
   platEl2.style.color = pf.color;
 
-  document.getElementById('modalTitle').textContent = g.title || 'Nieznana gra';
+  const titleEl = document.getElementById('modalTitle');
+  titleEl.textContent = g.title || 'Nieznana gra';
+
   document.getElementById('modalTags').innerHTML =
     (g.genres || []).map(t => `<span class="tag">${t}</span>`).join('');
   document.getElementById('modalDesc').textContent =
@@ -337,6 +395,36 @@ function openDetails(g) {
       : 'Brak danych';
   document.getElementById('modalHltb').textContent = formatHltb(hltb);
 
+  const existingPlaytime = document.getElementById('modalPlaytime');
+  if (existingPlaytime) existingPlaytime.remove();
+
+  if (window.launcherAPI?.getPlaytime) {
+    window.launcherAPI.getPlaytime(g.id).then(res => {
+      if (!res?.ok) return;
+      if (!res.totalMs || res.totalMs <= 0) return;
+
+      const currentTitle = document.getElementById('modalTitle');
+      if (!currentTitle || !currentTitle.parentElement) return;
+
+      const old = document.getElementById('modalPlaytime');
+      if (old) old.remove();
+
+      const div = document.createElement('div');
+      div.id = 'modalPlaytime';
+      div.className = 'modal-playtime';
+      div.textContent = res.formatted;
+
+      currentTitle.insertAdjacentElement('afterend', div);
+    }).catch(() => {});
+  }
+
   overlay.classList.add('open');
   overlay.currentGame = g;
+}
+
+if (window.launcherAPI?.onWindowFocus) {
+  window.launcherAPI.onWindowFocus(() => {
+    refreshCurrentGamePlaytime();
+    renderShelf();
+  });
 }

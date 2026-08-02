@@ -255,10 +255,10 @@ async function init() {
     switchToPage('home');
   }
 }
-
 // ---------- Obsługa pada (Gamepad API) ----------
 let gamepadIndex = null;
 let gamepadLoopActive = false;
+let stopComboLatched = false;
 
 const gpState = {
   lastMove: 0,
@@ -309,11 +309,9 @@ function getVisibleFocusable(root) {
 
 function getSettingsFocusable() {
   if (!isSettingsActive()) return [];
-
   const panel = document.querySelector('.settings-subpanel.active') || settingsPanel;
   const subtabs = [...document.querySelectorAll('.settings-subtab')];
   const panelItems = getVisibleFocusable(panel);
-
   const merged = [...subtabs, ...panelItems];
   return merged.filter((el, idx) => merged.indexOf(el) === idx);
 }
@@ -429,24 +427,32 @@ function switchSettingsSubtab(step) {
   }, 30);
 }
 
-window.addEventListener('gamepadconnected', (e) => {
-  gamepadIndex = e.gamepad.index;
-  document.getElementById('gamepadIndicator')?.classList.add('connected');
-  showToast('Pad podłączony: ' + e.gamepad.id);
+function isStopComboPressed(gp) {
+  if (!gp) return false;
 
-  if (!gamepadLoopActive) {
-    gamepadLoopActive = true;
-    requestAnimationFrame(gamepadLoop);
-  }
-});
+  const l3 = !!gp.buttons?.[10]?.pressed;
+  const x = !!gp.buttons?.[2]?.pressed;
 
-window.addEventListener('gamepaddisconnected', (e) => {
-  if (gamepadIndex === e.gamepad.index) {
-    gamepadIndex = null;
-    document.getElementById('gamepadIndicator')?.classList.remove('connected');
-    showToast('Pad odłączony', true);
+  return l3 && x;
+}
+
+
+async function handleStopCombo(gp) {
+  const pressed = isStopComboPressed(gp);
+
+  if (pressed && !stopComboLatched) {
+    stopComboLatched = true;
+    if (window.launcherAPI?.stopLastGame) {
+      const res = await window.launcherAPI.stopLastGame();
+      if (res?.ok) showToast('Zamykam emulator', false);
+      else showToast('Nie udało się zamknąć emulatora', true);
+    }
   }
-});
+
+  if (!pressed) {
+    stopComboLatched = false;
+  }
+}
 
 function handleModalGamepad(gp, now) {
   const items = getModalFocusable();
@@ -716,10 +722,11 @@ function handleGamepadInput(gp) {
 }
 
 function gamepadLoop() {
-  if (gamepadIndex !== null) {
-    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
-    const gp = pads[gamepadIndex];
-    if (gp) handleGamepadInput(gp);
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  const gp = gamepadIndex !== null ? pads[gamepadIndex] : null;
+  if (gp && gp.connected) {
+    handleStopCombo(gp);
+    handleGamepadInput(gp);
   }
 
   requestAnimationFrame(gamepadLoop);
@@ -728,7 +735,7 @@ function gamepadLoop() {
 function checkExistingGamepads() {
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];
   for (const gp of pads) {
-    if (gp) {
+    if (gp && gp.connected) {
       gamepadIndex = gp.index;
       document.getElementById('gamepadIndicator')?.classList.add('connected');
 
@@ -740,6 +747,27 @@ function checkExistingGamepads() {
     }
   }
 }
+
+window.addEventListener('gamepadconnected', (e) => {
+  gamepadIndex = e.gamepad.index;
+  document.getElementById('gamepadIndicator')?.classList.add('connected');
+  showToast('Pad podłączony: ' + e.gamepad.id);
+
+  if (!gamepadLoopActive) {
+    gamepadLoopActive = true;
+    requestAnimationFrame(gamepadLoop);
+  }
+});
+
+window.addEventListener('gamepaddisconnected', (e) => {
+  if (gamepadIndex === e.gamepad.index) {
+    gamepadIndex = null;
+    stopComboLatched = false;
+    document.getElementById('gamepadIndicator')?.classList.remove('connected');
+    showToast('Pad odłączony', true);
+  }
+});
+
 checkExistingGamepads();
 
 // ---------- System audio: tylko efekty UI ----------
@@ -840,5 +868,9 @@ function applyFilter(platform, tabEl) {
     shelfInfo.classList.remove('switching');
   }, 260);
 }
+
+
+
+
 
 init();

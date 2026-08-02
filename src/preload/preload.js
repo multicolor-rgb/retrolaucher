@@ -1,5 +1,11 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+function onChannel(channel, cb) {
+  const listener = (_event, data) => cb(data);
+  ipcRenderer.on(channel, listener);
+  return () => ipcRenderer.removeListener(channel, listener);
+}
+
 contextBridge.exposeInMainWorld('launcherAPI', {
   loadConfig: () => ipcRenderer.invoke('config:load'),
   saveConfig: (config) => ipcRenderer.invoke('config:save', config),
@@ -10,6 +16,7 @@ contextBridge.exposeInMainWorld('launcherAPI', {
 
   scanRoms: (folderPath, extensions) => ipcRenderer.invoke('roms:scan', folderPath, extensions),
   launchGame: (payload) => ipcRenderer.invoke('game:launch', payload),
+  stopLastGame: () => ipcRenderer.invoke('game:stopLast'),
   testEmulator: (payload) => ipcRenderer.invoke('emulator:test', payload),
 
   toggleFullscreen: () => ipcRenderer.invoke('window:toggleFullscreen'),
@@ -20,14 +27,10 @@ contextBridge.exposeInMainWorld('launcherAPI', {
 
   focusGame: () => ipcRenderer.invoke('game:focus'),
   getLastLaunchedPid: () => ipcRenderer.invoke('game:lastPid'),
-  onWindowFocus: (cb) => {
-    const listener = (_event, data) => cb(data);
-    ipcRenderer.on('app:window-focus', listener);
-    return () => ipcRenderer.removeListener('app:window-focus', listener);
-  },
-  onWindowBlur: (cb) => {
-    const listener = (_event, data) => cb(data);
-    ipcRenderer.on('app:window-blur', listener);
-    return () => ipcRenderer.removeListener('app:window-blur', listener);
-  }
+
+  getPlaytime: (gameId) => ipcRenderer.invoke('game:getPlaytime', gameId),
+  getPlaytimeRaw: (gameId) => ipcRenderer.invoke('game:getPlaytimeRaw', gameId),
+
+  onWindowFocus: (cb) => onChannel('app:window-focus', cb),
+  onWindowBlur: (cb) => onChannel('app:window-blur', cb)
 });

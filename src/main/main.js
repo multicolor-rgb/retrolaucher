@@ -1,24 +1,117 @@
 const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const { spawn } = require('child_process');
 const { pathToFileURL } = require('url');
 
-const CONFIG_PATH = path.join(app.getPath('userData'), 'retro-launcher-config.json');
 let mainWindow;
+let inputWatchWindow;
 let lastLaunchedPid = null;
 let lastLaunchedCommand = null;
 let lastEmulatorChild = null;
 let launcherWasFullscreen = false;
 
-function readConfig() {
+let CONFIG_PATH;
+let PLAYTIME_PATH;
+
+function ensureDataFiles() {
+  const userData = app.getPath('userData');
+  CONFIG_PATH = path.join(userData, 'retro-launcher-config.json');
+  PLAYTIME_PATH = path.join(userData, 'retro-launcher-playtime.json');
+  fs.mkdirSync(userData, { recursive: true });
+}
+
+function readJsonSafe(filePath, fallback) {
   try {
-    if (!fs.existsSync(CONFIG_PATH)) return null;
-    return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
+    if (!fs.existsSync(filePath)) return fallback;
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
   } catch (e) {
-    console.error('Blad odczytu configu przy starcie:', e);
-    return null;
+    console.error(`Blad odczytu JSON: ${filePath}`, e);
+    return fallback;
   }
+}
+
+function writeJsonSafe(filePath, data) {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+}
+
+function getDefaultConfig() {
+  return {
+    uiState: {
+      fullscreenOnLaunch: false
+    }
+  };
+}
+
+function readConfig() {
+  return readJsonSafe(CONFIG_PATH, null);
+}
+
+function saveConfig(config) {
+  writeJsonSafe(CONFIG_PATH, config);
+}
+
+function readPlaytimeStore() {
+  const data = readJsonSafe(PLAYTIME_PATH, { playtime: {} });
+  if (!data.playtime) data.playtime = {};
+  return data;
+}
+
+function savePlaytimeStore(data) {
+  writeJsonSafe(PLAYTIME_PATH, data);
+}
+
+function getPlaytimeEntry(gameId) {
+  const store = readPlaytimeStore();
+  return store.playtime[gameId] || {
+    totalMs: 0,
+    lastStartAt: null,
+    running: false
+  };
+}
+
+function setPlaytimeEntry(gameId, entry) {
+  const store = readPlaytimeStore();
+  store.playtime[gameId] = entry;
+  savePlaytimeStore(store);
+}
+
+function startPlaytime(gameId) {
+  if (!gameId) return;
+  const entry = getPlaytimeEntry(gameId);
+  if (!entry.running) {
+    entry.running = true;
+    entry.lastStartAt = Date.now();
+    setPlaytimeEntry(gameId, entry);
+  }
+}
+
+function stopPlaytime(gameId) {
+  if (!gameId) return;
+  const entry = getPlaytimeEntry(gameId);
+  if (entry.running && entry.lastStartAt) {
+    entry.totalMs = (entry.totalMs || 0) + (Date.now() - entry.lastStartAt);
+    entry.running = false;
+    entry.lastStartAt = null;
+    setPlaytimeEntry(gameId, entry);
+  }
+}
+
+function getCurrentPlaytimeMs(gameId) {
+  const entry = getPlaytimeEntry(gameId);
+  const runningMs = entry.running && entry.lastStartAt ? (Date.now() - entry.lastStartAt) : 0;
+  return (entry.totalMs || 0) + runningMs;
+}
+
+function formatPlaytime(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  if (hours > 0) return `${hours}h ${String(minutes).padStart(2, '0')}m`;
+  if (minutes > 0) return `${minutes}m ${String(seconds).padStart(2, '0')}s`;
+  return `${seconds}s`;
 }
 
 function sanitizeFileName(name) {
@@ -39,6 +132,10 @@ function sanitizeGameIdPart(name) {
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
     .toLowerCase();
+}
+
+function stableGameId(relativePath) {
+  return crypto.createHash('sha1').update(String(relativePath || '')).digest('hex');
 }
 
 function parseCommandString(value) {
@@ -63,6 +160,12 @@ function buildSpawnCommand(command, args = []) {
   return { command, args };
 }
 
+function emitWindowState(state) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send(state === 'focus' ? 'app:window-focus' : 'app:window-blur');
+  }
+}
+
 function showLauncher() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   mainWindow.setFocusable(true);
@@ -75,6 +178,7 @@ function showLauncher() {
     mainWindow.restore();
   }
   mainWindow.focus();
+  emitWindowState('focus');
   launcherWasFullscreen = false;
 }
 
@@ -85,10 +189,101 @@ function hideLauncherForGame() {
   mainWindow.setSkipTaskbar(true);
   mainWindow.setFocusable(false);
   mainWindow.hide();
+  emitWindowState('blur');
+}
+
+function stopLastGameProcess() {
+  try {
+    const pid = lastEmulatorChild?.pid || lastLaunchedPid;
+    if (!pid) return false;
+
+    if (process.platform === 'win32') {
+      spawn('taskkill', ['/PID', String(pid), '/F', '/T'], {
+        detached: true,
+        stdio: 'ignore',
+        windowsHide: true
+      }).unref();
+      return true;
+    }
+
+    if (process.platform === 'linux') {
+      try {
+        process.kill(-pid, 'SIGTERM');
+      } catch (_) {
+        try {
+          process.kill(pid, 'SIGTERM');
+        } catch (_) {}
+      }
+
+      setTimeout(() => {
+        try {
+          process.kill(-pid, 'SIGKILL');
+        } catch (_) {
+          try {
+            process.kill(pid, 'SIGKILL');
+          } catch (_) {}
+        }
+      }, 1200);
+
+      return true;
+    }
+
+    try {
+      if (lastEmulatorChild && !lastEmulatorChild.killed) {
+        lastEmulatorChild.kill('SIGTERM');
+      } else {
+        process.kill(pid, 'SIGTERM');
+      }
+    } catch (_) {}
+
+    setTimeout(() => {
+      try {
+        if (lastEmulatorChild && !lastEmulatorChild.killed) {
+          lastEmulatorChild.kill('SIGKILL');
+        } else {
+          process.kill(pid, 'SIGKILL');
+        }
+      } catch (_) {}
+    }, 1200);
+
+    return true;
+  } catch (e) {
+    console.error('Blad zamykania gry:', e);
+    return false;
+  }
+}
+
+function createInputWatchWindow() {
+  inputWatchWindow = new BrowserWindow({
+    show: false,
+    width: 1,
+    height: 1,
+    frame: false,
+    transparent: true,
+    skipTaskbar: true,
+    resizable: false,
+    movable: false,
+    focusable: false,
+    backgroundColor: '#00000000',
+    webPreferences: {
+      preload: path.join(__dirname, '..', 'preload', 'input-watch-preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      devTools: false,
+      backgroundThrottling: false
+    }
+  });
+
+  inputWatchWindow.setMenuBarVisibility(false);
+  inputWatchWindow.loadFile(path.join(__dirname, '..', 'renderer', 'input-watch.html'));
+
+  inputWatchWindow.on('closed', () => {
+    inputWatchWindow = null;
+  });
 }
 
 function createWindow() {
-  const storedConfig = readConfig() || {};
+  const storedConfig = readConfig() || getDefaultConfig();
   const fullscreenOnLaunch = !!storedConfig?.uiState?.fullscreenOnLaunch;
 
   mainWindow = new BrowserWindow({
@@ -112,6 +307,9 @@ function createWindow() {
   mainWindow.setMenuBarVisibility(false);
   mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
 
+  mainWindow.on('focus', () => emitWindowState('focus'));
+  mainWindow.on('blur', () => emitWindowState('blur'));
+
   mainWindow.webContents.on('before-input-event', (event, input) => {
     const isKeyDown = input.type === 'keyDown';
     const key = String(input.key || '').toLowerCase();
@@ -122,6 +320,7 @@ function createWindow() {
     const isCtrlShiftJ = isKeyDown && input.control && input.shift && key === 'j';
     const isCtrlU = isKeyDown && input.control && key === 'u';
     const isAltOnly = isKeyDown && key === 'alt';
+
     if (isF11 || isAltEnter) {
       event.preventDefault();
       mainWindow.setFullScreen(!mainWindow.isFullScreen());
@@ -139,9 +338,24 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(createWindow);
-app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
-app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
+app.whenReady().then(() => {
+  ensureDataFiles();
+  if (!fs.existsSync(CONFIG_PATH)) saveConfig(getDefaultConfig());
+  if (!fs.existsSync(PLAYTIME_PATH)) savePlaytimeStore({ playtime: {} });
+  createWindow();
+  createInputWatchWindow();
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
+});
+
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+    createInputWatchWindow();
+  }
+});
 
 ipcMain.handle('config:load', async () => {
   try {
@@ -155,7 +369,7 @@ ipcMain.handle('config:load', async () => {
 
 ipcMain.handle('config:save', async (_event, config) => {
   try {
-    fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2), 'utf-8');
+    saveConfig(config);
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e.message };
@@ -255,10 +469,10 @@ function scanFilesRecursive(rootDir, normalizedExts, baseDir = rootDir) {
     if (normalizedExts.length && !normalizedExts.includes(ext)) continue;
     const stat = fs.statSync(fullPath);
     const baseTitle = path.basename(entry.name, ext);
-    const safeIdTitle = sanitizeGameIdPart(baseTitle);
     const relativePath = path.relative(baseDir, fullPath);
+    const gameId = stableGameId(relativePath);
     results.push({
-      id: `${safeIdTitle}-${stat.size}-${Math.floor(stat.mtimeMs)}`,
+      id: gameId,
       title: baseTitle,
       rom: fullPath,
       location: fullPath,
@@ -284,25 +498,48 @@ ipcMain.handle('roms:scan', async (_event, folderPath, extensions) => {
   }
 });
 
-ipcMain.handle('game:launch', async (_event, { emulatorPath, romPath, extraArgs }) => {
+ipcMain.handle('game:launch', async (_event, { gameId, emulatorPath, romPath, extraArgs }) => {
   try {
     if (!emulatorPath) return { ok: false, error: 'Nie skonfigurowano emulatora dla tej platformy.' };
     const cleaned = parseCommandString(emulatorPath);
     const command = cleaned.shift();
     const args = [...cleaned, ...(extraArgs || []), romPath].filter(Boolean);
     if (!command) return { ok: false, error: 'Nieprawidłowe polecenie emulatora.' };
+
     const prepared = buildSpawnCommand(command, args);
-    const child = spawn(prepared.command, prepared.args, { detached: true, stdio: 'ignore', windowsHide: true });
+    const child = spawn(prepared.command, prepared.args, {
+      detached: true,
+      stdio: 'ignore',
+      windowsHide: true
+    });
+
     lastLaunchedPid = child.pid || null;
     lastLaunchedCommand = command;
     lastEmulatorChild = child;
+
+    if (gameId) startPlaytime(gameId);
+
     child.unref();
     hideLauncherForGame();
-    child.on('exit', () => {
-      showLauncher();
-      lastEmulatorChild = null;
-    });
+
+child.on('exit', () => {
+  if (gameId) stopPlaytime(gameId);
+  showLauncher();
+  lastEmulatorChild = null;
+  lastLaunchedPid = null;
+  lastLaunchedCommand = null;
+});
+
     return { ok: true, pid: lastLaunchedPid };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
+
+ipcMain.handle('game:stopLast', async () => {
+  try {
+    const ok = stopLastGameProcess();
+    return { ok: true, requested: ok };
   } catch (e) {
     return { ok: false, error: e.message };
   }
@@ -319,3 +556,22 @@ ipcMain.handle('game:focus', async () => {
 });
 
 ipcMain.handle('game:lastPid', async () => ({ pid: lastLaunchedPid, command: lastLaunchedCommand }));
+
+ipcMain.handle('game:getPlaytime', async (_event, gameId) => {
+  try {
+    if (!gameId) return { ok: false, error: 'Brak gameId.' };
+    const totalMs = getCurrentPlaytimeMs(gameId);
+    return { ok: true, totalMs, formatted: formatPlaytime(totalMs) };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
+
+ipcMain.handle('game:getPlaytimeRaw', async (_event, gameId) => {
+  try {
+    if (!gameId) return { ok: false, error: 'Brak gameId.' };
+    return { ok: true, entry: getPlaytimeEntry(gameId) };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
