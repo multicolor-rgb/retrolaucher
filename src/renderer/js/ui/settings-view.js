@@ -447,6 +447,20 @@ function renderSettings() {
     if (result?.ok) showToast('Polecenie testowe uruchomione');
     else showToast(result?.error || 'Test nieudany', true);
   };
+
+
+  const langSel = document.getElementById('language-select');
+if (langSel) langSel.value = getSavedLanguage();
+bindLanguageSettings();
+applyLanguageToUI();
+
+function initLanguage() {
+  if (!config.uiState) config.uiState = {};
+  if (!config.uiState.language) config.uiState.language = 'pl';
+  applyI18n();
+}
+
+
 });
 
   document.querySelectorAll('.remove-platform-btn').forEach(btn => {
@@ -588,4 +602,109 @@ function switchToPage(page) {
 
   config.uiState.settingsOpen = page === 'settings';
   location.hash = page === 'settings' ? '#settings' : '#home';
+}
+
+
+function getSavedLanguage() {
+  return config.uiState?.language === 'en' ? 'en' : 'pl';
+}
+
+function setSavedLanguage(lang) {
+  const next = lang === 'en' ? 'en' : 'pl';
+  config.uiState = config.uiState || {};
+  config.uiState.language = next;
+  return next;
+}
+
+function t(key) {
+  const lang = getSavedLanguage();
+  return I18N[lang]?.[key] || I18N.pl[key] || key;
+}
+
+
+function bindLanguageSettings() {
+  const select = document.getElementById('language-select');
+  const btn = document.getElementById('save-language');
+  if (!select || !btn || btn.dataset.bound === 'true') return;
+
+  select.value = getSavedLanguage();
+
+  btn.addEventListener('click', async () => {
+    setSavedLanguage(select.value);
+    await saveStoredConfig();
+    applyI18n();
+    renderSettings();
+    renderShelf();
+    showToast(getSavedLanguage() === 'en' ? 'Language saved ✓' : 'Zapisano język ✓');
+  });
+
+  btn.dataset.bound = 'true';
+}
+
+
+function applyLanguageToUI() {
+  const lang = getSavedLanguage();
+
+  const titleMap = {
+    navHome: 'library',
+    navSettings: 'settings',
+    playBtn: 'launch',
+    detailsBtn: 'details',
+    modalPlayBtn: 'playGame',
+    modalCoverBtn: 'setCover'
+  };
+
+  const navHome = document.getElementById('navHome');
+  const navSettings = document.getElementById('navSettings');
+  const search = document.getElementById('search');
+  const playBtn = document.getElementById('playBtn');
+  const detailsBtn = document.getElementById('detailsBtn');
+  const modalPlayBtn = document.getElementById('modalPlayBtn');
+  const modalCoverBtn = document.getElementById('modalCoverBtn');
+  const languageLabel = document.getElementById('language-label');
+  const languageCardTitle = document.getElementById('language-card-title');
+  const languageCardNote = document.getElementById('language-card-note');
+
+  if (navHome) navHome.title = I18N[lang].library;
+  if (navSettings) navSettings.title = I18N[lang].settings;
+  if (search) search.placeholder = I18N[lang].search;
+  if (playBtn) playBtn.textContent = `▶ ${I18N[lang].launch}`;
+  if (detailsBtn) detailsBtn.textContent = I18N[lang].details;
+  if (modalPlayBtn) modalPlayBtn.textContent = `▶ ${I18N[lang].playGame}`;
+  if (modalCoverBtn) modalCoverBtn.textContent = `🖼 ${I18N[lang].setCover}`;
+  if (languageLabel) languageLabel.textContent = I18N[lang].languageInterface;
+  if (languageCardTitle) languageCardTitle.textContent = I18N[lang].language;
+  if (languageCardNote) languageCardNote.textContent =
+    lang === 'en'
+      ? 'Choose the application interface language.'
+      : 'Wybierz język interfejsu aplikacji.';
+}
+
+
+
+
+
+
+
+function applyI18n() {
+  const lang = getSavedLanguage();
+  const dict = I18N[lang] || I18N.pl;
+
+  document.documentElement.lang = lang;
+  document.documentElement.dataset.lang = lang;
+
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    if (dict[key] != null) el.textContent = dict[key];
+  });
+
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.dataset.i18nTitle;
+    if (dict[key] != null) el.title = dict[key];
+  });
+
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.dataset.i18nPlaceholder;
+    if (dict[key] != null) el.placeholder = dict[key];
+  });
 }

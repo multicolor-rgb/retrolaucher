@@ -1,32 +1,34 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="pl" data-lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <title>Retro Launcher</title>
-    <link rel="icon" type="image/png" href="./build/icon.png">
-
-  <link rel="stylesheet" href="style.css?v=20260730-1333434" />
+  <title data-i18n-title="appTitle">Retro Launcher</title>
+  <link rel="icon" type="image/png" href="./build/icon.png">
+  <link rel="stylesheet" href="style.css?v=20260730-133343422" />
 </head>
 <body>
   <div id="app">
     <header class="bp-topbar">
       <div class="brand">RETRO<span>LAUNCHER</span></div>
+
       <div class="tabs" id="tabsContainer">
         <div class="tab-highlight" id="tabHighlight"></div>
       </div>
+
       <div class="platform-dropdown" id="platformDropdown">
-        <button class="platform-dropdown-btn" id="platformDropdownBtn">
-          <span id="platformDropdownLabel">Platformy</span>
+        <button class="platform-dropdown-btn" id="platformDropdownBtn" data-i18n-title="platforms">
+          <span id="platformDropdownLabel" data-i18n="platforms">Platformy</span>
           <span class="pd-arrow">▾</span>
         </button>
         <div class="platform-dropdown-menu" id="platformDropdownMenu"></div>
       </div>
+
       <div class="bp-actions">
-        <button class="icon-btn active-view" id="navHome" title="Biblioteka">⌂</button>
-        <button class="icon-btn" id="navSettings" title="Ustawienia">⚙</button>
-        <input id="search" type="text" placeholder="Szukaj..." />
-        <button class="icon-btn" id="fullscreenBtn" title="Pełny ekran (F11) / Alt + Enter">⛶</button>
-        <span class="gamepad-indicator" id="gamepadIndicator" title="Status pada">🎮</span>
+        <button class="icon-btn active-view" id="navHome" data-i18n-title="library">⌂</button>
+        <button class="icon-btn" id="navSettings" data-i18n-title="settings">⚙</button>
+        <input id="search" type="text" data-i18n-placeholder="search" />
+        <button class="icon-btn" id="fullscreenBtn" data-i18n-title="fullscreenHint">⛶</button>
+        <span class="gamepad-indicator" id="gamepadIndicator" data-i18n-title="gamepadStatus">🎮</span>
       </div>
     </header>
 
@@ -34,28 +36,30 @@
       <div class="shelf-stage">
         <div class="bg-gradient" id="bgGradient"></div>
         <div class="bg-blur" id="bgBlur"></div>
+
         <div class="shelf-viewport" id="shelfViewport">
           <div class="shelf" id="shelf"></div>
         </div>
+
         <div class="shelf-info" id="shelfInfo">
           <div class="plat" id="plat">PSP</div>
-          <h1 id="gameTitle">Wybierz grę</h1>
+          <h1 id="gameTitle" data-i18n="chooseGame">Wybierz grę</h1>
           <div class="rating-mini" id="ratingMini"></div>
           <div class="action-row">
-            <button class="play-btn" id="playBtn">▶ Uruchom</button>
-            <button class="details-btn" id="detailsBtn">Szczegóły</button>
+            <button class="play-btn" id="playBtn" data-i18n="launch">▶ Uruchom</button>
+            <button class="details-btn" id="detailsBtn" data-i18n="details">Szczegóły</button>
           </div>
         </div>
       </div>
     </main>
 
     <footer class="bp-footer">
-      <span class="hint"><b>◄ ►</b> Nawigacja</span>
-      <span class="hint"><b>▲</b> Platformy</span>
-      <span class="hint"><b>LB/RB</b> Zmień platformę</span>
-      <span class="hint"><b>Enter</b> Uruchom</span>
-      <span class="hint"><b>F11/Alt + Enter</b> Pełny ekran</span>
-      <span class="hint"><b>Esc</b> Zamknij</span>
+      <span class="hint"><b>◄ ►</b> <span data-i18n="navHint">Nawigacja</span></span>
+      <span class="hint"><b>▲</b> <span data-i18n="platformHint">Platformy</span></span>
+      <span class="hint"><b>LB/RB</b> <span data-i18n="changePlatformHint">Zmień platformę</span></span>
+      <span class="hint"><b>Enter</b> <span data-i18n="launchHint">Uruchom</span></span>
+      <span class="hint"><b>F11/Alt + Enter</b> <span data-i18n="fullscreenHintLabel">Pełny ekran</span></span>
+      <span class="hint"><b>Esc</b> <span data-i18n="closeHint">Zamknij</span></span>
     </footer>
 
     <div class="modal-overlay" id="overlay">
@@ -72,11 +76,11 @@
 
           <div class="meta-grid">
             <div class="meta-item">
-              <div class="meta-label">Waga pliku</div>
+              <div class="meta-label" data-i18n="fileSize">Waga pliku</div>
               <div class="meta-value" id="modalFileSize"></div>
             </div>
             <div class="meta-item">
-              <div class="meta-label">Lokalizacja</div>
+              <div class="meta-label" data-i18n="location">Lokalizacja</div>
               <div class="meta-value" id="modalLocation"></div>
             </div>
             <div class="meta-item" style="display:none;">
@@ -89,8 +93,12 @@
             </div>
           </div>
 
-          <button class="modal-play-btn" id="modalPlayBtn">▶ Uruchom grę</button>
-          <button class="modal-secondary-btn" id="modalCoverBtn">🖼 Ustaw okładkę</button>
+          <button class="modal-play-btn" style="display:block;width:100%;" id="modalPlayBtn" data-i18n="playGame">
+            ▶ Uruchom grę
+          </button>
+          <button class="modal-secondary-btn" style="display:block;width:100%" id="modalCoverBtn" data-i18n="setCover">
+            🖼 Ustaw okładkę
+          </button>
         </div>
       </div>
     </div>
@@ -107,15 +115,17 @@
     <section id="settings-panel" class="settings-page" hidden>
       <div class="settings-shell">
         <div class="settings-head">
-          <h2>Ustawienia</h2>
-          <button type="button" id="settings-close-btn" class="settings-close-btn" aria-label="Wróć do biblioteki">←</button>
+          <h2 data-i18n="settings">Ustawienia</h2>
+          <button type="button" id="settings-close-btn" class="settings-close-btn" aria-label="Wróć do biblioteki" data-i18n-title="back">
+            ←
+          </button>
         </div>
 
         <div class="settings-subtabs" role="tablist" aria-label="Ustawienia aplikacji">
-          <button class="settings-subtab active" data-subtab="general" role="tab" aria-selected="true">Ogólne</button>
-          <button class="settings-subtab" data-subtab="artwork" role="tab" aria-selected="false">Okładki</button>
-          <button class="settings-subtab" data-subtab="platforms" role="tab" aria-selected="false">Platformy</button>
-          <button class="settings-subtab" data-subtab="system" role="tab" aria-selected="false">System</button>
+          <button class="settings-subtab active" data-subtab="general" role="tab" aria-selected="true" data-i18n="general">Ogólne</button>
+          <button class="settings-subtab" data-subtab="artwork" role="tab" aria-selected="false" data-i18n="artwork">Okładki</button>
+          <button class="settings-subtab" data-subtab="platforms" role="tab" aria-selected="false" data-i18n="platforms">Platformy</button>
+          <button class="settings-subtab" data-subtab="system" role="tab" aria-selected="false" data-i18n="system">System</button>
         </div>
 
         <div class="settings-panels">
@@ -124,21 +134,21 @@
 
             <div class="settings-card-grid">
               <div class="settings-card">
-                <h3>Start aplikacji</h3>
-                <p class="settings-note">
+                <h3 data-i18n="startup">Start aplikacji</h3>
+                <p class="settings-note" data-i18n="startupNote">
                   Ustaw, czy launcher ma uruchamiać się od razu w trybie pełnoekranowym.
                 </p>
 
                 <label class="field-row field-row-stack">
-                  <span class="field-label">Fullscreen przy uruchomieniu</span>
+                  <span class="field-label" data-i18n="fullscreenOnLaunch">Fullscreen przy uruchomieniu</span>
                   <select id="fullscreen-on-launch" class="field-select">
-                    <option value="true">Włączony</option>
-                    <option value="false">Wyłączony</option>
+                    <option value="true" data-i18n="enabled">Włączony</option>
+                    <option value="false" data-i18n="disabled">Wyłączony</option>
                   </select>
                 </label>
 
                 <div class="settings-actions-row">
-                  <button type="button" id="save-startup-settings" class="btn-primary">
+                  <button type="button" id="save-startup-settings" class="btn-primary" data-i18n="saveStartup">
                     Zapisz ustawienia startu
                   </button>
                 </div>
@@ -146,7 +156,7 @@
 
               <div class="settings-card">
                 <h3>SteamGridDB API</h3>
-                <p class="settings-note">
+                <p class="settings-note" data-i18n="steamgridNote">
                   Wpisz własny klucz API, aby pobierać okładki i opisy automatycznie.
                 </p>
 
@@ -157,12 +167,34 @@
                     type="text"
                     class="field-textinput"
                     placeholder="Wpisz klucz API"
+                    data-i18n-placeholder="apiKeyPlaceholder"
                   />
                 </label>
 
                 <div class="settings-actions-row">
-                  <button type="button" id="save-steamgrid-api-key" class="btn-primary">
+                  <button type="button" id="save-steamgrid-api-key" class="btn-primary" data-i18n="saveKey">
                     Zapisz klucz
+                  </button>
+                </div>
+              </div>
+
+              <div class="settings-card">
+                <h3 data-i18n="language">Język</h3>
+                <p class="settings-note" data-i18n="languageNote">
+                  Wybierz język interfejsu aplikacji.
+                </p>
+
+                <label class="field-row field-row-stack">
+                  <span class="field-label" data-i18n="languageInterface">Język interfejsu</span>
+                  <select id="language-select" class="field-select">
+                    <option value="pl">Polski</option>
+                    <option value="en">English</option>
+                  </select>
+                </label>
+
+                <div class="settings-actions-row">
+                  <button type="button" id="save-language" class="btn-primary" data-i18n="saveLanguage">
+                    Zapisz język
                   </button>
                 </div>
               </div>
@@ -172,56 +204,57 @@
           <section class="settings-subpanel" data-subpanel="artwork">
             <div class="settings-card-grid">
               <div class="settings-card settings-card-wide">
-                <h3>Okładki i opisy</h3>
-                <p class="settings-note">
+                <h3 data-i18n="artworkMetaTitle">Okładki i opisy</h3>
+                <p class="settings-note" data-i18n="artworkMetaNote">
                   Wybierz platformę do pobierania danych. Możesz pobrać metadata dla jednej platformy albo wszystkich.
                 </p>
 
                 <div class="field-row field-row-stack">
-                  <span class="field-label">Platforma do pobierania</span>
+                  <span class="field-label" data-i18n="fetchPlatform">Platforma do pobierania</span>
                   <select id="artwork-platform-select" class="field-select"></select>
                 </div>
 
                 <div class="settings-actions-row">
-                  <button type="button" id="bulk-fetch-platform-meta" class="btn-secondary">
+                  <button type="button" id="bulk-fetch-platform-meta" class="btn-secondary" data-i18n="fetchCovers">
                     Pobierz okładki i opisy
                   </button>
-                  <button type="button" id="force-fetch-platform-meta" class="btn-primary">
+                  <button type="button" id="force-fetch-platform-meta" class="btn-primary" data-i18n="forceRefresh">
                     Wymuś odświeżenie
                   </button>
                 </div>
               </div>
 
               <div class="settings-card settings-card-wide">
-                <h3>Ręczna okładka</h3>
-                <p class="settings-note">
+                <h3 data-i18n="manualCover">Ręczna okładka</h3>
+                <p class="settings-note" data-i18n="manualCoverNote">
                   Wybierz platformę i grę, a następnie podaj URL obrazka albo wskaż plik z dysku.
                 </p>
 
                 <div class="field-row field-row-stack">
-                  <span class="field-label">Platforma gry</span>
+                  <span class="field-label" data-i18n="gamePlatform">Platforma gry</span>
                   <select id="manual-cover-platform" class="field-select"></select>
                 </div>
 
                 <div class="field-row field-row-stack">
-                  <span class="field-label">Gra</span>
+                  <span class="field-label" data-i18n="game">Gra</span>
                   <select id="manual-cover-game" class="field-select"></select>
                 </div>
 
                 <div class="field-row field-row-stack">
-                  <span class="field-label">URL okładki</span>
+                  <span class="field-label" data-i18n="coverUrl">URL okładki</span>
                   <input
                     id="manual-cover-url"
                     type="text"
                     class="field-textinput"
                     placeholder="https://example.com/cover.jpg"
+                    data-i18n-placeholder="coverUrlPlaceholder"
                   />
                 </div>
 
                 <div class="settings-actions-row">
-                  <button type="button" id="save-manual-cover-url" class="btn-primary">Zapisz URL</button>
-                  <button type="button" id="pick-manual-cover-file" class="btn-secondary">Wybierz plik z dysku</button>
-                  <button type="button" id="clear-manual-cover" class="btn-secondary">Usuń ręczną okładkę</button>
+                  <button type="button" id="save-manual-cover-url" class="btn-primary" data-i18n="saveUrl">Zapisz URL</button>
+                  <button type="button" id="pick-manual-cover-file" class="btn-secondary" data-i18n="chooseFile">Wybierz plik z dysku</button>
+                  <button type="button" id="clear-manual-cover" class="btn-secondary" data-i18n="removeCover">Usuń ręczną okładkę</button>
                 </div>
 
                 <div id="manual-cover-preview" class="manual-cover-preview"></div>
@@ -239,14 +272,14 @@
           <section class="settings-subpanel" data-subpanel="platforms">
             <div class="settings-card-grid">
               <div class="settings-card settings-card-wide">
-                <h3>Dodawanie platformy</h3>
-                <p class="settings-note">
+                <h3 data-i18n="addPlatform">Dodawanie platformy</h3>
+                <p class="settings-note" data-i18n="addPlatformNote">
                   Dodaj nazwę platformy, rozszerzenia ROM-ów, kolor i typ okładki. Launcher sam utworzy wpis konfiguracji.
                 </p>
 
                 <form class="add-platform-form" id="addPlatformForm">
-                  <input type="text" name="platformName" id="newPlatformName" placeholder="Nazwa platformy, np. Dreamcast" required />
-                  <input type="text" name="platformExts" id="newPlatformExts" placeholder="Rozszerzenia, np. .gdi, .cdi" />
+                  <input type="text" name="platformName" id="newPlatformName" placeholder="Nazwa platformy, np. Dreamcast" data-i18n-placeholder="platformNamePlaceholder" required />
+                  <input type="text" name="platformExts" id="newPlatformExts" placeholder="Rozszerzenia, np. .gdi, .cdi" data-i18n-placeholder="platformExtsPlaceholder" />
                   <input type="color" id="newPlatformColor" value="#38e0ff" />
                   <select id="newPlatformAspect" class="field-select">
                     <option value="standard">Standard</option>
@@ -255,26 +288,26 @@
                     <option value="wide">Szeroka</option>
                     <option value="bigpic">Steam Big Picture</option>
                   </select>
-                  <button type="submit" class="btn-primary">Dodaj platformę</button>
+                  <button type="submit" class="btn-primary" data-i18n="addPlatformBtn">Dodaj platformę</button>
                 </form>
 
-                <div class="settings-help-box">
+                <div class="settings-help-box" data-i18n="platformHelp">
                   <strong>Szybka wskazówka:</strong>
                   po dodaniu platformy ustaw folder ROM-ów, polecenie emulatora i opcjonalne argumenty startowe.
                 </div>
               </div>
 
               <div class="settings-card settings-card-wide">
-                <h3>ROM-y i emulatory</h3>
-                <p class="settings-note">
+                <h3 data-i18n="romEmu">ROM-y i emulatory</h3>
+                <p class="settings-note" data-i18n="romEmuNote">
                   Każda platforma może mieć własny folder ROM-ów, emulator, argumenty i proporcje okładek.
                 </p>
 
                 <div id="platformBlocks"></div>
 
                 <div class="save-bar">
-                  <button class="btn-secondary" id="resetBtn">Wyczyść ścieżki</button>
-                  <button class="btn-primary" id="saveBtn">Zapisz zmiany</button>
+                  <button class="btn-secondary" id="resetBtn" data-i18n="clearPaths">Wyczyść ścieżki</button>
+                  <button class="btn-primary" id="saveBtn" data-i18n="saveChanges">Zapisz zmiany</button>
                 </div>
               </div>
             </div>
@@ -283,40 +316,40 @@
           <section class="settings-subpanel" data-subpanel="system">
             <div class="settings-card-grid">
               <div class="settings-card">
-                <h3>Windows</h3>
-                <p class="settings-note">
+                <h3 data-i18n="windows">Windows</h3>
+                <p class="settings-note" data-i18n="windowsNote">
                   Dla emulatora wybierz plik `.exe`, a dla ROM-ów folder z grami. Lokalne pliki okładek mogą wymagać poprawnego adresu `file:///`, szczególnie dla ścieżek dyskowych typu `C:\...`.
                 </p>
-                <div class="settings-note">
+                <div class="settings-note" data-i18n="windowsEmuExample">
                   Przykład emulatora: <code>C:\Emulatory\PPSSPP\PPSSPPWindows64.exe</code>
                 </div>
-                <div class="settings-note">
+                <div class="settings-note" data-i18n="windowsCoverExample">
                   Przykład okładki: <code>file:///C:/Retro/covers/god-of-war.jpg</code>
                 </div>
               </div>
 
               <div class="settings-card">
-                <h3>Linux</h3>
-                <p class="settings-note">
+                <h3 data-i18n="linux">Linux</h3>
+                <p class="settings-note" data-i18n="linuxNote">
                   Na Linuxie zwykle wybierasz binarkę emulatora albo komendę uruchomieniową, a przy Flatpaku mogą być potrzebne uprawnienia do katalogów spoza sandboxa, np. `/media` lub własnych folderów z ROM-ami.
                 </p>
-                <div class="settings-note">
+                <div class="settings-note" data-i18n="linuxEmuExample">
                   Przykład emulatora: <code>/usr/bin/retroarch</code>
                 </div>
-                <div class="settings-note">
+                <div class="settings-note" data-i18n="linuxFlatpakExample">
                   Przykład Flatpak: <code>flatpak run org.ppsspp.PPSSPP</code>
                 </div>
-                <div class="settings-note">
+                <div class="settings-note" data-i18n="linuxPermExample">
                   Przykład uprawnień: <code>flatpak override --user --filesystem=/media org.ppsspp.PPSSPP</code>
                 </div>
               </div>
 
               <div class="settings-card settings-card-wide">
-                <h3>Jak dodać platformę i okładki</h3>
-                <p class="settings-note">
+                <h3 data-i18n="howToAdd">Jak dodać platformę i okładki</h3>
+                <p class="settings-note" data-i18n="howToAddNote">
                   1. Dodaj platformę w zakładce „Platformy”. 2. Ustaw folder ROM-ów i emulator. 3. W zakładce „Okładki” wybierz platformę i pobierz dane albo ustaw ręczną okładkę przez URL lub plik lokalny.
                 </p>
-                <p class="settings-note">
+                <p class="settings-note" data-i18n="howToAddHint">
                   Jeśli lokalna okładka nie pokazuje się poprawnie, sprawdź format ścieżki `file://` oraz to, czy aplikacja ma dostęp do pliku.
                 </p>
               </div>
@@ -337,6 +370,5 @@
   <script src="./js/ui/shelf-view.js"></script>
   <script src="./js/ui/settings-view.js"></script>
   <script src="./js/system/audio-input.js"></script>
- 
 </body>
 </html>
