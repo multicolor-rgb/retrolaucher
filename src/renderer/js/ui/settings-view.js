@@ -17,7 +17,7 @@ function populateArtworkPlatformSelect() {
 
   const allOpt = document.createElement('option');
   allOpt.value = 'all';
-  allOpt.textContent = 'Wszystkie platformy';
+  allOpt.textContent = t('allPlatforms') || 'Wszystkie platformy';
   select.appendChild(allOpt);
 
   config.platforms.forEach(p => {
@@ -40,7 +40,7 @@ function populateManualCoverPlatformSelect() {
 
   const allOpt = document.createElement('option');
   allOpt.value = 'all';
-  allOpt.textContent = 'Wybierz platformę';
+  allOpt.textContent = t('choosePlatform') || 'Wybierz platformę';
   select.appendChild(allOpt);
 
   config.platforms.forEach(p => {
@@ -57,7 +57,8 @@ function populateManualCoverPlatformSelect() {
 function renderSettingsWarning() {
   const warning = document.getElementById('settings-warning');
   if (!warning) return;
-  warning.textContent = 'Okładki i opisy są pobierane z SteamGridDB. W ustawieniach możesz wybrać jedną platformę albo wszystkie naraz. Dla każdej platformy możesz też ustawić własny typ proporcji okładki oraz ręcznie podmienić cover wybranej gry.';
+  warning.textContent = t('artworkWarning') ||
+    'Okładki i opisy są pobierane z SteamGridDB. W ustawieniach możesz wybrać jedną platformę albo wszystkie naraz. Dla każdej platformy możesz też ustawić własny typ proporcji okładki oraz ręcznie podmienić cover wybranej gry.';
 }
 
 function populateManualCoverGameSelect() {
@@ -73,8 +74,8 @@ function populateManualCoverGameSelect() {
     const opt = document.createElement('option');
     opt.value = '';
     opt.textContent = platformKey === 'all'
-      ? 'Najpierw wybierz platformę w panelu okładek'
-      : 'Brak gier dla tej platformy';
+      ? (t('choosePlatformFirst') || 'Najpierw wybierz platformę w panelu okładek')
+      : (t('noGamesForPlatform') || 'Brak gier dla tej platformy');
     select.appendChild(opt);
     return [];
   }
@@ -82,7 +83,7 @@ function populateManualCoverGameSelect() {
   platformGames.forEach(g => {
     const opt = document.createElement('option');
     opt.value = g.id;
-    opt.textContent = g.title;
+    opt.textContent = getDisplayTitle(g);
     select.appendChild(opt);
   });
 
@@ -111,7 +112,7 @@ function renderManualCoverPreview() {
 
   if (disableEditing) {
     preview.classList.add('empty');
-    preview.innerHTML = 'Wybierz konkretną platformę, aby edytować ręczne okładki.';
+    preview.innerHTML = t('choosePlatformToEdit') || 'Wybierz konkretną platformę, aby edytować ręczne okładki.';
     input.value = '';
     return;
   }
@@ -119,7 +120,7 @@ function renderManualCoverPreview() {
   const game = games.find(g => g.id === select.value && g.platform === platformKey);
   if (!game) {
     preview.classList.add('empty');
-    preview.innerHTML = 'Wybierz grę z listy.';
+    preview.innerHTML = t('chooseGameFromList') || 'Wybierz grę z listy.';
     input.value = '';
     return;
   }
@@ -128,11 +129,11 @@ function renderManualCoverPreview() {
   input.value = manual || '';
   preview.classList.remove('empty');
   preview.innerHTML = `
-    <img src="${getCoverForGame(game)}" alt="${game.title}" />
+    <img src="${getCoverForGame(game)}" alt="${getDisplayTitle(game)}" />
     <div class="manual-cover-meta">
-      <strong>${game.title}</strong>
-      <span>${manual ? 'Źródło: ręczne' : 'Źródło: SteamGridDB / automatyczne'}</span>
-      <span>${manual || 'Brak ręcznego URL lub pliku.'}</span>
+      <strong>${getDisplayTitle(game)}</strong>
+      <span>${manual ? (t('sourceManual') || 'Źródło: ręczne') : (t('sourceAuto') || 'Źródło: SteamGridDB / automatyczne')}</span>
+      <span>${manual || (t('noManualCover') || 'Brak ręcznego URL lub pliku.')}</span>
     </div>
   `;
 }
@@ -141,7 +142,7 @@ async function saveManualCoverFromUrl() {
   const platformKey = getManualCoverPlatform();
 
   if (platformKey === 'all') {
-    showToast('Najpierw wybierz konkretną platformę w panelu okładek', true);
+    showToast(t('choosePlatformFirst') || 'Najpierw wybierz konkretną platformę w panelu okładek', true);
     return;
   }
 
@@ -151,13 +152,13 @@ async function saveManualCoverFromUrl() {
   const value = (input?.value || '').trim();
 
   if (!gameId || !value) {
-    showToast('Wybierz grę i wpisz URL okładki', true);
+    showToast(t('chooseGameAndUrl') || 'Wybierz grę i wpisz URL okładki', true);
     return;
   }
 
   const game = games.find(g => g.id === gameId && g.platform === platformKey);
   if (!game) {
-    showToast('Nie znaleziono gry', true);
+    showToast(t('gameNotFound') || 'Nie znaleziono gry', true);
     return;
   }
 
@@ -170,36 +171,35 @@ async function saveManualCoverFromUrl() {
   if (manualCoverSelect) manualCoverSelect.value = gameId;
 
   renderManualCoverPreview();
-  showToast('Zapisano ręczny URL okładki');
+  showToast(t('savedManualCoverUrl') || 'Zapisano ręczny URL okładki');
 }
 
 async function pickManualCoverFile() {
   const platformKey = getManualCoverPlatform();
 
   if (platformKey === 'all') {
-    showToast('Najpierw wybierz konkretną platformę w panelu okładek', true);
+    showToast(t('choosePlatformFirst') || 'Najpierw wybierz konkretną platformę w panelu okładek', true);
     return;
   }
 
   const select = document.getElementById('manual-cover-game');
   const gameId = select?.value || '';
   if (!gameId) {
-    showToast('Najpierw wybierz grę', true);
+    showToast(t('chooseGameFirst') || 'Najpierw wybierz grę', true);
     return;
   }
 
   const game = games.find(g => g.id === gameId && g.platform === platformKey);
   if (!game) {
-    showToast('Nie znaleziono gry', true);
+    showToast(t('gameNotFound') || 'Nie znaleziono gry', true);
     return;
   }
 
   const api = window.launcherAPI;
- const picker = api?.selectImageFile || api?.selectFile;
-
+  const picker = api?.selectImageFile || api?.selectFile;
 
   if (!picker) {
-    showToast('Brak natywnego okna wyboru pliku w launcherAPI', true);
+    showToast(t('noFilePicker') || 'Brak natywnego okna wyboru pliku w launcherAPI', true);
     return;
   }
 
@@ -207,7 +207,7 @@ async function pickManualCoverFile() {
   try {
     picked = await picker.call(api);
   } catch (e) {
-    showToast('Nie udało się otworzyć okna wyboru pliku', true);
+    showToast(t('filePickerError') || 'Nie udało się otworzyć okna wyboru pliku', true);
     return;
   }
 
@@ -225,27 +225,27 @@ async function pickManualCoverFile() {
   if (manualCoverSelect) manualCoverSelect.value = gameId;
 
   renderManualCoverPreview();
-  showToast('Zapisano ręczny plik okładki');
+  showToast(t('savedManualCoverFile') || 'Zapisano ręczny plik okładki');
 }
 
 async function clearManualCover() {
   const platformKey = getManualCoverPlatform();
 
   if (platformKey === 'all') {
-    showToast('Najpierw wybierz konkretną platformę w panelu okładek', true);
+    showToast(t('choosePlatformFirst') || 'Najpierw wybierz konkretną platformę w panelu okładek', true);
     return;
   }
 
   const select = document.getElementById('manual-cover-game');
   const gameId = select?.value || '';
   if (!gameId) {
-    showToast('Najpierw wybierz grę', true);
+    showToast(t('chooseGameFirst') || 'Najpierw wybierz grę', true);
     return;
   }
 
   const game = games.find(g => g.id === gameId && g.platform === platformKey);
   if (!game) {
-    showToast('Nie znaleziono gry', true);
+    showToast(t('gameNotFound') || 'Nie znaleziono gry', true);
     return;
   }
 
@@ -258,7 +258,7 @@ async function clearManualCover() {
   if (manualCoverSelect) manualCoverSelect.value = gameId;
 
   renderManualCoverPreview();
-  showToast('Usunięto ręczną okładkę');
+  showToast(t('removedManualCover') || 'Usunięto ręczną okładkę');
 }
 
 async function fetchMetadataForSelectedPlatforms(force = false) {
@@ -267,7 +267,7 @@ async function fetchMetadataForSelectedPlatforms(force = false) {
   if (selectedPlatform === 'all') {
     const platformKeys = config.platforms.map(p => p.key);
     if (!platformKeys.length) {
-      showToast('Brak platform do pobrania', true);
+      showToast(t('noPlatformsToFetch') || 'Brak platform do pobrania', true);
       return;
     }
 
@@ -278,8 +278,8 @@ async function fetchMetadataForSelectedPlatforms(force = false) {
     await refreshLibrary();
     showToast(
       force
-        ? 'Odświeżono dane dla wszystkich platform'
-        : 'Pobrano dane dla wszystkich platform'
+        ? (t('refreshedAllPlatforms') || 'Odświeżono dane dla wszystkich platform')
+        : (t('fetchedAllPlatforms') || 'Pobrano dane dla wszystkich platform')
     );
     return;
   }
@@ -314,15 +314,15 @@ function renderSettings() {
       <div class="platform-header">
         <span class="platform-badge" style="background:${p.color}33;color:${p.color}">${p.label}</span>
         <span class="ext-hint">${(p.extensions || []).join(', ')}</span>
-        <button type="button" class="remove-platform-btn" data-key="${p.key}" title="Usuń platformę">✕</button>
+        <button type="button" class="remove-platform-btn" data-key="${p.key}" title="${t('removePlatform') || 'Usuń platformę'}">✕</button>
       </div>
       <div class="field-row">
-        <div class="field-label">Folder z ROM-ami</div>
-        <div class="field-input ${romPath ? '' : 'empty'}">${romPath || 'Nie ustawiono'}</div>
-        <button type="button" class="browse-btn" data-type="rom" data-key="${p.key}">Wybierz folder…</button>
+        <div class="field-label">${t('romFolder') || 'Folder z ROM-ami'}</div>
+        <div class="field-input ${romPath ? '' : 'empty'}">${romPath || (t('notSet') || 'Nie ustawiono')}</div>
+        <button type="button" class="browse-btn" data-type="rom" data-key="${p.key}">${t('chooseFolder') || 'Wybierz folder…'}</button>
       </div>
       <div class="field-row field-row-stack">
-        <div class="field-label">Polecenie uruchomieniowe</div>
+        <div class="field-label">${t('launchCommand') || 'Polecenie uruchomieniowe'}</div>
         <input
           type="text"
           class="field-textinput"
@@ -330,27 +330,27 @@ function renderSettings() {
           value="${emuPath || ''}"
           placeholder="${DEFAULT_LAUNCH_PLACEHOLDER}"
         />
-        <button type="button" class="browse-btn" data-type="emu" data-key="${p.key}">Wybierz plik…</button>
+        <button type="button" class="browse-btn" data-type="emu" data-key="${p.key}">${t('chooseFile') || 'Wybierz plik…'}</button>
       </div>
       <div class="field-row field-row-stack">
-        <div class="field-label">Domyślne argumenty</div>
+        <div class="field-label">${t('defaultArgs') || 'Domyślne argumenty'}</div>
         <input
           type="text"
           class="field-textinput"
           data-args-input="${p.key}"
           value="${launchArgs || ''}"
-          placeholder="Np. --fullscreen --fastboot"
+          placeholder="${t('argsPlaceholder') || 'Np. --fullscreen --fastboot'}"
         />
-        <button type="button" class="test-launch-btn" data-key="${p.key}">Testuj</button>
+        <button type="button" class="test-launch-btn" data-key="${p.key}">${t('test') || 'Testuj'}</button>
       </div>
       <div class="field-row field-row-stack">
-        <div class="field-label">Typ okładki</div>
+        <div class="field-label">${t('coverType') || 'Typ okładki'}</div>
         <select class="field-select" data-aspect-input="${p.key}">
-          <option value="standard" ${aspect === 'standard' ? 'selected' : ''}>Standard</option>
-          <option value="psp" ${aspect === 'psp' ? 'selected' : ''}>PSP / wąska</option>
-          <option value="square" ${aspect === 'square' ? 'selected' : ''}>Kwadrat</option>
-          <option value="wide" ${aspect === 'wide' ? 'selected' : ''}>Szeroka</option>
-          <option value="bigpic" ${aspect === 'bigpic' ? 'selected' : ''}>Steam Big Picture</option>
+          <option value="standard" ${aspect === 'standard' ? 'selected' : ''}>${t('standard') || 'Standard'}</option>
+          <option value="psp" ${aspect === 'psp' ? 'selected' : ''}>${t('pspNarrow') || 'PSP / wąska'}</option>
+          <option value="square" ${aspect === 'square' ? 'selected' : ''}>${t('square') || 'Kwadrat'}</option>
+          <option value="wide" ${aspect === 'wide' ? 'selected' : ''}>${t('wide') || 'Szeroka'}</option>
+          <option value="bigpic" ${aspect === 'bigpic' ? 'selected' : ''}>${t('steamBigPicture') || 'Steam Big Picture'}</option>
         </select>
       </div>
     `;
@@ -363,7 +363,7 @@ function renderSettings() {
       config.uiState.fullscreenOnLaunch =
         document.getElementById('fullscreen-on-launch')?.value === 'true';
       await saveStoredConfig();
-      showToast('Zapisano ustawienia startu');
+      showToast(t('savedStartupSettings') || 'Zapisano ustawienia startu');
     };
   }
 
@@ -390,12 +390,12 @@ function renderSettings() {
         await saveStoredConfig();
         await refreshLibrary();
         renderSettings();
-        showToast('Zapisano folder z ROM-ami');
+        showToast(t('savedRomFolder') || 'Zapisano folder z ROM-ami');
       } else {
         config.emulators[key] = picked;
         await saveStoredConfig();
         renderSettings();
-        showToast('Zapisano polecenie uruchomieniowe');
+        showToast(t('savedLaunchCommand') || 'Zapisano polecenie uruchomieniowe');
       }
     };
   });
@@ -423,45 +423,37 @@ function renderSettings() {
       await saveStoredConfig();
       renderShelf();
       renderManualCoverPreview();
-      showToast('Zapisano typ okładki');
+      showToast(t('savedCoverType') || 'Zapisano typ okładki');
     };
   });
 
- document.querySelectorAll('.test-launch-btn').forEach(btn => {
-  btn.onclick = async () => {
-    const key = btn.dataset.key;
-    const emulatorPath = config.emulators[key] || '';
-    const rawArgs = config.launchArgs[key] || '';
-    const extraArgs = parseArgString(rawArgs);
+  document.querySelectorAll('.test-launch-btn').forEach(btn => {
+    btn.onclick = async () => {
+      const key = btn.dataset.key;
+      const emulatorPath = config.emulators[key] || '';
+      const rawArgs = config.launchArgs[key] || '';
+      const extraArgs = parseArgString(rawArgs);
 
-    if (!window.launcherAPI?.testEmulator) {
-      showToast('Brak mostka IPC do testu uruchomienia', true);
-      return;
-    }
+      if (!window.launcherAPI?.testEmulator) {
+        showToast(t('noTestBridge') || 'Brak mostka IPC do testu uruchomienia', true);
+        return;
+      }
 
-    const result = await window.launcherAPI.testEmulator({
-      emulatorPath,
-      extraArgs
-    });
+      const result = await window.launcherAPI.testEmulator({
+        emulatorPath,
+        extraArgs
+      });
 
-    if (result?.ok) showToast('Polecenie testowe uruchomione');
-    else showToast(result?.error || 'Test nieudany', true);
-  };
-
+      if (result?.ok) showToast(t('testCommandLaunched') || 'Polecenie testowe uruchomione');
+      else showToast(result?.error || (t('testFailed') || 'Test nieudany'), true);
+    };
+  });
 
   const langSel = document.getElementById('language-select');
-if (langSel) langSel.value = getSavedLanguage();
-bindLanguageSettings();
-applyLanguageToUI();
+  if (langSel) langSel.value = getSavedLanguage();
 
-function initLanguage() {
-  if (!config.uiState) config.uiState = {};
-  if (!config.uiState.language) config.uiState.language = 'pl';
+  bindLanguageSettings();
   applyI18n();
-}
-
-
-});
 
   document.querySelectorAll('.remove-platform-btn').forEach(btn => {
     btn.onclick = async () => {
@@ -475,7 +467,7 @@ function initLanguage() {
       delete config.userRatings[key];
 
       await saveStoredConfig();
-      showToast('Usunięto platformę');
+      showToast(t('platformRemoved') || 'Usunięto platformę');
 
       renderSettings();
       renderTabs();
@@ -507,7 +499,7 @@ function initLanguage() {
       const input = document.getElementById('steamgrid-api-key-input');
       config.apiKeys.steamgrid = (input?.value || '').trim();
       await saveStoredConfig();
-      showToast('Zapisano klucz SteamGridDB API');
+      showToast(t('savedSteamgridKey') || 'Zapisano klucz SteamGridDB API');
     };
   }
 
@@ -604,7 +596,6 @@ function switchToPage(page) {
   location.hash = page === 'settings' ? '#settings' : '#home';
 }
 
-
 function getSavedLanguage() {
   return config.uiState?.language === 'en' ? 'en' : 'pl';
 }
@@ -621,7 +612,6 @@ function t(key) {
   return I18N[lang]?.[key] || I18N.pl[key] || key;
 }
 
-
 function bindLanguageSettings() {
   const select = document.getElementById('language-select');
   const btn = document.getElementById('save-language');
@@ -635,56 +625,11 @@ function bindLanguageSettings() {
     applyI18n();
     renderSettings();
     renderShelf();
-    showToast(getSavedLanguage() === 'en' ? 'Language saved ✓' : 'Zapisano język ✓');
+    showToast(getSavedLanguage() === 'en' ? (t('languageSavedEn') || 'Language saved ✓') : (t('languageSavedPl') || 'Zapisano język ✓'));
   });
 
   btn.dataset.bound = 'true';
 }
-
-
-function applyLanguageToUI() {
-  const lang = getSavedLanguage();
-
-  const titleMap = {
-    navHome: 'library',
-    navSettings: 'settings',
-    playBtn: 'launch',
-    detailsBtn: 'details',
-    modalPlayBtn: 'playGame',
-    modalCoverBtn: 'setCover'
-  };
-
-  const navHome = document.getElementById('navHome');
-  const navSettings = document.getElementById('navSettings');
-  const search = document.getElementById('search');
-  const playBtn = document.getElementById('playBtn');
-  const detailsBtn = document.getElementById('detailsBtn');
-  const modalPlayBtn = document.getElementById('modalPlayBtn');
-  const modalCoverBtn = document.getElementById('modalCoverBtn');
-  const languageLabel = document.getElementById('language-label');
-  const languageCardTitle = document.getElementById('language-card-title');
-  const languageCardNote = document.getElementById('language-card-note');
-
-  if (navHome) navHome.title = I18N[lang].library;
-  if (navSettings) navSettings.title = I18N[lang].settings;
-  if (search) search.placeholder = I18N[lang].search;
-  if (playBtn) playBtn.textContent = `▶ ${I18N[lang].launch}`;
-  if (detailsBtn) detailsBtn.textContent = I18N[lang].details;
-  if (modalPlayBtn) modalPlayBtn.textContent = `▶ ${I18N[lang].playGame}`;
-  if (modalCoverBtn) modalCoverBtn.textContent = `🖼 ${I18N[lang].setCover}`;
-  if (languageLabel) languageLabel.textContent = I18N[lang].languageInterface;
-  if (languageCardTitle) languageCardTitle.textContent = I18N[lang].language;
-  if (languageCardNote) languageCardNote.textContent =
-    lang === 'en'
-      ? 'Choose the application interface language.'
-      : 'Wybierz język interfejsu aplikacji.';
-}
-
-
-
-
-
-
 
 function applyI18n() {
   const lang = getSavedLanguage();
@@ -707,4 +652,41 @@ function applyI18n() {
     const key = el.dataset.i18nPlaceholder;
     if (dict[key] != null) el.placeholder = dict[key];
   });
+
+  applyLanguageToUI();
+}
+
+function applyLanguageToUI() {
+  const lang = getSavedLanguage();
+
+  const navHome = document.getElementById('navHome');
+  const navSettings = document.getElementById('navSettings');
+  const search = document.getElementById('search');
+  const playBtn = document.getElementById('playBtn');
+  const detailsBtn = document.getElementById('detailsBtn');
+  const modalPlayBtn = document.getElementById('modalPlayBtn');
+  const modalCoverBtn = document.getElementById('modalCoverBtn');
+  const languageLabel = document.getElementById('language-label');
+  const languageCardTitle = document.getElementById('language-card-title');
+  const languageCardNote = document.getElementById('language-card-note');
+
+  if (navHome) navHome.title = t('library');
+  if (navSettings) navSettings.title = t('settings');
+  if (search) search.placeholder = t('search');
+  if (playBtn) playBtn.textContent = `▶ ${t('launch')}`;
+  if (detailsBtn) detailsBtn.textContent = t('details');
+  if (modalPlayBtn) modalPlayBtn.textContent = `▶ ${t('playGame')}`;
+  if (modalCoverBtn) modalCoverBtn.textContent = `🖼 ${t('setCover')}`;
+  if (languageLabel) languageLabel.textContent = t('languageInterface');
+  if (languageCardTitle) languageCardTitle.textContent = t('language');
+  if (languageCardNote) languageCardNote.textContent =
+    lang === 'en'
+      ? 'Choose the application interface language.'
+      : 'Wybierz język interfejsu aplikacji.';
+}
+
+function initLanguage() {
+  if (!config.uiState) config.uiState = {};
+  if (!config.uiState.language) config.uiState.language = 'pl';
+  applyI18n();
 }

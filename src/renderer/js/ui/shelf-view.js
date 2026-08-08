@@ -115,7 +115,7 @@ function onShelfWheel(e) {
 
 function formatBytes(bytes) {
   const value = Number(bytes);
-  if (!Number.isFinite(value) || value <= 0) return 'Brak danych';
+  if (!Number.isFinite(value) || value <= 0) return t('noData');
 
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
   const index = Math.min(
@@ -130,7 +130,7 @@ function formatBytes(bytes) {
 }
 
 function formatHltb(value) {
-  if (value == null || value === '') return 'Brak danych';
+  if (value == null || value === '') return t('noData');
 
   const hours = Number(value);
   if (!Number.isFinite(hours) || hours <= 0) return String(value);
@@ -140,7 +140,7 @@ function formatHltb(value) {
 }
 
 function getGameLocation(game) {
-  return game.location || game.rom || game.path || game.filePath || 'Brak danych';
+  return game.location || game.rom || game.path || game.filePath || t('noData');
 }
 
 function getGameFileSize(game) {
@@ -159,8 +159,8 @@ function getGameHltb(game) {
 }
 
 function getGamePlaytimeText(game) {
-  if (!game?.id) return 'Brak danych';
-  return playtimeCache[game.id] || 'Brak danych';
+  if (!game?.id) return t('noData');
+  return playtimeCache[game.id] || t('noData');
 }
 
 function renderShelfSubinfo(game) {
@@ -170,7 +170,7 @@ function renderShelfSubinfo(game) {
 
   const parts = [];
 
-  if (playtime && playtime !== 'Brak danych') {
+  if (playtime && playtime !== t('noData')) {
     parts.push(`Czas gry: ${playtime}`);
   }
 
@@ -221,7 +221,7 @@ function stopPlaytimeAutoRefresh() {
 
 function updateGameDetailsPlaytime(g, formatted) {
   const el = document.getElementById('modalPlaytime');
-  if (el) el.textContent = formatted || playtimeCache[g.id] || 'Brak danych';
+  if (el) el.textContent = formatted || playtimeCache[g.id] || t('noData');
 }
 
 function renderShelf() {
@@ -239,7 +239,7 @@ function renderShelf() {
   syncViewModeButtons();
 
   if (len === 0) {
-    shelfViewport.innerHTML = '<div class="empty-state">Brak gier dla tej platformy — skonfiguruj folder i emulator w Ustawieniach</div>';
+    shelfViewport.innerHTML = `<div class="empty-state">${t('noGamesForPlatform')}</div>`;
     titleEl.textContent = '';
     platEl.textContent = '';
     if (ratingMini) ratingMini.textContent = '';
@@ -268,7 +268,7 @@ function renderShelf() {
     applyCoverGeometry(el, g.platform, offset === 0);
 
     const coverSrc = getCoverForGame(g);
-    el.innerHTML = `<img src="${coverSrc}" alt="${g.title}"/>`;
+    el.innerHTML = `<img src="${coverSrc}" alt="${getDisplayTitle(g)}"/>`;
 
     el.addEventListener('click', () => {
       if (current === idx) return;
@@ -281,9 +281,9 @@ function renderShelf() {
   }
 
   const g = filtered[current];
-  const pf = getPlatform(g.platform) || { label: g.platform || 'Nieznana platforma' };
+  const pf = getPlatform(g.platform) || { label: g.platform || t('unknownPlatform') };
 
-  titleEl.textContent = g.title || 'Nieznana gra';
+  titleEl.textContent = getDisplayTitle(g) || t('unknownGame');
   platEl.textContent = pf.label;
 
   if (ratingMini) {
@@ -333,17 +333,17 @@ async function launchGame(game) {
   const extraArgs = parseArgString(rawArgs);
 
   if (!validatePathExists(emulatorPath)) {
-    showToast('Brak polecenia uruchomieniowego dla tej platformy', true);
+    showToast(t('missingEmulatorCommand'), true);
     return;
   }
 
   if (!validatePathExists(game.rom)) {
-    showToast('Brak ścieżki do pliku gry', true);
+    showToast(t('missingGamePath'), true);
     return;
   }
 
   if (/flatpak run/.test(emulatorPath) && /^\/media\//.test(game.rom)) {
-    showToast('Jeśli gra nie startuje, nadaj Flatpakowi dostęp do /media', true);
+    showToast(t('flatpakMediaHint'), true);
   }
 
   if (window.launcherAPI?.launchGame) {
@@ -354,16 +354,16 @@ async function launchGame(game) {
       extraArgs
     });
 
-    if (!result.ok) showToast('Błąd: ' + result.error, true);
-    else showToast('Uruchamiam: ' + game.title);
+    if (!result.ok) showToast(t('errorLaunch') + result.error, true);
+    else showToast(t('launchGamePrefix') + getDisplayTitle(game));
   } else {
-    showToast('Demo: uruchomienie ' + game.title);
+    showToast(t('demoLaunch') + getDisplayTitle(game));
   }
 }
 
 function openDetails(g) {
   const pf = getPlatform(g.platform) || {
-    label: g.platform || 'Nieznana platforma',
+    label: g.platform || t('unknownPlatform'),
     color: '#38e0ff'
   };
 
@@ -379,20 +379,20 @@ function openDetails(g) {
   platEl2.style.background = pf.color + '33';
   platEl2.style.color = pf.color;
 
-  const titleEl = document.getElementById('modalTitle');
-  titleEl.textContent = g.title || 'Nieznana gra';
+  const titleEl2 = document.getElementById('modalTitle');
+  titleEl2.textContent = getDisplayTitle(g) || t('unknownGame');
 
   document.getElementById('modalTags').innerHTML =
     (g.genres || []).map(t => `<span class="tag">${t}</span>`).join('');
   document.getElementById('modalDesc').textContent =
-    g.desc || g.description || 'Brak opisu dla tej gry.';
+    g.desc || g.description || t('noDescription');
 
   document.getElementById('modalFileSize').textContent = formatBytes(fileSize);
   document.getElementById('modalLocation').textContent = location;
   document.getElementById('modalMetacritic').textContent =
     metacritic != null && metacritic !== ''
       ? `${metacritic}/100`
-      : 'Brak danych';
+      : t('noData');
   document.getElementById('modalHltb').textContent = formatHltb(hltb);
 
   const existingPlaytime = document.getElementById('modalPlaytime');
