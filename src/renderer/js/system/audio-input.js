@@ -99,7 +99,7 @@ document.addEventListener('click', (e) => {
 });
 
 function setShelfViewMode(mode) {
-  const allowed = ['flat', 'arc', 'stack', 'cascade'];
+  const allowed = ['flat', 'arc', 'stack', 'cascade', 'grid'];
   if (!allowed.includes(mode)) return;
   if (viewMode === mode) return;
 
@@ -123,7 +123,7 @@ function setShelfViewMode(mode) {
 }
 
 function cycleShelfViewMode(step) {
-  const modes = ['flat', 'arc', 'stack', 'cascade'];
+  const modes = ['flat', 'arc', 'stack', 'cascade', 'grid'];
   const currentIndex = Math.max(0, modes.indexOf(viewMode));
   const nextIndex = mod(currentIndex + step, modes.length);
   setShelfViewMode(modes[nextIndex]);

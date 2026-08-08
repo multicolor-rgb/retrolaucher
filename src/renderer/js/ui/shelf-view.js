@@ -7,7 +7,8 @@ let playtimeRefreshTimer = null;
 let playtimeCache = {};
 
 function getAllowedShelfViewModes() {
-  return ['flat', 'arc', 'stack', 'cascade'];
+  return ['flat', 'arc', 'stack', 'cascade', 'grid'];
+
 }
 
 function getSavedShelfViewMode() {
@@ -224,9 +225,11 @@ function updateGameDetailsPlaytime(g, formatted) {
   if (el) el.textContent = formatted || playtimeCache[g.id] || t('noData');
 }
 
+
+
+
+
 function renderShelf() {
-  shelf.innerHTML = '';
-  const range = 3;
   const len = filtered.length;
 
   bindShelfWheelNavigation();
@@ -237,6 +240,12 @@ function renderShelf() {
   }
 
   syncViewModeButtons();
+
+  // Dodaj klasę grid-mode na shelf-info, jeśli tryb grid
+  const shelfInfo = document.getElementById('shelfInfo');
+  if (shelfInfo) {
+    shelfInfo.classList.toggle('grid-mode', viewMode === 'grid');
+  }
 
   if (len === 0) {
     shelfViewport.innerHTML = `<div class="empty-state">${t('noGamesForPlatform')}</div>`;
@@ -255,6 +264,57 @@ function renderShelf() {
   shelf.className = 'shelf mode-' + viewMode;
   shelfViewport.className = 'shelf-viewport mode-' + viewMode;
 
+  // Grid: aktualizuj tylko focus, nie buduj od nowa całej listy
+  if (viewMode === 'grid') {
+    if (shelf.children.length !== len) {
+      shelf.innerHTML = '';
+      filtered.forEach((g, idx) => {
+        const el = document.createElement('div');
+        el.className = 'sh-item' + (idx === current ? ' focus' : '');
+        el.dataset.index = idx;
+        el.dataset.gameId = g.id;
+        el.dataset.platform = g.platform;
+
+        applyCoverGeometry(el, g.platform, idx === current);
+
+        const coverSrc = getCoverForGame(g);
+        el.innerHTML = `<img src="${coverSrc}" alt="${getDisplayTitle(g)}"/>`;
+
+        el.addEventListener('click', () => {
+          if (current === idx) return;
+          current = idx;
+          updateGridFocusOnly();
+        });
+
+        el.addEventListener('dblclick', () => launchGame(g));
+        shelf.appendChild(el);
+      });
+    } else {
+      updateGridFocusOnly();
+    }
+
+    // Aktualizuj tytuł, ale bez animacji
+    const g = filtered[current];
+    const pf = getPlatform(g.platform) || { label: g.platform || t('unknownPlatform') };
+    titleEl.textContent = getDisplayTitle(g) || t('unknownGame');
+    platEl.textContent = pf.label;
+
+    if (ratingMini) {
+      ratingMini.textContent = renderShelfSubinfo(g);
+    }
+
+    const activeCover = getCoverForGame(g);
+    bgBlur.style.backgroundImage = `url('${activeCover}')`;
+    getDominantColor(activeCover, applyGradient);
+
+    refreshCurrentGamePlaytime();
+    startPlaytimeAutoRefresh();
+    return;
+  }
+
+  // Tryby carousel (flat, arc, stack, cascade)
+  const range = 3;
+  shelf.innerHTML = '';
   for (let offset = -range; offset <= range; offset++) {
     const idx = mod(current + offset, len);
     const g = filtered[idx];
@@ -299,6 +359,35 @@ function renderShelf() {
   refreshCurrentGamePlaytime();
   startPlaytimeAutoRefresh();
 }
+
+
+function updateGridFocusOnly() {
+  const items = shelf.querySelectorAll('.sh-item');
+  items.forEach((el, idx) => {
+    el.classList.toggle('focus', idx === current);
+  });
+
+  const focusEl = items[current];
+  if (focusEl) {
+    focusEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  const g = filtered[current];
+  const pf = getPlatform(g.platform) || { label: g.platform || t('unknownPlatform') };
+  titleEl.textContent = getDisplayTitle(g) || t('unknownGame');
+  platEl.textContent = pf.label;
+
+  if (ratingMini) {
+    ratingMini.textContent = renderShelfSubinfo(g);
+  }
+
+  const activeCover = getCoverForGame(g);
+  bgBlur.style.backgroundImage = `url('${activeCover}')`;
+  getDominantColor(activeCover, applyGradient);
+
+  refreshCurrentGamePlaytime();
+}
+
 
 function next() {
   if (filtered.length) {
