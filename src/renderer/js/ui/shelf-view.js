@@ -227,6 +227,101 @@ function updateGameDetailsPlaytime(g, formatted) {
 
 
 
+//zmiana nazwy
+
+// Zmiana nazwy gry
+
+async function renameGame(game) {
+  openRenameInline(game);
+}
+
+function openRenameInline(game) {
+  const row = document.getElementById('renameGameRow');
+  const input = document.getElementById('renameGameInput');
+  const saveBtn = document.getElementById('renameGameSave');
+  const cancelBtn = document.getElementById('renameGameCancel');
+
+  if (!row || !input || !saveBtn || !cancelBtn) return;
+
+  row.hidden = false;
+  input.value = getDisplayTitle(game);
+  input.focus();
+  input.select();
+
+  const cleanup = () => {
+    row.hidden = true;
+    saveBtn.onclick = null;
+    cancelBtn.onclick = null;
+    input.onkeydown = null;
+  };
+
+  saveBtn.onclick = async () => {
+    await renameGameCore(game, input.value.trim(), cleanup);
+  };
+
+  cancelBtn.onclick = cleanup;
+
+  input.onkeydown = async (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      await renameGameCore(game, input.value.trim(), cleanup);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      cleanup();
+    }
+  };
+}
+
+async function renameGameCore(game, newTitle, onDone) {
+  if (!game?.id) return;
+
+  if (!newTitle) {
+    showToast(t('gameNameEmpty'), true);
+    return;
+  }
+
+  if (!config.uiState || typeof config.uiState !== 'object') {
+    config.uiState = {};
+  }
+
+  if (
+    !config.uiState.gameTitles ||
+    typeof config.uiState.gameTitles !== 'object' ||
+    Array.isArray(config.uiState.gameTitles)
+  ) {
+    config.uiState.gameTitles = {};
+  }
+
+  const originalTitle = String(
+    game.title || game.displayTitle || game.name || t('unknownGame')
+  ).trim();
+
+  if (newTitle === originalTitle) {
+    delete config.uiState.gameTitles[game.id];
+  } else {
+    config.uiState.gameTitles[game.id] = newTitle;
+  }
+
+  await saveStoredConfig();
+
+  if (typeof renderShelf === 'function') renderShelf();
+
+  if (
+    typeof overlay !== 'undefined' &&
+    overlay?.classList?.contains('open') &&
+    overlay.currentGame?.id === game.id
+  ) {
+    const modalTitle = document.getElementById('modalTitle');
+    if (modalTitle) modalTitle.textContent = getDisplayTitle(game);
+  }
+
+  showToast(t('gameRenamed'));
+
+  if (typeof onDone === 'function') onDone();
+}
+
+//koniec zmiany nazwy
+
 
 
 function renderShelf() {
@@ -469,19 +564,36 @@ function openDetails(g) {
   platEl2.style.color = pf.color;
 
   const titleEl2 = document.getElementById('modalTitle');
-  titleEl2.textContent = getDisplayTitle(g) || t('unknownGame');
+  if (titleEl2) {
+    titleEl2.textContent = getDisplayTitle(g);
+  }
+
+  // Schowaj pole edycji nazwy, jeśli zostało otwarte dla innej gry
+  const renameRow = document.getElementById('renameGameRow');
+  if (renameRow) {
+    renameRow.hidden = true;
+  }
+
+  const renameButton = document.getElementById('renameGameButton');
+  if (renameButton) {
+    renameButton.textContent = t('renameGame');
+    renameButton.onclick = () => openRenameInline(g);
+  }
 
   document.getElementById('modalTags').innerHTML =
-    (g.genres || []).map(t => `<span class="tag">${t}</span>`).join('');
+    (g.genres || []).map(tag => `<span class="tag">${tag}</span>`).join('');
+
   document.getElementById('modalDesc').textContent =
     g.desc || g.description || t('noDescription');
 
   document.getElementById('modalFileSize').textContent = formatBytes(fileSize);
   document.getElementById('modalLocation').textContent = location;
+
   document.getElementById('modalMetacritic').textContent =
     metacritic != null && metacritic !== ''
       ? `${metacritic}/100`
       : t('noData');
+
   document.getElementById('modalHltb').textContent = formatHltb(hltb);
 
   const existingPlaytime = document.getElementById('modalPlaytime');
@@ -492,8 +604,8 @@ function openDetails(g) {
       if (!res?.ok) return;
       if (!res.totalMs || res.totalMs <= 0) return;
 
-      const currentTitle = document.getElementById('modalTitle');
-      if (!currentTitle || !currentTitle.parentElement) return;
+      const titleRow = document.getElementById('modalTitleRow');
+      if (!titleRow || !titleRow.parentElement) return;
 
       const old = document.getElementById('modalPlaytime');
       if (old) old.remove();
@@ -503,7 +615,7 @@ function openDetails(g) {
       div.className = 'modal-playtime';
       div.textContent = res.formatted;
 
-      currentTitle.insertAdjacentElement('afterend', div);
+      titleRow.insertAdjacentElement('afterend', div);
     }).catch(() => {});
   }
 

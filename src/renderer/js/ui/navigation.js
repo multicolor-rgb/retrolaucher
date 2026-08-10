@@ -6,6 +6,10 @@ function moveHighlight(tabEl) {
   tabHighlight.style.width = tabEl.offsetWidth + 'px';
 }
 
+function getPlatformGameCount(platformKey) {
+  return games.filter(game => game.platform === platformKey).length;
+}
+
 function usedPlatforms() {
   const usedKeys = new Set(games.map(g => g.platform));
   return config.platforms.filter(p => usedKeys.has(p.key));
@@ -21,19 +25,36 @@ function renderPlatformDropdown() {
   const dropdownBtn = document.getElementById('platformDropdownBtn');
 
   menu.innerHTML = '';
+
   usedPlatforms().forEach(p => {
+    const count = getPlatformGameCount(p.key);
+
     const item = document.createElement('div');
-    item.className = 'pd-item' + (activePlatform === p.key ? ' active' : '');
-    item.textContent = p.label;
+    item.className = 'pd-item' + (
+      activePlatform === p.key ? ' active' : ''
+    );
+
+    item.textContent = `${p.label} (${count})`;
+
     item.addEventListener('click', () => {
       applyFilter(p.key, null);
       closeDropdown();
     });
+
     menu.appendChild(item);
   });
 
-  const currentPlatform = config.platforms.find(p => p.key === activePlatform);
-  label.textContent = currentPlatform ? currentPlatform.label : t('platforms');
+  const currentPlatform = config.platforms.find(
+    p => p.key === activePlatform
+  );
+
+  const currentCount = activePlatform === 'all'
+    ? games.length
+    : getPlatformGameCount(activePlatform);
+
+  label.textContent = currentPlatform
+    ? `${currentPlatform.label} (${currentCount})`
+    : `${t('platforms')} (${games.length})`;
 
   dropdownBtn.classList.toggle('active', activePlatform !== 'all');
 }
@@ -89,3 +110,5 @@ function starString(rating) {
   const full = Math.round(rating / 2);
   return '★'.repeat(full) + '☆'.repeat(5 - full);
 }
+
+

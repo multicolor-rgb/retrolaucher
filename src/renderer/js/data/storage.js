@@ -1,6 +1,7 @@
 // Odczyt i zapis konfiguracji oraz pomocnicze get/set dla danych.
 
 function ensurePresetEmulators() {
+  // Upewnij się, że struktury per-platform są poprawne
   config.platforms.forEach(p => {
     if (typeof config.emulators[p.key] !== 'string') config.emulators[p.key] = '';
     if (typeof config.launchArgs[p.key] !== 'string') config.launchArgs[p.key] = '';
@@ -10,6 +11,7 @@ function ensurePresetEmulators() {
     if (!p.aspect) p.aspect = 'standard';
   });
 
+  // API keys
   if (!config.apiKeys || typeof config.apiKeys !== 'object') {
     config.apiKeys = { steamgrid: '' };
   }
@@ -17,6 +19,7 @@ function ensurePresetEmulators() {
     config.apiKeys.steamgrid = '';
   }
 
+  // uiState
   if (!config.uiState || typeof config.uiState !== 'object') {
     config.uiState = {};
   }
@@ -29,9 +32,24 @@ function ensurePresetEmulators() {
     config.uiState.fullscreenOnLaunch = false;
   }
 
-  const allowedViewModes = ['flat', 'arc', 'stack', 'cascade'];
+  // view mode – rozszerz o grid, skoro masz go w renderShelf
+  const allowedViewModes = ['flat', 'arc', 'stack', 'cascade', 'grid'];
   if (!allowedViewModes.includes(config.uiState.shelfViewMode)) {
     config.uiState.shelfViewMode = 'flat';
+  }
+
+  // język
+  if (!config.uiState.language) {
+    config.uiState.language = 'pl';
+  }
+
+  // customowe tytuły gier
+  if (
+    !config.uiState.gameTitles ||
+    typeof config.uiState.gameTitles !== 'object' ||
+    Array.isArray(config.uiState.gameTitles)
+  ) {
+    config.uiState.gameTitles = {};
   }
 }
 
@@ -39,40 +57,50 @@ function mergeStoredConfig(stored = {}) {
   return {
     ...config,
     ...stored,
+
     platforms: Array.isArray(stored.platforms) && stored.platforms.length
       ? stored.platforms
       : config.platforms,
+
     romFolders: {
       ...(config.romFolders || {}),
       ...((stored && stored.romFolders) || {})
     },
+
     emulators: {
       ...(config.emulators || {}),
       ...((stored && stored.emulators) || {})
     },
+
     launchArgs: {
       ...(config.launchArgs || {}),
       ...((stored && stored.launchArgs) || {})
     },
+
     metadata: {
       ...(config.metadata || {}),
       ...((stored && stored.metadata) || {})
     },
+
     manualCovers: {
       ...(config.manualCovers || {}),
       ...((stored && stored.manualCovers) || {})
     },
+
     userRatings: {
       ...(config.userRatings || {}),
       ...((stored && stored.userRatings) || {})
     },
+
     apiKeys: {
       ...(config.apiKeys || {}),
       ...((stored && stored.apiKeys) || {})
     },
+
     uiState: {
       ...(config.uiState || {}),
       ...((stored && stored.uiState) || {})
+      // tu wciągamy też stored.uiState.gameTitles, jeśli jest
     }
   };
 }
@@ -114,7 +142,10 @@ async function saveStoredConfig() {
     if (window.launcherAPI?.saveConfig) {
       await window.launcherAPI.saveConfig(payload);
     } else {
-      localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(payload));
+      localStorage.setItem(
+        CONFIG_STORAGE_KEY,
+        JSON.stringify(payload)
+      );
     }
   } catch (e) {
     console.warn('Nie udało się zapisać ustawień:', e);
@@ -137,10 +168,15 @@ function getManualCover(platformKey, gameId) {
 }
 
 function setManualCover(platformKey, gameId, value) {
-  if (!config.manualCovers[platformKey]) config.manualCovers[platformKey] = {};
+  if (!config.manualCovers[platformKey]) {
+    config.manualCovers[platformKey] = {};
+  }
 
-  if (value) config.manualCovers[platformKey][gameId] = value;
-  else delete config.manualCovers[platformKey][gameId];
+  if (value) {
+    config.manualCovers[platformKey][gameId] = value;
+  } else {
+    delete config.manualCovers[platformKey][gameId];
+  }
 }
 
 function getCoverForGame(game) {

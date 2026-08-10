@@ -1,45 +1,117 @@
 // Stan globalny aplikacji i stałe konfiguracyjne.
+
 const games = [];
 
 let config = {
   platforms: [
-    { key: 'psp', label: 'PlayStation Portable', color: '#ffb450', icon: '🎮', extensions: ['.iso', '.cso', '.pbp', '.chd'], aspect: 'psp' },
-    { key: 'ps2', label: 'PlayStation 2', color: '#64b4ff', icon: '🔒️', extensions: ['.iso', '.bin'], aspect: 'standard' },
-    { key: 'psx', label: 'PlayStation (PSX)', color: '#c88cff', icon: '💕', extensions: ['.bin', '.cue', '.img'], aspect: 'standard' },
-    { key: 'ps3', label: 'PlayStation 3', color: '#78ffb4', icon: '📀', extensions: ['.iso', '.pkg'], aspect: 'wide' },
-    { key: 'snes', label: 'Super Nintendo', color: '#ff8ca8', icon: '🔥', extensions: ['.sfc', '.smc'], aspect: 'square' },
-    { key: 'nds', label: 'Nintendo DS', color: '#8cffe0', icon: '📱', extensions: ['.nds'], aspect: 'psp' },
-    { key: 'xbox360', label: 'Xbox 360', color: '#9dff8c', icon: '❎', extensions: ['.iso', '.xex'], aspect: 'standard' }
+    {
+      key: 'psp',
+      label: 'PlayStation Portable',
+      color: '#ffb450',
+      icon: '🎮',
+      extensions: ['.iso', '.cso', '.pbp', '.chd'],
+      aspect: 'psp'
+    },
+    {
+      key: 'ps2',
+      label: 'PlayStation 2',
+      color: '#64b4ff',
+      icon: '🔒️',
+      extensions: ['.iso', '.bin'],
+      aspect: 'standard'
+    },
+    {
+      key: 'psx',
+      label: 'PlayStation (PSX)',
+      color: '#c88cff',
+      icon: '💕',
+      extensions: ['.bin', '.cue', '.img'],
+      aspect: 'standard'
+    },
+    {
+      key: 'ps3',
+      label: 'PlayStation 3',
+      color: '#78ffb4',
+      icon: '📀',
+      extensions: ['.iso', '.pkg'],
+      aspect: 'wide'
+    },
+    {
+      key: 'snes',
+      label: 'Super Nintendo',
+      color: '#ff8ca8',
+      icon: '🔥',
+      extensions: ['.sfc', '.smc'],
+      aspect: 'square'
+    },
+    {
+      key: 'nds',
+      label: 'Nintendo DS',
+      color: '#8cffe0',
+      icon: '📱',
+      extensions: ['.nds'],
+      aspect: 'psp'
+    },
+    {
+      key: 'xbox360',
+      label: 'Xbox 360',
+      color: '#9dff8c',
+      icon: '❎',
+      extensions: ['.iso', '.xex'],
+      aspect: 'standard'
+    }
   ],
+
   romFolders: {},
   emulators: {},
   launchArgs: {},
   metadata: {},
   manualCovers: {},
   userRatings: {},
+
   apiKeys: {
     steamgrid: ''
   },
+
   uiState: {
     settingsOpen: false,
     fullscreenOnLaunch: false,
     shelfViewMode: 'flat',
-    language: 'pl'
+    language: 'pl',
+    gameTitles: {}
   }
 };
 
+
 const CONFIG_STORAGE_KEY = 'retroLauncherConfig';
-const STEAMGRIDBASE = 'https://www.steamgriddb.com/api/v2';
-const STEAMGRIDATTRIBUTIONURL = 'https://www.steamgriddb.com';
-const SteamGridDB_API_BASE = 'https://www.steamgriddb.com/api/v2';
-const SteamGridDB_ATTRIBUTION_URL = 'https://www.steamgriddb.com';
-const DEFAULT_LAUNCH_PLACEHOLDER = 'Np. pcsx2-qt | flatpak run net.pcsx2.PCSX2 | /home/user/Emulator.AppImage | C:\\Emu\\emu.exe';
+
+const STEAMGRIDBASE =
+  'https://www.steamgriddb.com/api/v2';
+
+const STEAMGRIDATTRIBUTIONURL =
+  'https://www.steamgriddb.com';
+
+const SteamGridDB_API_BASE =
+  'https://www.steamgriddb.com/api/v2';
+
+const SteamGridDB_ATTRIBUTION_URL =
+  'https://www.steamgriddb.com';
+
+const DEFAULT_LAUNCH_PLACEHOLDER =
+  'Np. pcsx2-qt | flatpak run net.pcsx2.PCSX2 | /home/user/Emulator.AppImage | C:\\Emu\\emu.exe';
+
 const DEFAULT_PLATFORM_ICON = '🎮';
+
 
 let activePlatform = 'all';
 let filtered = [];
-current = 0;
-let viewMode = config.uiState.shelfViewMode || 'flat';
+let current = 0;
+let viewMode = 'flat';
+
+
+// ------------------------------------------------------------
+// Tłumaczenia
+// ------------------------------------------------------------
 
 const I18N = {
   pl: {
@@ -81,7 +153,7 @@ const I18N = {
     languageInterface: 'Język interfejsu',
     saveLanguage: 'Zapisz język',
     artworkMetaTitle: 'Okładki i opisy',
-    artworkMetaNote: 'Wybierz platformę do pobierania danych. Możesz pobrać metadata dla jednej platformy albo wszystkich.',
+    artworkMetaNote: 'Wybierz platformę do pobierania danych.',
     fetchPlatform: 'Platforma do pobierania',
     fetchCovers: 'Pobierz okładki i opisy',
     forceRefresh: 'Wymuś odświeżenie',
@@ -95,27 +167,12 @@ const I18N = {
     chooseFile: 'Wybierz plik z dysku',
     removeCover: 'Usuń ręczną okładkę',
     addPlatform: 'Dodawanie platformy',
-    addPlatformNote: 'Dodaj nazwę platformy, rozszerzenia ROM-ów, kolor i typ okładki. Launcher sam utworzy wpis konfiguracji.',
-    platformNamePlaceholder: 'Nazwa platformy, np. Dreamcast',
-    platformExtsPlaceholder: 'Rozszerzenia, np. .gdi, .cdi',
     addPlatformBtn: 'Dodaj platformę',
-    platformHelp: 'Szybka wskazówka: po dodaniu platformy ustaw folder ROM-ów, polecenie emulatora i opcjonalne argumenty startowe.',
     romEmu: 'ROM-y i emulatory',
-    romEmuNote: 'Każda platforma może mieć własny folder ROM-ów, emulator, argumenty i proporcje okładek.',
     clearPaths: 'Wyczyść ścieżki',
     saveChanges: 'Zapisz zmiany',
     windows: 'Windows',
-    windowsNote: 'Dla emulatora wybierz plik `.exe`, a dla ROM-ów folder z grami. Lokalne pliki okładek mogą wymagać poprawnego adresu `file:///`, szczególnie dla ścieżek dyskowych typu `C:\\...`.',
-    windowsEmuExample: 'Przykład emulatora: C:\\Emulatory\\PPSSPP\\PPSSPPWindows64.exe',
-    windowsCoverExample: 'Przykład okładki: file:///C:/Retro/covers/god-of-war.jpg',
     linux: 'Linux',
-    linuxNote: 'Na Linuxie zwykle wybierasz binarkę emulatora albo komendę uruchomieniową, a przy Flatpaku mogą być potrzebne uprawnienia do katalogów spoza sandboxa, np. `/media` lub własnych folderów z ROM-ami.',
-    linuxEmuExample: 'Przykład emulatora: /usr/bin/retroarch',
-    linuxFlatpakExample: 'Przykład Flatpak: flatpak run org.ppsspp.PPSSPP',
-    linuxPermExample: 'Przykład uprawnień: flatpak override --user --filesystem=/media org.ppsspp.PPSSPP',
-    howToAdd: 'Jak dodać platformę i okładki',
-    howToAddNote: '1. Dodaj platformę w zakładce „Platformy". 2. Ustaw folder ROM-ów i emulator. 3. W zakładce „Okładki" wybierz platformę i pobierz dane albo ustaw ręczną okładkę przez URL lub plik lokalny.',
-    howToAddHint: 'Jeśli lokalna okładka nie pokazuje się poprawnie, sprawdź format ścieżki `file://` oraz to, czy aplikacja ma dostęp do pliku.',
     noGamesForPlatform: 'Brak gier dla tej platformy — skonfiguruj folder i emulator w Ustawieniach',
     unknownPlatform: 'Nieznana platforma',
     unknownGame: 'Nieznana gra',
@@ -128,26 +185,17 @@ const I18N = {
     demoLaunch: 'Demo: uruchomienie ',
     launchGamePrefix: 'Uruchamiam: ',
     saved: 'Zapisano ✓',
-    artworkWarning: 'Okładki i opisy są pobierane z SteamGridDB. W ustawieniach możesz wybrać jedną platformę albo wszystkie naraz. Dla każdej platformy możesz też ustawić własny typ proporcji okładki oraz ręcznie podmienić cover wybranej gry.',
     allPlatforms: 'Wszystkie platformy',
     choosePlatform: 'Wybierz platformę',
-    choosePlatformFirst: 'Najpierw wybierz platformę w panelu okładek',
-    choosePlatformToEdit: 'Wybierz konkretną platformę, aby edytować ręczne okładki.',
     chooseGameFromList: 'Wybierz grę z listy.',
     sourceManual: 'Źródło: ręczne',
     sourceAuto: 'Źródło: SteamGridDB / automatyczne',
     noManualCover: 'Brak ręcznego URL lub pliku.',
-    chooseGameAndUrl: 'Wybierz grę i wpisz URL okładki',
     gameNotFound: 'Nie znaleziono gry',
-    savedManualCoverUrl: 'Zapisano ręczny URL okładki',
     chooseGameFirst: 'Najpierw wybierz grę',
     noFilePicker: 'Brak natywnego okna wyboru pliku w launcherAPI',
     filePickerError: 'Nie udało się otworzyć okna wyboru pliku',
-    savedManualCoverFile: 'Zapisano ręczny plik okładki',
-    removedManualCover: 'Usunięto ręczną okładkę',
     noPlatformsToFetch: 'Brak platform do pobrania',
-    refreshedAllPlatforms: 'Odświeżono dane dla wszystkich platform',
-    fetchedAllPlatforms: 'Pobrano dane dla wszystkich platform',
     removePlatform: 'Usuń platformę',
     romFolder: 'Folder z ROM-ami',
     notSet: 'Nie ustawiono',
@@ -183,9 +231,13 @@ const I18N = {
     supportTitle: 'Wspieraj rozwój',
     supportNote: 'Jeśli podoba Ci się ten program, możesz postawić mi wirtualną kawę i wesprzeć dalszy rozwój.',
     supportButton: '☕ Postaw kawę',
-    all: 'Wszystkie'
+    all: 'Wszystkie',
 
+    renameGame: 'Podaj nową nazwę gry:',
+    gameNameEmpty: 'Nazwa gry nie może być pusta.',
+    gameRenamed: 'Nazwa gry została zmieniona.'
   },
+
   en: {
     appTitle: 'Retro Launcher',
     library: 'Library',
@@ -193,7 +245,6 @@ const I18N = {
     platforms: 'Platforms',
     search: 'Search...',
     fullscreen: 'Fullscreen',
-    fullscreenHint: 'Fullscreen (F11) / Alt + Enter',
     gamepadStatus: 'Gamepad status',
     chooseGame: 'Choose a game',
     launch: 'Launch',
@@ -202,7 +253,6 @@ const I18N = {
     platformHint: 'Platforms',
     changePlatformHint: 'Change platform',
     launchHint: 'Launch',
-    fullscreenHintLabel: 'Fullscreen',
     closeHint: 'Close',
     fileSize: 'File size',
     location: 'Location',
@@ -212,54 +262,33 @@ const I18N = {
     artwork: 'Covers',
     system: 'System',
     startup: 'Startup',
-    startupNote: 'Choose whether the launcher starts in fullscreen mode.',
     fullscreenOnLaunch: 'Fullscreen on launch',
     enabled: 'Enabled',
     disabled: 'Disabled',
     saveStartup: 'Save startup settings',
-    steamgridNote: 'Enter your own API key to fetch covers and descriptions automatically.',
-    apiKeyPlaceholder: 'Enter API key',
     saveKey: 'Save key',
     language: 'Language',
     languageNote: 'Choose the application interface language.',
     languageInterface: 'Interface language',
     saveLanguage: 'Save language',
     artworkMetaTitle: 'Covers and descriptions',
-    artworkMetaNote: 'Choose a platform to fetch data. You can fetch metadata for one platform or all at once.',
     fetchPlatform: 'Fetch platform',
     fetchCovers: 'Fetch covers and descriptions',
     forceRefresh: 'Force refresh',
     manualCover: 'Manual cover',
-    manualCoverNote: 'Choose a platform and a game, then enter an image URL or select a file from disk.',
     gamePlatform: 'Game platform',
     game: 'Game',
     coverUrl: 'Cover URL',
-    coverUrlPlaceholder: 'https://example.com/cover.jpg',
     saveUrl: 'Save URL',
     chooseFile: 'Choose file from disk',
     removeCover: 'Remove manual cover',
     addPlatform: 'Add platform',
-    addPlatformNote: 'Add a platform name, ROM extensions, color, and cover type. The launcher will create the config entry automatically.',
-    platformNamePlaceholder: 'Platform name, e.g. Dreamcast',
-    platformExtsPlaceholder: 'Extensions, e.g. .gdi, .cdi',
     addPlatformBtn: 'Add platform',
-    platformHelp: 'Quick tip: after adding a platform, set the ROM folder, emulator command, and optional launch arguments.',
     romEmu: 'ROMs and emulators',
-    romEmuNote: 'Each platform can have its own ROM folder, emulator, arguments, and cover proportions.',
     clearPaths: 'Clear paths',
     saveChanges: 'Save changes',
     windows: 'Windows',
-    windowsNote: 'For the emulator choose an `.exe` file, and for ROMs choose the game folder. Local cover files may require a proper `file:///` path, especially on disk paths like `C:\\...`.',
-    windowsEmuExample: 'Example emulator: C:\\Emulators\\PPSSPP\\PPSSPPWindows64.exe',
-    windowsCoverExample: 'Example cover: file:///C:/Retro/covers/god-of-war.jpg',
     linux: 'Linux',
-    linuxNote: 'On Linux you usually choose an emulator binary or a launch command, and with Flatpak you may need permissions for folders outside the sandbox, such as `/media` or your own ROM folders.',
-    linuxEmuExample: 'Example emulator: /usr/bin/retroarch',
-    linuxFlatpakExample: 'Example Flatpak: flatpak run org.ppsspp.PPSSPP',
-    linuxPermExample: 'Example permission: flatpak override --user --filesystem=/media org.ppsspp.PPSSPP',
-    howToAdd: 'How to add platforms and covers',
-    howToAddNote: '1. Add a platform in the "Platforms" tab. 2. Set the ROM folder and emulator. 3. In the "Covers" tab choose a platform and fetch data or set a manual cover using a URL or a local file.',
-    howToAddHint: 'If a local cover does not appear correctly, check the `file://` path format and whether the app can access the file.',
     noGamesForPlatform: 'No games for this platform — configure the folder and emulator in Settings',
     unknownPlatform: 'Unknown platform',
     unknownGame: 'Unknown game',
@@ -272,26 +301,17 @@ const I18N = {
     demoLaunch: 'Demo: launching ',
     launchGamePrefix: 'Launching: ',
     saved: 'Saved ✓',
-    artworkWarning: 'Covers and descriptions are fetched from SteamGridDB. In settings you can choose one platform or all at once. For each platform you can also set your own cover proportions and manually override the cover for a selected game.',
     allPlatforms: 'All platforms',
     choosePlatform: 'Choose platform',
-    choosePlatformFirst: 'Choose a platform first in the covers panel',
-    choosePlatformToEdit: 'Choose a specific platform to edit manual covers.',
     chooseGameFromList: 'Choose a game from the list.',
     sourceManual: 'Source: manual',
     sourceAuto: 'Source: SteamGridDB / automatic',
     noManualCover: 'No manual URL or file.',
-    chooseGameAndUrl: 'Choose a game and enter a cover URL',
     gameNotFound: 'Game not found',
-    savedManualCoverUrl: 'Saved manual cover URL',
     chooseGameFirst: 'Choose a game first',
     noFilePicker: 'No native file picker in launcherAPI',
     filePickerError: 'Failed to open file picker',
-    savedManualCoverFile: 'Saved manual cover file',
-    removedManualCover: 'Removed manual cover',
     noPlatformsToFetch: 'No platforms to fetch',
-    refreshedAllPlatforms: 'Refreshed data for all platforms',
-    fetchedAllPlatforms: 'Fetched data for all platforms',
     removePlatform: 'Remove platform',
     romFolder: 'ROM folder',
     notSet: 'Not set',
@@ -327,26 +347,226 @@ const I18N = {
     supportTitle: 'Support development',
     supportNote: 'If you like this app, you can buy me a virtual coffee and support further development.',
     supportButton: '☕ Buy me a coffee',
-    all: 'All'
+    all: 'All',
+
+    renameGame: 'Enter a new game name:',
+    gameNameEmpty: 'The game name cannot be empty.',
+    gameRenamed: 'Game name changed.'
   }
 };
+
+
+// ------------------------------------------------------------
+// Język
+// ------------------------------------------------------------
 
 function getSavedLanguage() {
   return config.uiState?.language === 'en' ? 'en' : 'pl';
 }
 
+
 function setSavedLanguage(lang) {
   const next = lang === 'en' ? 'en' : 'pl';
+
   config.uiState = config.uiState || {};
   config.uiState.language = next;
+
   return next;
 }
 
+
 function t(key) {
   const lang = getSavedLanguage();
-  return I18N[lang]?.[key] ?? I18N.pl[key] ?? key;
+
+  return I18N[lang]?.[key]
+    ?? I18N.pl[key]
+    ?? key;
 }
 
+
+// ------------------------------------------------------------
+// Domyślne wartości konfiguracji
+// ------------------------------------------------------------
+
+function ensureConfigDefaults() {
+  if (!config.uiState || typeof config.uiState !== 'object') {
+    config.uiState = {};
+  }
+
+  if (
+    !config.uiState.gameTitles
+    || typeof config.uiState.gameTitles !== 'object'
+    || Array.isArray(config.uiState.gameTitles)
+  ) {
+    config.uiState.gameTitles = {};
+  }
+
+  if (!config.uiState.shelfViewMode) {
+    config.uiState.shelfViewMode = 'flat';
+  }
+
+  if (!config.uiState.language) {
+    config.uiState.language = 'pl';
+  }
+
+  if (typeof config.uiState.settingsOpen !== 'boolean') {
+    config.uiState.settingsOpen = false;
+  }
+
+  if (typeof config.uiState.fullscreenOnLaunch !== 'boolean') {
+    config.uiState.fullscreenOnLaunch = false;
+  }
+
+  if (!config.platforms || !Array.isArray(config.platforms)) {
+    config.platforms = [];
+  }
+
+  if (!config.romFolders || typeof config.romFolders !== 'object') {
+    config.romFolders = {};
+  }
+
+  if (!config.emulators || typeof config.emulators !== 'object') {
+    config.emulators = {};
+  }
+
+  if (!config.launchArgs || typeof config.launchArgs !== 'object') {
+    config.launchArgs = {};
+  }
+
+  if (!config.metadata || typeof config.metadata !== 'object') {
+    config.metadata = {};
+  }
+
+  if (!config.manualCovers || typeof config.manualCovers !== 'object') {
+    config.manualCovers = {};
+  }
+
+  if (!config.userRatings || typeof config.userRatings !== 'object') {
+    config.userRatings = {};
+  }
+
+  if (!config.apiKeys || typeof config.apiKeys !== 'object') {
+    config.apiKeys = {};
+  }
+
+  if (typeof config.apiKeys.steamgrid !== 'string') {
+    config.apiKeys.steamgrid = '';
+  }
+}
+
+
+// ------------------------------------------------------------
+// Nazwy gier
+// ------------------------------------------------------------
+
 function getDisplayTitle(game) {
-  return (game?.customTitle || game?.displayTitle || game?.title || t('unknownGame')).trim();
+  if (!game) return t('unknownGame');
+
+  const customTitle = config?.uiState?.gameTitles?.[game.id];
+
+  const title =
+    customTitle
+    || game.customTitle
+    || game.displayTitle
+    || game.title
+    || game.name
+    || t('unknownGame');
+
+  return String(title).trim() || t('unknownGame');
+}
+
+
+async function renameGame(game) {
+  if (!game?.id) return;
+
+  ensureConfigDefaults();
+
+  const currentTitle = getDisplayTitle(game);
+
+  const newTitle = window.prompt(
+    t('renameGame'),
+    currentTitle
+  );
+
+  if (newTitle === null) return;
+
+  const trimmedTitle = String(newTitle).trim();
+
+  if (!trimmedTitle) {
+    showToast(t('gameNameEmpty'), true);
+    return;
+  }
+
+  const originalTitle = String(
+    game.title
+    || game.displayTitle
+    || t('unknownGame')
+  ).trim();
+
+  if (trimmedTitle === originalTitle) {
+    delete config.uiState.gameTitles[game.id];
+  } else {
+    config.uiState.gameTitles[game.id] = trimmedTitle;
+  }
+
+  await saveStoredConfig();
+
+  if (typeof renderShelf === 'function') {
+    renderShelf();
+  }
+
+  if (
+    typeof overlay !== 'undefined'
+    && overlay?.classList?.contains('open')
+    && overlay.currentGame?.id === game.id
+  ) {
+    const modalTitle = document.getElementById('modalTitle');
+
+    if (modalTitle) {
+      modalTitle.textContent = getDisplayTitle(game);
+    }
+  }
+
+  showToast(t('gameRenamed'));
+}
+
+
+// ------------------------------------------------------------
+// Wczytywanie konfiguracji
+// ------------------------------------------------------------
+
+async function loadStoredConfig() {
+  let loadedConfig = null;
+
+  try {
+    if (window.launcherAPI?.loadConfig) {
+      loadedConfig = await window.launcherAPI.loadConfig();
+    } else {
+      const raw = localStorage.getItem(CONFIG_STORAGE_KEY);
+
+      if (raw) {
+        loadedConfig = JSON.parse(raw);
+      }
+    }
+  } catch (e) {
+    console.warn('Nie udało się wczytać konfiguracji:', e);
+  }
+
+  if (loadedConfig && typeof loadedConfig === 'object') {
+    config = {
+      ...config,
+      ...loadedConfig,
+
+      uiState: {
+        ...config.uiState,
+        ...(loadedConfig.uiState || {})
+      }
+    };
+  }
+
+  ensureConfigDefaults();
+
+  viewMode = config.uiState.shelfViewMode;
+
+  return config;
 }

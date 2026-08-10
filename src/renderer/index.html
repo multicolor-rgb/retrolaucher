@@ -68,11 +68,31 @@
         <div class="modal-cover">
           <img id="modalCoverImg" src="" alt="cover" />
         </div>
-        <div class="modal-content">
-          <div class="modal-platform" id="modalPlatform">PSP</div>
-          <h1 class="modal-title" id="modalTitle">Tytuł gry</h1>
-          <div class="tags-row" id="modalTags"></div>
-          <p class="description" id="modalDesc"></p>
+     <div class="modal-content">
+  <div class="modal-platform" id="modalPlatform">PSP</div>
+
+  <div id="modalTitleRow" class="modal-title-row">
+    <h1 class="modal-title" id="modalTitle">Tytuł gry</h1>
+    <button
+      type="button"
+      style=""margin-top:20px;
+      width:100%;
+      id="renameGameButton"
+      class="rename-game-button"
+      data-i18n="renameGame"
+    >
+      Zmień nazwę
+    </button>
+  </div>
+
+  <div id="renameGameRow" class="rename-game-row" hidden>
+    <input id="renameGameInput" type="text" class="rename-game-input" />
+    <button type="button" id="renameGameSave" class="rename-game-save">OK</button>
+    <button type="button" id="renameGameCancel" class="rename-game-cancel">✕</button>
+  </div>
+
+  <div class="tags-row" id="modalTags"></div>
+  <p class="description" style="display:none;" id="modalDesc"></p>
 
           <div class="meta-grid">
             <div class="meta-item">
