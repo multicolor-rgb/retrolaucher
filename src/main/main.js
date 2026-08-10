@@ -299,7 +299,7 @@ function createWindow() {
       preload: path.join(__dirname, '..', 'preload', 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      devTools: true
+      devTools: false
     }
   });
 
@@ -308,13 +308,7 @@ function createWindow() {
   mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
 
 
-  /*devtools */
-  if (!app.isPackaged) {
-  mainWindow.webContents.openDevTools({
-    mode: 'detach'
-  });
-}
-  /*devtools */
+ 
 
   mainWindow.on('focus', () => emitWindowState('focus'));
   mainWindow.on('blur', () => emitWindowState('blur'));

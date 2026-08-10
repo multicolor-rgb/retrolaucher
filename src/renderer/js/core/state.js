@@ -232,6 +232,7 @@ const I18N = {
     supportNote: 'Jeśli podoba Ci się ten program, możesz postawić mi wirtualną kawę i wesprzeć dalszy rozwój.',
     supportButton: '☕ Postaw kawę',
     all: 'Wszystkie',
+  fullscreenHintLabel: 'Pełny ekran',
 
     renameGame: 'Podaj nową nazwę gry:',
     gameNameEmpty: 'Nazwa gry nie może być pusta.',
@@ -348,6 +349,7 @@ const I18N = {
     supportNote: 'If you like this app, you can buy me a virtual coffee and support further development.',
     supportButton: '☕ Buy me a coffee',
     all: 'All',
+  fullscreenHintLabel: 'Fullscreen',
 
     renameGame: 'Enter a new game name:',
     gameNameEmpty: 'The game name cannot be empty.',
