@@ -393,21 +393,7 @@ body { min-height:100vh; }
   transform: translateZ(0);
 }
 
-.shelf.mode-cascade .sh-item::before {
-  content: "";
-  position: absolute;
-  inset: auto 10px -22px 10px;
-  height: 30px;
-  border-radius: 50%;
-  background: rgba(0,0,0,0.42);
-  filter: blur(18px);
-  z-index: -1;
-  opacity: 0.78;
-  transition:
-    opacity .34s ease,
-    transform .78s cubic-bezier(.22,.9,.25,1);
-}
-
+ 
 .shelf.mode-cascade .sh-item[data-offset="0"] {
   transform: translate3d(0, -6px, 260px) scale(1.06) rotateY(0deg) rotateZ(0deg);
   opacity: 1;
@@ -493,17 +479,7 @@ body { min-height:100vh; }
   transform: translate3d(-270px, 18px, 42px) scale(0.87) rotateY(-30deg) rotateZ(-3deg);
 }
 
-.shelf.mode-cascade .sh-item::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.08), transparent 16%, transparent 70%, rgba(0,0,0,0.16)),
-    linear-gradient(90deg, rgba(255,255,255,0.05), transparent 16%, transparent 84%, rgba(0,0,0,0.14));
-  mix-blend-mode: screen;
-  opacity: 0.55;
-}
+ 
 
 .shelf-viewport.mode-cascade::before {
   content: "";
