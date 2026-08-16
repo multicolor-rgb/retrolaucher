@@ -81,44 +81,6 @@ function applyCoverGeometry(el, platformKey, focused = false) {
   else el.classList.remove('focus');
 }
 
-
-function bindGridScrollSync() {
-  if (!shelfViewport || shelfViewport.dataset.scrollSyncBound === 'true') return;
-
-  let scrollTimer = null;
-  shelfViewport.addEventListener('scroll', () => {
-    if (viewMode !== 'grid') return;
-    clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(() => {
-      const items = shelf.querySelectorAll('.sh-item');
-      if (!items.length) return;
-
-      const viewportRect = shelfViewport.getBoundingClientRect();
-      const viewportCenter = viewportRect.top + viewportRect.height / 2;
-
-      let closestIdx = current;
-      let closestDist = Infinity;
-
-      items.forEach((el, idx) => {
-        const rect = el.getBoundingClientRect();
-        const elCenter = rect.top + rect.height / 2;
-        const dist = Math.abs(elCenter - viewportCenter);
-        if (dist < closestDist) {
-          closestDist = dist;
-          closestIdx = idx;
-        }
-      });
-
-      if (closestIdx !== current) {
-        current = closestIdx;
-        updateGridFocusOnly();
-      }
-    }, 120);
-  }, { passive: true });
-
-  shelfViewport.dataset.scrollSyncBound = 'true';
-}
-
 function bindShelfWheelNavigation() {
   if (wheelNavigationBound) return;
   if (!shelfViewport) return;
@@ -497,17 +459,15 @@ function renderShelf() {
 }
 
 
-function updateGridFocusOnly(skipScrollIntoView = false) {
+function updateGridFocusOnly() {
   const items = shelf.querySelectorAll('.sh-item');
   items.forEach((el, idx) => {
     el.classList.toggle('focus', idx === current);
   });
 
-  if (!skipScrollIntoView) {
-    const focusEl = items[current];
-    if (focusEl) {
-      focusEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    }
+  const focusEl = items[current];
+  if (focusEl) {
+    focusEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
   const g = filtered[current];
