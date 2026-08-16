@@ -69,8 +69,16 @@ let config = {
   manualCovers: {},
   userRatings: {},
 
+  // Klucze/dane logowania do scraperów metadanych. steamgrid i rawg to
+  // jednolite klucze API. screenscraperUser/Password to login+hasło
+  // konta ScreenScraper (nie klucz API — ich autoryzacja działa inaczej).
+  // thegamesdb to klucz API TheGamesDB (fallback dla niszowych ROM-ów).
   apiKeys: {
-    steamgrid: ''
+    steamgrid: '',
+    rawg: '',
+    screenscraperUser: '',
+    screenscraperPassword: '',
+    thegamesdb: ''
   },
 
   uiState: {
@@ -96,6 +104,19 @@ const SteamGridDB_API_BASE =
 
 const SteamGridDB_ATTRIBUTION_URL =
   'https://www.steamgriddb.com';
+
+// Bazowe URL-e dodatkowych scraperów retro (ScreenScraper, TheGamesDB).
+const SCREENSCRAPER_BASE =
+  'https://www.screenscraper.fr/api2';
+
+const SCREENSCRAPER_ATTRIBUTION_URL =
+  'https://www.screenscraper.fr';
+
+const THEGAMESDB_BASE =
+  'https://api.thegamesdb.net/v1';
+
+const THEGAMESDB_ATTRIBUTION_URL =
+  'https://thegamesdb.net';
 
 const DEFAULT_LAUNCH_PLACEHOLDER =
   'Np. pcsx2-qt | flatpak run net.pcsx2.PCSX2 | /home/user/Emulator.AppImage | C:\\Emu\\emu.exe';
@@ -145,9 +166,24 @@ const I18N = {
     enabled: 'Włączony',
     disabled: 'Wyłączony',
     saveStartup: 'Zapisz ustawienia startu',
+
+    metaSourcesTitle: 'Źródła metadanych i okładek',
+    metaSourcesNote: 'Skonfiguruj klucze API dla poszczególnych scraperów. SteamGridDB i RAWG działają najlepiej dla nowszych gier, ScreenScraper i TheGamesDB są zorientowane na retro (SNES, Genesis, arcade, handheldy). Możesz skonfigurować tylko te źródła, z których chcesz korzystać — pozostałe zostaną pominięte przy pobieraniu.',
+
     steamgridNote: 'Wpisz własny klucz API, aby pobierać okładki i opisy automatycznie.',
     apiKeyPlaceholder: 'Wpisz klucz API',
     saveKey: 'Zapisz klucz',
+
+    rawgNote: 'Klucz API RAWG służy do pobierania opisów, gatunków i oceny Metacritic. Klucz generujesz bezpłatnie na rawg.io/apidocs.',
+
+    screenscraperNote: 'Główne źródło metadanych dla retro (opisy, gatunki, liczba graczy, okładki). Wymaga darmowego konta zarejestrowanego na screenscraper.fr — podaj login i hasło konta (nie klucz API).',
+    screenscraperUser: 'Login ScreenScraper',
+    screenscraperPassword: 'Hasło ScreenScraper',
+    usernamePlaceholder: 'Nazwa użytkownika',
+    passwordPlaceholder: 'Hasło',
+
+    gamesdbNote: 'Zapasowe źródło okładek dla niszowych ROM-ów, gdy SteamGridDB i ScreenScraper nie znajdą trafienia. Wymaga darmowego klucza API z thegamesdb.net.',
+
     language: 'Język',
     languageNote: 'Wybierz język interfejsu aplikacji.',
     languageInterface: 'Język interfejsu',
@@ -219,6 +255,9 @@ const I18N = {
     testFailed: 'Test nieudany',
     platformRemoved: 'Usunięto platformę',
     savedSteamgridKey: 'Zapisano klucz SteamGridDB API',
+    savedRawgKey: 'Zapisano klucz RAWG API',
+    savedScreenscraperCredentials: 'Zapisano dane logowania ScreenScraper',
+    savedGamesDbKey: 'Zapisano klucz TheGamesDB API',
     languageSavedEn: 'Language saved ✓',
     languageSavedPl: 'Zapisano język ✓',
     stopShortcut: 'Skrót zatrzymywania emulatora',
@@ -232,7 +271,6 @@ const I18N = {
     supportNote: 'Jeśli podoba Ci się ten program, możesz postawić mi wirtualną kawę i wesprzeć dalszy rozwój.',
     supportButton: '☕ Postaw kawę',
     all: 'Wszystkie',
-  fullscreenHintLabel: 'Pełny ekran',
 
     renameGame: 'Podaj nową nazwę gry:',
     gameNameEmpty: 'Nazwa gry nie może być pusta.',
@@ -254,6 +292,7 @@ const I18N = {
     platformHint: 'Platforms',
     changePlatformHint: 'Change platform',
     launchHint: 'Launch',
+    fullscreenHintLabel: 'Fullscreen',
     closeHint: 'Close',
     fileSize: 'File size',
     location: 'Location',
@@ -267,7 +306,22 @@ const I18N = {
     enabled: 'Enabled',
     disabled: 'Disabled',
     saveStartup: 'Save startup settings',
+
+    metaSourcesTitle: 'Metadata and cover sources',
+    metaSourcesNote: 'Configure API keys for each scraper. SteamGridDB and RAWG work best for newer games, ScreenScraper and TheGamesDB are focused on retro (SNES, Genesis, arcade, handhelds). You can configure only the sources you want to use — the rest will be skipped when fetching.',
+
     saveKey: 'Save key',
+
+    rawgNote: 'The RAWG API key is used to fetch descriptions, genres and Metacritic score. Generate a free key at rawg.io/apidocs.',
+
+    screenscraperNote: 'Main metadata source for retro (descriptions, genres, player count, covers). Requires a free account registered at screenscraper.fr — provide the account login and password (not an API key).',
+    screenscraperUser: 'ScreenScraper login',
+    screenscraperPassword: 'ScreenScraper password',
+    usernamePlaceholder: 'Username',
+    passwordPlaceholder: 'Password',
+
+    gamesdbNote: 'Backup cover source for niche ROMs when SteamGridDB and ScreenScraper find no match. Requires a free API key from thegamesdb.net.',
+
     language: 'Language',
     languageNote: 'Choose the application interface language.',
     languageInterface: 'Interface language',
@@ -336,6 +390,9 @@ const I18N = {
     testFailed: 'Test failed',
     platformRemoved: 'Platform removed',
     savedSteamgridKey: 'Saved SteamGridDB API key',
+    savedRawgKey: 'Saved RAWG API key',
+    savedScreenscraperCredentials: 'Saved ScreenScraper credentials',
+    savedGamesDbKey: 'Saved TheGamesDB API key',
     languageSavedEn: 'Language saved ✓',
     languageSavedPl: 'Zapisano język ✓',
     stopShortcut: 'Emulator stop shortcut',
@@ -349,7 +406,6 @@ const I18N = {
     supportNote: 'If you like this app, you can buy me a virtual coffee and support further development.',
     supportButton: '☕ Buy me a coffee',
     all: 'All',
-  fullscreenHintLabel: 'Fullscreen',
 
     renameGame: 'Enter a new game name:',
     gameNameEmpty: 'The game name cannot be empty.',
@@ -366,7 +422,6 @@ function getSavedLanguage() {
   return config.uiState?.language === 'en' ? 'en' : 'pl';
 }
 
-
 function setSavedLanguage(lang) {
   const next = lang === 'en' ? 'en' : 'pl';
 
@@ -375,7 +430,6 @@ function setSavedLanguage(lang) {
 
   return next;
 }
-
 
 function t(key) {
   const lang = getSavedLanguage();
@@ -451,8 +505,27 @@ function ensureConfigDefaults() {
     config.apiKeys = {};
   }
 
+  // Każdy klucz scrapera ma własny, jawny domyślny string — ten sam
+  // wzorzec co istniejący config.apiKeys.steamgrid, rozszerzony o
+  // RAWG, ScreenScraper (login+hasło) i TheGamesDB.
   if (typeof config.apiKeys.steamgrid !== 'string') {
     config.apiKeys.steamgrid = '';
+  }
+
+  if (typeof config.apiKeys.rawg !== 'string') {
+    config.apiKeys.rawg = '';
+  }
+
+  if (typeof config.apiKeys.screenscraperUser !== 'string') {
+    config.apiKeys.screenscraperUser = '';
+  }
+
+  if (typeof config.apiKeys.screenscraperPassword !== 'string') {
+    config.apiKeys.screenscraperPassword = '';
+  }
+
+  if (typeof config.apiKeys.thegamesdb !== 'string') {
+    config.apiKeys.thegamesdb = '';
   }
 }
 
@@ -558,6 +631,11 @@ async function loadStoredConfig() {
     config = {
       ...config,
       ...loadedConfig,
+
+      apiKeys: {
+        ...config.apiKeys,
+        ...(loadedConfig.apiKeys || {})
+      },
 
       uiState: {
         ...config.uiState,

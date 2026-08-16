@@ -1,5 +1,6 @@
 // Audio, gamepad, fullscreen i inicjalizacja aplikacji.
-
+//
+ 
 function slugify(str) {
   return str.toLowerCase().trim().replace(/[^a-z0-9]+/g, '');
 }
@@ -190,6 +191,9 @@ window.addEventListener('hashchange', () => {
   }
 });
 
+// JEDYNY listener klawiatury w projekcie. W widoku 'grid' strzałki
+// przesuwają fokus po siatce (moveGridSelection z shelf-view.js), w
+// innych trybach next()/prev() jak dotychczas.
 window.addEventListener('keydown', (e) => {
   const settingsActive = !settingsPanel.hidden;
 
@@ -205,8 +209,18 @@ window.addEventListener('keydown', (e) => {
 
   if (settingsActive) return;
 
-  if (e.key === 'ArrowRight') next();
-  if (e.key === 'ArrowLeft') prev();
+  const tag = document.activeElement?.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+  if (viewMode === 'grid') {
+    if (e.key === 'ArrowLeft') { e.preventDefault(); moveGridSelection(-1, 0); return; }
+    if (e.key === 'ArrowRight') { e.preventDefault(); moveGridSelection(1, 0); return; }
+    if (e.key === 'ArrowUp') { e.preventDefault(); moveGridSelection(0, -1); return; }
+    if (e.key === 'ArrowDown') { e.preventDefault(); moveGridSelection(0, 1); return; }
+  } else {
+    if (e.key === 'ArrowRight') next();
+    if (e.key === 'ArrowLeft') prev();
+  }
 
   if (e.key === 'Enter') {
     const g = filtered[current];
@@ -255,6 +269,7 @@ async function init() {
     switchToPage('home');
   }
 }
+
 // ---------- Obsługa pada (Gamepad API) ----------
 let gamepadIndex = null;
 let gamepadLoopActive = false;
@@ -270,7 +285,9 @@ const gpState = {
   settingsIndex: 0,
   modalIndex: 0,
   stickXActive: false,
-  stickXDir: 0
+  stickXDir: 0,
+  stickYActive: false,
+  stickYDir: 0
 };
 
 const GP_MOVE_COOLDOWN = 220;
@@ -398,6 +415,34 @@ function readHorizontalStickNavigation(gp, now) {
   return 0;
 }
 
+// Analogiczne odczytanie osi Y (potrzebne do góra/dół w widoku grid).
+function readVerticalStickNavigation(gp, now) {
+  const y = gp.axes[1] || 0;
+  const absY = Math.abs(y);
+
+  if (absY < GP_DEADZONE) {
+    gpState.stickYActive = false;
+    gpState.stickYDir = 0;
+    return 0;
+  }
+
+  const dir = y < 0 ? -1 : 1;
+
+  if (!gpState.stickYActive || gpState.stickYDir !== dir) {
+    gpState.stickYActive = true;
+    gpState.stickYDir = dir;
+    gpState.lastMove = now;
+    return dir;
+  }
+
+  if (now - gpState.lastMove > GP_MOVE_COOLDOWN) {
+    gpState.lastMove = now;
+    return dir;
+  }
+
+  return 0;
+}
+
 function moveSettingsFocus(step) {
   const items = getSettingsFocusable();
   if (!items.length) return;
@@ -435,7 +480,6 @@ function isStopComboPressed(gp) {
 
   return l3 && x;
 }
-
 
 async function handleStopCombo(gp) {
   const pressed = isStopComboPressed(gp);
@@ -609,15 +653,25 @@ function handleDropdownGamepad(gp, now) {
   return true;
 }
 
+// JEDYNA obsługa gamepada dla biblioteki. W widoku 'grid' left/right/
+// up/down przesuwają fokus po siatce (moveGridSelection z shelf-view.js).
+// W innych trybach left/right = prev()/next() jak dotychczas. Dropdown
+// platform pozostaje na LB/RB (cykl), zgodnie z wcześniejszym ustaleniem
+// żeby D-pad up nie kolidował z przesuwaniem fokusu w gridzie.
 function handleLibraryGamepad(gp, now) {
   const dpadLeft = justPressedButton(gp, 14);
   const dpadRight = justPressedButton(gp, 15);
+  const dpadUp = justPressedButton(gp, 12);
+  const dpadDown = justPressedButton(gp, 13);
+
   const stickHorizontal = readHorizontalStickNavigation(gp, now);
+  const stickVertical = readVerticalStickNavigation(gp, now);
 
   const left = dpadLeft || stickHorizontal === -1;
   const right = dpadRight || stickHorizontal === 1;
+  const up = dpadUp || stickVertical === -1;
+  const down = dpadDown || stickVertical === 1;
 
-  const up = justPressedButton(gp, 12) || axisPressed(gp.axes[1] || 0, 'negative', 'lastAxisY');
   const a = justPressedButton(gp, 0);
   const y = justPressedButton(gp, 3);
   const start = justPressedButton(gp, 9);
@@ -626,14 +680,14 @@ function handleLibraryGamepad(gp, now) {
   const lt = justPressedButton(gp, 6);
   const rt = justPressedButton(gp, 7);
 
-  if (left) {
-    prev();
-    return;
-  }
-
-  if (right) {
-    next();
-    return;
+  if (viewMode === 'grid') {
+    if (left) { moveGridSelection(-1, 0); return; }
+    if (right) { moveGridSelection(1, 0); return; }
+    if (up) { moveGridSelection(0, -1); return; }
+    if (down) { moveGridSelection(0, 1); return; }
+  } else {
+    if (left) { prev(); return; }
+    if (right) { next(); return; }
   }
 
   if ((lb || rb) && now - gpState.lastAction > GP_ACTION_COOLDOWN) {
@@ -659,14 +713,6 @@ function handleLibraryGamepad(gp, now) {
   if ((lt || rt) && now - gpState.lastAction > GP_ACTION_COOLDOWN) {
     if (lt) cycleShelfViewMode(-1);
     if (rt) cycleShelfViewMode(1);
-    gpState.lastAction = now;
-    return;
-  }
-
-  if (up && now - gpState.lastAction > GP_ACTION_COOLDOWN) {
-    document.getElementById('platformDropdown')?.classList.add('open');
-    gpState.pdIndex = 0;
-    sfxTab();
     gpState.lastAction = now;
     return;
   }
@@ -868,9 +914,5 @@ function applyFilter(platform, tabEl) {
     shelfInfo.classList.remove('switching');
   }, 260);
 }
-
-
-
-
 
 init();

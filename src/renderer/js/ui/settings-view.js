@@ -293,6 +293,7 @@ function renderSettings() {
 
   const steamgridInput = document.getElementById('steamgrid-api-key-input');
   if (steamgridInput) steamgridInput.value = config.apiKeys?.steamgrid || '';
+if (typeof fillApiKeyFields === 'function') fillApiKeyFields();
 
   const fsSel = document.getElementById('fullscreen-on-launch');
   if (fsSel) fsSel.value = String(!!config.uiState?.fullscreenOnLaunch);

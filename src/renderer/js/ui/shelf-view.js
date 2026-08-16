@@ -6,9 +6,18 @@ let shelfInfoAnimating = false;
 let playtimeRefreshTimer = null;
 let playtimeCache = {};
 
+let gridColsCache = 0;
+let gridColsCacheTime = 0;
+
+// Pamięta ostatni tryb, w jakim faktycznie zbudowano DOM shelfa — potrzebne,
+// żeby wykryć przełączenie grid <-> carousel i wyczyścić stare elementy
+// (inaczej reużycie po data-gameId miesza elementy z różnych layoutów i
+// "psuje stylowanie": stare inline style / klasy z gridu zostają na
+// elementach renderowanych teraz jako carousel, albo odwrotnie).
+let lastBuiltShelfMode = null;
+
 function getAllowedShelfViewModes() {
   return ['flat', 'arc', 'stack', 'cascade', 'grid'];
-
 }
 
 function getSavedShelfViewMode() {
@@ -79,6 +88,43 @@ function applyCoverGeometry(el, platformKey, focused = false) {
 
   if (focused) el.classList.add('focus');
   else el.classList.remove('focus');
+}
+
+function bindGridScrollSync() {
+  if (!shelfViewport || shelfViewport.dataset.scrollSyncBound === 'true') return;
+
+  let scrollTimer = null;
+  shelfViewport.addEventListener('scroll', () => {
+    if (viewMode !== 'grid') return;
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => {
+      const items = shelf.querySelectorAll('.sh-item');
+      if (!items.length) return;
+
+      const viewportRect = shelfViewport.getBoundingClientRect();
+      const viewportCenter = viewportRect.top + viewportRect.height / 2;
+
+      let closestIdx = current;
+      let closestDist = Infinity;
+
+      items.forEach((el, idx) => {
+        const rect = el.getBoundingClientRect();
+        const elCenter = rect.top + rect.height / 2;
+        const dist = Math.abs(elCenter - viewportCenter);
+        if (dist < closestDist) {
+          closestDist = dist;
+          closestIdx = idx;
+        }
+      });
+
+      if (closestIdx !== current) {
+        current = closestIdx;
+        updateGridFocusOnly(true);
+      }
+    }, 120);
+  }, { passive: true });
+
+  shelfViewport.dataset.scrollSyncBound = 'true';
 }
 
 function bindShelfWheelNavigation() {
@@ -229,7 +275,6 @@ function updateGameDetailsPlaytime(g, formatted) {
 }
 
 
-
 //zmiana nazwy
 
 // Zmiana nazwy gry
@@ -326,12 +371,124 @@ async function renameGameCore(game, newTitle, onDone) {
 //koniec zmiany nazwy
 
 
+// Buduje/aktualizuje shelf w trybach carousel (flat, arc, stack, cascade).
+//
+// POPRAWKA: dwa realne problemy, które psuły stylowanie i wyglądały jak
+// "przeskakiwanie":
+//
+// 1) Mieszanie elementów między trybami — jeśli poprzedni render był w
+//    'grid' (inne klasy/atrybuty na .sh-item) a teraz wchodzimy w carousel,
+//    trzeba wyczyścić shelf od zera, inaczej reużycie po data-gameId łapie
+//    elementy ze starym stylem/inline atrybutami z innego layoutu.
+//
+// 2) Nowe elementy wchodzące na krawędzi zakresu (offset ±3) nie miały
+//    ustawionej pozycji startowej przed wejściem do DOM — dostawały od
+//    razu finalny --offset, więc nie było z czego animować. Teraz nowy
+//    element startuje z offsetu "za krawędzią" i w następnej klatce
+//    dostaje docelowy --offset, więc transition ma z czego animować wjazd.
+function renderCarouselShelf() {
+  const len = filtered.length;
+  const range = 3;
+
+  const desired = [];
+  for (let offset = -range; offset <= range; offset++) {
+    desired.push({ offset, idx: mod(current + offset, len) });
+  }
+
+  const existing = new Map();
+  shelf.querySelectorAll('.sh-item').forEach(el => {
+    existing.set(el.dataset.gameId, el);
+  });
+
+  const usedIds = new Set();
+  const newlyCreated = [];
+  let anchor = null;
+
+  desired.forEach(({ offset, idx }) => {
+    const g = filtered[idx];
+    const gameId = String(g.id);
+    let el = existing.get(gameId);
+    const isNew = !el;
+
+    if (isNew) {
+      el = document.createElement('div');
+      el.className = 'sh-item';
+      el.dataset.gameId = gameId;
+
+      const coverSrc = getCoverForGame(g);
+      el.innerHTML = `<img src="${coverSrc}" alt="${getDisplayTitle(g)}"/>`;
+
+      el.addEventListener('click', () => {
+        const liveIdx = filtered.indexOf(g);
+        if (liveIdx === -1 || current === liveIdx) return;
+        current = liveIdx;
+        renderShelf();
+      });
+
+      el.addEventListener('dblclick', () => launchGame(g));
+
+      const startOffset = offset === 0 ? offset : offset + Math.sign(offset);
+      el.dataset.offset = startOffset;
+      el.style.setProperty('--offset', startOffset);
+      el.style.transition = 'none';
+
+      applyCoverGeometry(el, g.platform, false);
+      newlyCreated.push(el);
+    }
+
+    // Re-insercja: kolejność DOM musi odpowiadać logicznemu offsetowi,
+    // żeby flex + justify-content:center centrowało poprawny element
+    // w trybie flat. To nie przerywa animacji w arc/stack/cascade, bo
+    // sama pozycja jest tam sterowana przez --offset/transform, nie
+    // przez kolejność DOM.
+    if (anchor) {
+      anchor.insertAdjacentElement('afterend', el);
+    } else {
+      shelf.insertBefore(el, shelf.firstChild);
+    }
+    anchor = el;
+
+    el.dataset.platform = g.platform;
+    el.classList.toggle('focus', offset === 0);
+    applyCoverGeometry(el, g.platform, offset === 0);
+
+    usedIds.add(gameId);
+
+    if (!isNew) {
+      el.dataset.offset = offset;
+      el.style.setProperty('--offset', offset);
+    } else {
+      el._pendingOffset = offset;
+    }
+  });
+
+  existing.forEach((el, gameId) => {
+    if (!usedIds.has(gameId)) el.remove();
+  });
+
+  if (newlyCreated.length) {
+    void shelf.offsetWidth;
+
+    requestAnimationFrame(() => {
+      newlyCreated.forEach(el => {
+        el.style.transition = '';
+        const target = el._pendingOffset;
+        if (target !== undefined) {
+          el.dataset.offset = target;
+          el.style.setProperty('--offset', target);
+          delete el._pendingOffset;
+        }
+      });
+    });
+  }
+}
 
 function renderShelf() {
   const len = filtered.length;
 
   bindShelfWheelNavigation();
   bindViewModeSwitch();
+  bindGridScrollSync();
 
   if (!viewMode || !getAllowedShelfViewModes().includes(viewMode)) {
     viewMode = getSavedShelfViewMode();
@@ -351,6 +508,7 @@ function renderShelf() {
     platEl.textContent = '';
     if (ratingMini) ratingMini.textContent = '';
     stopPlaytimeAutoRefresh();
+    lastBuiltShelfMode = null;
     return;
   }
 
@@ -359,7 +517,15 @@ function renderShelf() {
     shelfViewport.appendChild(shelf);
   }
 
+  const modeGroup = viewMode === 'grid' ? 'grid' : 'carousel';
+  const lastGroup = lastBuiltShelfMode === 'grid' ? 'grid' : (lastBuiltShelfMode ? 'carousel' : null);
+  if (lastGroup !== null && lastGroup !== modeGroup) {
+    shelf.innerHTML = '';
+    invalidateGridColsCache();
+  }
+
   shelf.className = 'shelf mode-' + viewMode;
+  shelf.dataset.mode = viewMode;
   shelfViewport.className = 'shelf-viewport mode-' + viewMode;
 
   // Grid: aktualizuj tylko focus, nie buduj od nowa całej listy
@@ -387,11 +553,11 @@ function renderShelf() {
         el.addEventListener('dblclick', () => launchGame(g));
         shelf.appendChild(el);
       });
+      invalidateGridColsCache();
     } else {
       updateGridFocusOnly();
     }
 
-    // Aktualizuj tytuł, ale bez animacji
     const g = filtered[current];
     const pf = getPlatform(g.platform) || { label: g.platform || t('unknownPlatform') };
     titleEl.textContent = getDisplayTitle(g) || t('unknownGame');
@@ -407,36 +573,11 @@ function renderShelf() {
 
     refreshCurrentGamePlaytime();
     startPlaytimeAutoRefresh();
+    lastBuiltShelfMode = viewMode;
     return;
   }
 
-  // Tryby carousel (flat, arc, stack, cascade)
-  const range = 3;
-  shelf.innerHTML = '';
-  for (let offset = -range; offset <= range; offset++) {
-    const idx = mod(current + offset, len);
-    const g = filtered[idx];
-    const el = document.createElement('div');
-
-    el.className = 'sh-item' + (offset === 0 ? ' focus' : '');
-    el.dataset.offset = offset;
-    el.dataset.gameId = g.id;
-    el.dataset.platform = g.platform;
-
-    applyCoverGeometry(el, g.platform, offset === 0);
-
-    const coverSrc = getCoverForGame(g);
-    el.innerHTML = `<img src="${coverSrc}" alt="${getDisplayTitle(g)}"/>`;
-
-    el.addEventListener('click', () => {
-      if (current === idx) return;
-      current = idx;
-      renderShelf();
-    });
-
-    el.addEventListener('dblclick', () => launchGame(g));
-    shelf.appendChild(el);
-  }
+  renderCarouselShelf();
 
   const g = filtered[current];
   const pf = getPlatform(g.platform) || { label: g.platform || t('unknownPlatform') };
@@ -456,18 +597,21 @@ function renderShelf() {
 
   refreshCurrentGamePlaytime();
   startPlaytimeAutoRefresh();
+  lastBuiltShelfMode = viewMode;
 }
 
 
-function updateGridFocusOnly() {
+function updateGridFocusOnly(skipScrollIntoView = false) {
   const items = shelf.querySelectorAll('.sh-item');
   items.forEach((el, idx) => {
     el.classList.toggle('focus', idx === current);
   });
 
-  const focusEl = items[current];
-  if (focusEl) {
-    focusEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  if (!skipScrollIntoView) {
+    const focusEl = items[current];
+    if (focusEl) {
+      focusEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
   }
 
   const g = filtered[current];
@@ -502,6 +646,73 @@ function prev() {
     if (typeof sfxMove === 'function') sfxMove();
   }
 }
+
+// ============================================================
+// Pomocnicze funkcje nawigacji w widoku grid (góra/dół/lewo/prawo).
+// UWAGA: to jest TYLKO logika przesunięcia zaznaczenia — nie ma tu
+// żadnego bindowania klawiatury/gamepada. Klawiatura jest obsługiwana
+// wyłącznie w audio-input.js (window.addEventListener('keydown', ...)),
+// gamepad wyłącznie w audio-input.js (gamepadLoop/handleLibraryGamepad).
+// Duplikowanie tych nasłuchów tutaj powodowało podwójne wywołanie
+// next()/prev()/moveGridSelection() na jedno naciśnięcie — przeskok o 2
+// pozycje zamiast o 1. NIE dodawać tu drugiego bindShelfKeyboardNavigation()
+// ani startGamepadNavLoop().
+// ============================================================
+
+function getGridColumnCount() {
+  const now = performance.now();
+  if (gridColsCache && now - gridColsCacheTime < 250) return gridColsCache;
+
+  const items = shelf.querySelectorAll('.sh-item');
+  if (items.length < 2) {
+    gridColsCache = items.length || 1;
+    gridColsCacheTime = now;
+    return gridColsCache;
+  }
+
+  const firstTop = items[0].offsetTop;
+  let cols = 1;
+
+  for (let i = 1; i < items.length; i++) {
+    if (items[i].offsetTop !== firstTop) break;
+    cols++;
+  }
+
+  gridColsCache = cols;
+  gridColsCacheTime = now;
+  return cols;
+}
+
+function invalidateGridColsCache() {
+  gridColsCache = 0;
+  gridColsCacheTime = 0;
+}
+
+function moveGridSelection(dx, dy) {
+  const len = filtered.length;
+  if (!len) return;
+
+  const cols = getGridColumnCount();
+  let nextIdx = current;
+
+  if (dx !== 0) {
+    nextIdx = current + dx;
+    if (nextIdx < 0) nextIdx = len - 1;
+    else if (nextIdx >= len) nextIdx = 0;
+  } else if (dy !== 0) {
+    const candidate = current + dy * cols;
+    if (candidate < 0 || candidate >= len) return;
+    nextIdx = candidate;
+  }
+
+  if (nextIdx === current) return;
+
+  current = nextIdx;
+  updateGridFocusOnly();
+  if (typeof sfxMove === 'function') sfxMove();
+}
+
+window.addEventListener('resize', invalidateGridColsCache);
 
 function showToast(msg, isError) {
   const toast = document.getElementById('toast');
@@ -571,7 +782,6 @@ function openDetails(g) {
     titleEl2.textContent = getDisplayTitle(g);
   }
 
-  // Schowaj pole edycji nazwy, jeśli zostało otwarte dla innej gry
   const renameRow = document.getElementById('renameGameRow');
   if (renameRow) {
     renameRow.hidden = true;

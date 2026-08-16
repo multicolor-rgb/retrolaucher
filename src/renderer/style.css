@@ -348,7 +348,6 @@ body { min-height:100vh; }
   transform: scale(1.1);
 }
 
-
 /* ===== Cascade / animated coverflow ===== */
 
 .shelf-viewport.mode-cascade {
@@ -393,7 +392,21 @@ body { min-height:100vh; }
   transform: translateZ(0);
 }
 
- 
+.shelf.mode-cascade .sh-item::before {
+  content: "";
+  position: absolute;
+  inset: auto 10px -22px 10px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.42);
+  filter: blur(18px);
+  z-index: -1;
+  opacity: 0.78;
+  transition:
+    opacity .34s ease,
+    transform .78s cubic-bezier(.22,.9,.25,1);
+}
+
 .shelf.mode-cascade .sh-item[data-offset="0"] {
   transform: translate3d(0, -6px, 260px) scale(1.06) rotateY(0deg) rotateZ(0deg);
   opacity: 1;
@@ -479,7 +492,17 @@ body { min-height:100vh; }
   transform: translate3d(-270px, 18px, 42px) scale(0.87) rotateY(-30deg) rotateZ(-3deg);
 }
 
- 
+.shelf.mode-cascade .sh-item::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.08), transparent 16%, transparent 70%, rgba(0,0,0,0.16)),
+    linear-gradient(90deg, rgba(255,255,255,0.05), transparent 16%, transparent 84%, rgba(0,0,0,0.14));
+  mix-blend-mode: screen;
+  opacity: 0.55;
+}
 
 .shelf-viewport.mode-cascade::before {
   content: "";
@@ -560,80 +583,8 @@ body { min-height:100vh; }
     opacity: 0;
     pointer-events: none;
   }
-}.shelf-viewport.mode-grid{
-  height:auto;
-  min-height:0;
-  overflow-y:auto;
-  overflow-x:hidden;
-  padding:18px 24px 26px;
-  align-items:flex-start;
-  justify-content:center;
 }
 
-.shelf.mode-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));
-  gap:18px;
-  width:100%;
-  max-width:1400px;
-  align-items:start;
-  justify-content:center;
-}
-
-.shelf.mode-grid .sh-item{
-  width:100% !important;
-  aspect-ratio:0.72 / 1;
-  opacity:0.82;
-  filter:brightness(0.82) saturate(0.92);
-  transform:none !important;
-  margin:0;
-}
-
-.shelf.mode-grid .sh-item.focus{
-  opacity:1;
-  filter:brightness(1) saturate(1.08);
-  box-shadow:
-    0 12px 24px rgba(0,0,0,0.35),
-    0 24px 50px rgba(0,0,0,0.45),
-    0 0 0 1px rgba(255,255,255,0.5),
-    0 0 28px rgba(56,224,255,0.14);
-  transform:translateY(-4px) scale(1.02) !important;
-}
-
-.shelf.mode-grid .sh-item:hover:not(.focus){
-  transform:translateY(-3px) scale(1.01) !important;
-  opacity:0.95 !important;
-}
-
-.shelf.mode-grid .bp-status-title{
-  left:10px;
-  right:10px;
-  bottom:10px;
-  font-size:12px;
-  white-space:nowrap;
-}
-
-.shelf.mode-grid .sh-tag{
-  top:10px;
-  left:10px;
-}
-
-@media (max-width: 900px){
-  .shelf.mode-grid{
-    grid-template-columns:repeat(auto-fill, minmax(130px, 1fr));
-    gap:14px;
-  }
-}
-
-@media (max-width: 640px){
-  .shelf.mode-grid{
-    grid-template-columns:repeat(auto-fill, minmax(110px, 1fr));
-    gap:12px;
-  }
-}
-
-
- 
 /* ===== Grid view ===== */
 
 .shelf-viewport.mode-grid{
@@ -776,113 +727,6 @@ body { min-height:100vh; }
 
 /* ===== Shelf-info tylko dla grid ===== */
 
-.shelf.mode-grid ~ .shelf-info{
-  position:relative;
-  z-index:3;
-  text-align:center;
-  margin-top:0;
-  padding:16px 120px 20px;
-  background:linear-gradient(
-    180deg,
-    rgba(8,10,16,0.92) 0%,
-    rgba(5,6,10,0.98) 100%
-  );
-  border-top:1px solid rgba(56,224,255,0.18);
-  backdrop-filter:blur(8px);
-  box-shadow:0 -8px 24px rgba(0,0,0,0.45);
-}
-
-.shelf.mode-grid ~ .shelf-info .plat{
-  display:inline-block;
-  background:rgba(56,224,255,0.14);
-  color:#8feeff;
-  border:1px solid rgba(56,224,255,0.22);
-  font-size:11px;
-  letter-spacing:1.6px;
-  padding:5px 12px;
-  border-radius:999px;
-  margin-bottom:10px;
-  text-transform:uppercase;
-}
-
-.shelf.mode-grid ~ .shelf-info h1{
-  font-size:clamp(22px, 3.4vw, 36px);
-  font-weight:800;
-  text-shadow:0 4px 18px rgba(0,0,0,0.6);
-  margin-bottom:8px;
-  color:#fff;
-}
-
-.shelf.mode-grid ~ .shelf-info .rating-mini{
-  color:rgba(255,255,255,0.65);
-  font-size:12px;
-  margin-bottom:12px;
-}
-
-.shelf.mode-grid ~ .shelf-info .action-row{
-  display:flex;
-  justify-content:center;
-  gap:14px;
-  margin-top:10px;
-}
-
-.shelf.mode-grid ~ .shelf-info .play-btn{
-  background:linear-gradient(180deg, #ffffff, #d9f8ff);
-  color:#05060a;
-  border:none;
-  font-weight:700;
-  font-size:14px;
-  padding:11px 32px;
-  border-radius:999px;
-  cursor:pointer;
-  box-shadow:0 8px 18px rgba(56,224,255,0.14);
-  transition:all .25s cubic-bezier(.34,1.56,.64,1);
-}
-
-.shelf.mode-grid ~ .shelf-info .play-btn:hover{
-  transform:translateY(-2px);
-  box-shadow:0 12px 24px rgba(56,224,255,0.18);
-}
-
-.shelf.mode-grid ~ .shelf-info .details-btn{
-  background:rgba(255,255,255,0.08);
-  border:1px solid rgba(255,255,255,0.18);
-  color:#fff;
-  font-size:12px;
-  padding:10px 22px;
-  border-radius:999px;
-  cursor:pointer;
-  transition:all .25s cubic-bezier(.34,1.56,.64,1);
-}
-
-.shelf.mode-grid ~ .shelf-info .details-btn:hover{
-  background:rgba(255,255,255,0.14);
-  transform:translateY(-1px);
-}
-
-@media (max-width: 980px){
-  .shelf.mode-grid ~ .shelf-info{
-    padding:12px 18px 16px;
-  }
-}
-
-@media (max-width: 900px){
-  .shelf.mode-grid{
-    grid-template-columns:repeat(auto-fill, minmax(130px, 1fr));
-    gap:14px;
-  }
-}
-
-@media (max-width: 640px){
-  .shelf.mode-grid{
-    grid-template-columns:repeat(auto-fill, minmax(110px, 1fr));
-    gap:12px;
-  }
-}
-
-
-/* ===== Shelf-info tylko dla grid ===== */
-
 .shelf-info.grid-mode{
   position:relative;
   z-index:3;
@@ -974,7 +818,19 @@ body { min-height:100vh; }
   }
 }
 
+@media (max-width: 900px){
+  .shelf.mode-grid{
+    grid-template-columns:repeat(auto-fill, minmax(130px, 1fr));
+    gap:14px;
+  }
+}
 
+@media (max-width: 640px){
+  .shelf.mode-grid{
+    grid-template-columns:repeat(auto-fill, minmax(110px, 1fr));
+    gap:12px;
+  }
+}
 
 
 .modal-title-row {
@@ -1007,7 +863,6 @@ body { min-height:100vh; }
   gap: 6px;
   align-items: center;
   margin-bottom:20px;
-  
 }
 
 .rename-game-input {
@@ -1042,6 +897,92 @@ body { min-height:100vh; }
 
 .rename-game-cancel:hover {
   background: #333;
+}
+
+/* ============================================================
+   POPRAWKA (ustalenia z rozmowy): animacja przejścia między
+   grami we WSZYSTKICH trybach carousel (flat, arc, stack,
+   cascade) — w OBU kierunkach (next/prev), bez "przeskakiwania"
+   i bez psucia stylowania przy zmianie data-offset.
+
+   Kontekst zmian w JS, które ta poprawka wspiera:
+   - renderCarouselShelf() reużywa elementy .sh-item po
+     data-gameId (bez re-insercji w DOM — kolejność węzłów jest
+     nieistotna, bo pozycję/z-index steruje wyłącznie CSS na
+     bazie data-offset/--offset).
+   - Nowe elementy wchodzące na krawędzi zakresu startują z
+     offsetu "za krawędzią" (bez transition), a w kolejnej klatce
+     dostają docelowy --offset z transition przywróconym — dzięki
+     temu CSS ma z czego animować wjazd, a nie tylko "wyskakuje"
+     na finalnej pozycji.
+   - Przy przełączeniu grid <-> carousel DOM shelfa jest czyszczony
+     od zera, żeby stare klasy/atrybuty z innego layoutu nie
+     zostawały na reużywanych elementach.
+
+   Powód poprawki w CSS: .shelf.mode-arc .sh-item i
+   .shelf.mode-stack .sh-item nie miały jawnie zdefiniowanego
+   transition, więc dziedziczyły go z wcześniejszej ogólnej reguły
+   .sh-item{ transition:all .45s cubic-bezier(.34,1.56,.64,1) } —
+   ta reguła ma identyczną specyficzność jak każda inna .sh-item,
+   więc o tym, kto wygrywa, decydowała kolejność w pliku, co dawało
+   niekonsystentne animacje między trybami. Blok poniżej wymusza
+   explicit transition na najbardziej specyficznym selektorze
+   KAŻDEGO trybu, żeby zmiana --offset była animowana identycznie
+   i symetrycznie w obu kierunkach nawigacji.
+   ============================================================ */
+
+.shelf.mode-flat .sh-item,
+.shelf.mode-arc .sh-item,
+.shelf.mode-stack .sh-item,
+.shelf.mode-cascade .sh-item {
+  transition:
+    transform .5s cubic-bezier(.22,.9,.25,1),
+    opacity .32s ease,
+    filter .32s ease,
+    box-shadow .32s ease,
+    width .32s ease !important;
+  will-change: transform, opacity, filter;
+}
+
+/* Cascade ma naturalnie wolniejszy, bardziej "kinowy" ruch (duże
+   przeloty w Z i rotacji) — zostaje dłuższy czas, żeby duże skoki
+   transform nie wyglądały szarpanie. */
+.shelf.mode-cascade .sh-item {
+  transition:
+    transform .78s cubic-bezier(.22,.9,.25,1),
+    opacity .34s ease,
+    filter .34s ease,
+    box-shadow .34s ease,
+    width .34s ease !important;
+}
+
+/* Cień pod okładką (::before) w cascade musi mieć ten sam czas
+   transition co sam element, inaczej cień "doskakuje" szybciej lub
+   wolniej niż okładka i wygląda to jak rozjazd/przeskok. */
+.shelf.mode-cascade .sh-item::before {
+  transition:
+    opacity .34s ease,
+    transform .78s cubic-bezier(.22,.9,.25,1) !important;
+}
+
+/* Stack ma prostszy, płaski ruch — krótszy czas czuje się bardziej
+   responsywnie i pasuje do jego bouncy easing. */
+.shelf.mode-stack .sh-item {
+  transition:
+    transform .4s cubic-bezier(.34,1.56,.64,1),
+    opacity .3s ease,
+    filter .3s ease,
+    box-shadow .3s ease !important;
+}
+
+/* Hover-override w cascade musi też dziedziczyć transition, inaczej
+   powrót z hover po zmianie offsetu w tej samej klatce może się
+   "zatrzymywać" bez animacji. */
+.shelf.mode-cascade .sh-item:hover:not([data-offset="0"]) {
+  transition:
+    transform .3s cubic-bezier(.34,1.56,.64,1),
+    opacity .2s ease,
+    filter .2s ease !important;
 }
 
  

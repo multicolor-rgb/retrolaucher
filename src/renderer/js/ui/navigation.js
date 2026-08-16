@@ -1,4 +1,6 @@
+// ============================================================
 // Nawigacja między platformami i przełączanie głównych widoków.
+// ============================================================
 
 function moveHighlight(tabEl) {
   if (!tabEl) return;
@@ -111,4 +113,30 @@ function starString(rating) {
   return '★'.repeat(full) + '☆'.repeat(5 - full);
 }
 
+// ============================================================
+// Przełączanie platform padem — przycisk X (nie D-pad, żeby nie
+// kolidować z nawigacją góra/dół po grach w widoku grid).
+// Standardowe mapowanie Gamepad API: buttons[2] = X (Xbox) / Square (PS).
+// Cykl: 'all' -> pierwsza używana platforma -> ... -> ostatnia -> 'all'.
+// ============================================================
 
+function getPlatformCycleOrder() {
+  return ['all', ...usedPlatforms().map(p => p.key)];
+}
+
+function cyclePlatformViaGamepad(direction = 1) {
+  const order = getPlatformCycleOrder();
+  if (order.length < 2) return;
+
+  const currentIdx = order.indexOf(activePlatform);
+  const safeIdx = currentIdx === -1 ? 0 : currentIdx;
+  const nextIdx = mod(safeIdx + direction, order.length);
+  const nextPlatform = order[nextIdx];
+
+  if (nextPlatform === 'all') {
+    const allTab = document.querySelector('.tab[data-platform="all"]');
+    applyFilter('all', allTab);
+  } else {
+    applyFilter(nextPlatform, null);
+  }
+}

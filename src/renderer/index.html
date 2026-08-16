@@ -55,8 +55,7 @@
 
     <footer class="bp-footer">
       <span class="hint"><b>◄ ►</b> <span data-i18n="navHint">Nawigacja</span></span>
-      <span class="hint"><b>▲</b> <span data-i18n="platformHint">Platformy</span></span>
-      <span class="hint"><b>LB/RB</b> <span data-i18n="changePlatformHint">Zmień platformę</span></span>
+       <span class="hint"><b>LB/RB</b> <span data-i18n="changePlatformHint">Zmień platformę</span></span>
       <span class="hint"><b>Enter</b> <span data-i18n="launchHint">Uruchom</span></span>
       <span class="hint"><b>F11/Alt + Enter</b> <span data-i18n="fullscreenHintLabel">Pełny ekran</span></span>
       <span class="hint"><b>Esc</b> <span data-i18n="closeHint">Zamknij</span></span>
@@ -68,31 +67,30 @@
         <div class="modal-cover">
           <img id="modalCoverImg" src="" alt="cover" />
         </div>
-     <div class="modal-content">
-  <div class="modal-platform" id="modalPlatform">PSP</div>
+        <div class="modal-content">
+          <div class="modal-platform" id="modalPlatform">PSP</div>
 
-  <div id="modalTitleRow" class="modal-title-row">
-    <h1 class="modal-title" id="modalTitle">Tytuł gry</h1>
-    <button
-      type="button"
-      style=""margin-top:20px;
-      width:100%;
-      id="renameGameButton"
-      class="rename-game-button"
-      data-i18n="renameGame"
-    >
-      Zmień nazwę
-    </button>
-  </div>
+          <div id="modalTitleRow" class="modal-title-row">
+            <h1 class="modal-title" id="modalTitle">Tytuł gry</h1>
+            <button
+              type="button"
+              style="margin-top:20px; width:100%;"
+              id="renameGameButton"
+              class="rename-game-button"
+              data-i18n="renameGame"
+            >
+              Zmień nazwę
+            </button>
+          </div>
 
-  <div id="renameGameRow" class="rename-game-row" hidden>
-    <input id="renameGameInput" type="text" class="rename-game-input" />
-    <button type="button" id="renameGameSave" class="rename-game-save">OK</button>
-    <button type="button" id="renameGameCancel" class="rename-game-cancel">✕</button>
-  </div>
+          <div id="renameGameRow" class="rename-game-row" hidden>
+            <input id="renameGameInput" type="text" class="rename-game-input" />
+            <button type="button" id="renameGameSave" class="rename-game-save">OK</button>
+            <button type="button" id="renameGameCancel" class="rename-game-cancel">✕</button>
+          </div>
 
-  <div class="tags-row" id="modalTags"></div>
-  <p class="description" style="display:none;" id="modalDesc"></p>
+          <div class="tags-row" id="modalTags"></div>
+          <p class="description" style="display:none;" id="modalDesc"></p>
 
           <div class="meta-grid">
             <div class="meta-item">
@@ -131,7 +129,6 @@
       <button class="vm-btn" data-mode="stack" title="Widok Big Picture">▤</button>
       <button class="vm-btn" data-mode="cascade" title="Widok animowany">◫</button>
       <button class="vm-btn" data-mode="grid" title="Widok grid">▦</button>
-
     </div>
 
     <section id="settings-panel" class="settings-page" hidden>
@@ -149,7 +146,6 @@
           <button class="settings-subtab" data-subtab="platforms" role="tab" aria-selected="false" data-i18n="platforms">Platformy</button>
           <button class="settings-subtab" data-subtab="system" role="tab" aria-selected="false" data-i18n="system">System</button>
           <button class="settings-subtab" data-subtab="about" role="tab" aria-selected="false" data-i18n="about">O aplikacji</button>
-
         </div>
 
         <div class="settings-panels">
@@ -179,30 +175,6 @@
               </div>
 
               <div class="settings-card">
-                <h3>SteamGridDB API</h3>
-                <p class="settings-note" data-i18n="steamgridNote">
-                  Wpisz własny klucz API, aby pobierać okładki i opisy automatycznie.
-                </p>
-
-                <label class="field-row field-row-stack">
-                  <span class="field-label">Klucz SteamGridDB API</span>
-                  <input
-                    id="steamgrid-api-key-input"
-                    type="text"
-                    class="field-textinput"
-                    placeholder="Wpisz klucz API"
-                    data-i18n-placeholder="apiKeyPlaceholder"
-                  />
-                </label>
-
-                <div class="settings-actions-row">
-                  <button type="button" id="save-steamgrid-api-key" class="btn-primary" data-i18n="saveKey">
-                    Zapisz klucz
-                  </button>
-                </div>
-              </div>
-
-              <div class="settings-card">
                 <h3 data-i18n="language">Język</h3>
                 <p class="settings-note" data-i18n="languageNote">
                   Wybierz język interfejsu aplikacji.
@@ -227,6 +199,133 @@
 
           <section class="settings-subpanel" data-subpanel="artwork">
             <div class="settings-card-grid">
+
+              <div class="settings-card settings-card-wide">
+                <h3 data-i18n="metaSourcesTitle">Źródła metadanych i okładek</h3>
+                <p class="settings-note" data-i18n="metaSourcesNote">
+                  Skonfiguruj klucze API dla poszczególnych scraperów. SteamGridDB i RAWG działają najlepiej dla
+                  nowszych gier, ScreenScraper i TheGamesDB są zorientowane na retro (SNES, Genesis, arcade,
+                  handheldy). Możesz skonfigurować tylko te źródła, z których chcesz korzystać — pozostałe
+                  zostaną pominięte przy pobieraniu.
+                </p>
+
+                <div class="settings-card-grid">
+
+                  <div class="settings-card">
+                    <h4>SteamGridDB</h4>
+                    <p class="settings-note" data-i18n="steamgridNote">
+                      Wpisz własny klucz API, aby pobierać okładki automatycznie. Klucz generujesz na
+                      steamgriddb.com w ustawieniach konta.
+                    </p>
+
+                    <label class="field-row field-row-stack">
+                      <span class="field-label">Klucz SteamGridDB API</span>
+                      <input
+                        id="steamgrid-api-key-input"
+                        type="text"
+                        class="field-textinput"
+                        placeholder="Wpisz klucz API"
+                        data-i18n-placeholder="apiKeyPlaceholder"
+                      />
+                    </label>
+
+                    <div class="settings-actions-row">
+                      <button type="button" id="save-steamgrid-api-key" class="btn-primary" data-i18n="saveKey">
+                        Zapisz klucz
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="settings-card">
+                    <h4>RAWG</h4>
+                    <p class="settings-note" data-i18n="rawgNote">
+                      Klucz API RAWG służy do pobierania opisów, gatunków i oceny Metacritic. Klucz generujesz
+                      bezpłatnie na rawg.io/apidocs.
+                    </p>
+
+                    <label class="field-row field-row-stack">
+                      <span class="field-label">Klucz RAWG API</span>
+                      <input
+                        id="rawg-api-key-input"
+                        type="text"
+                        class="field-textinput"
+                        placeholder="Wpisz klucz API"
+                        data-i18n-placeholder="apiKeyPlaceholder"
+                      />
+                    </label>
+
+                    <div class="settings-actions-row">
+                      <button type="button" id="save-rawg-api-key" class="btn-primary" data-i18n="saveKey">
+                        Zapisz klucz
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="settings-card">
+                    <h4>ScreenScraper.fr</h4>
+                    <p class="settings-note" data-i18n="screenscraperNote">
+                      Główne źródło metadanych dla retro (opisy, gatunki, liczba graczy, okładki). Wymaga
+                      darmowego konta zarejestrowanego na screenscraper.fr — podaj tu login i hasło konta
+                      (nie klucz API).
+                    </p>
+
+                    <label class="field-row field-row-stack">
+                      <span class="field-label" data-i18n="screenscraperUser">Login ScreenScraper</span>
+                      <input
+                        id="screenscraper-user-input"
+                        type="text"
+                        class="field-textinput"
+                        placeholder="Nazwa użytkownika"
+                        data-i18n-placeholder="usernamePlaceholder"
+                      />
+                    </label>
+
+                    <label class="field-row field-row-stack">
+                      <span class="field-label" data-i18n="screenscraperPassword">Hasło ScreenScraper</span>
+                      <input
+                        id="screenscraper-password-input"
+                        type="password"
+                        class="field-textinput"
+                        placeholder="Hasło"
+                        data-i18n-placeholder="passwordPlaceholder"
+                      />
+                    </label>
+
+                    <div class="settings-actions-row">
+                      <button type="button" id="save-screenscraper-credentials" class="btn-primary" data-i18n="saveKey">
+                        Zapisz dane logowania
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="settings-card">
+                    <h4>TheGamesDB</h4>
+                    <p class="settings-note" data-i18n="gamesdbNote">
+                      Zapasowe źródło okładek dla niszowych ROM-ów, gdy SteamGridDB i ScreenScraper nie znajdą
+                      trafienia. Wymaga darmowego klucza API z thegamesdb.net.
+                    </p>
+
+                    <label class="field-row field-row-stack">
+                      <span class="field-label">Klucz TheGamesDB API</span>
+                      <input
+                        id="thegamesdb-api-key-input"
+                        type="text"
+                        class="field-textinput"
+                        placeholder="Wpisz klucz API"
+                        data-i18n-placeholder="apiKeyPlaceholder"
+                      />
+                    </label>
+
+                    <div class="settings-actions-row">
+                      <button type="button" id="save-thegamesdb-api-key" class="btn-primary" data-i18n="saveKey">
+                        Zapisz klucz
+                      </button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
               <div class="settings-card settings-card-wide">
                 <h3 data-i18n="artworkMetaTitle">Okładki i opisy</h3>
                 <p class="settings-note" data-i18n="artworkMetaNote">
@@ -379,44 +478,41 @@
               </div>
 
               <div class="settings-card settings-card-wide">
-  <h3 data-i18n="stopShortcut">Skrót zatrzymywania emulatora</h3>
-  <p class="settings-note" data-i18n="stopShortcutNote">
-    Aby zamknąć aktywny emulator, naciśnij jednocześnie L3 + R3 + LB + RB na padzie.
-  </p>
-  <div class="settings-note">
-    <strong data-i18n="stopShortcutKeys">Klawisze:</strong>
-    <span data-i18n="stopShortcutKeysValue">L3 + R3 + LB + RB</span>
-  </div>
-</div>
+                <h3 data-i18n="stopShortcut">Skrót zatrzymywania emulatora</h3>
+                <p class="settings-note" data-i18n="stopShortcutNote">
+                  Aby zamknąć aktywny emulator, naciśnij jednocześnie L3 + R3 + LB + RB na padzie.
+                </p>
+                <div class="settings-note">
+                  <strong data-i18n="stopShortcutKeys">Klawisze:</strong>
+                  <span data-i18n="stopShortcutKeysValue">L3 + R3 + LB + RB</span>
+                </div>
+              </div>
+            </div>
+          </section>
 
+          <section class="settings-subpanel" data-subpanel="about">
+            <div class="settings-card-grid">
+              <div class="settings-card settings-card-wide">
+                <h3 data-i18n="supportTitle">Wspieraj rozwój</h3>
+                <p class="settings-note" data-i18n="supportNote">
+                  Jeśli podoba Ci się ten program, możesz postawić mi wirtualną kawę i wesprzeć dalszy rozwój.
+                </p>
+                <div class="settings-actions-row" style="text-decoration:none !important">
+                  <a
+                    href="https://ko-fi.com/multicolorplugins"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn-primary"
+                    data-i18n="supportButton"
+                  >
+                    ☕ Postaw kawę
+                  </a>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
-
-
-      <section class="settings-subpanel" data-subpanel="about">
- 
-
-   
-
-    <div class="settings-card settings-card-wide">
-      <h3 data-i18n="supportTitle">Wspieraj rozwój</h3>
-      <p class="settings-note" data-i18n="supportNote">
-        Jeśli podoba Ci się ten program, możesz postawić mi wirtualną kawę i wesprzeć dalszy rozwój.
-      </p>
-      <div class="settings-actions-row" style="text-decoration:none !important">
-        <a
-          href="https://ko-fi.com/multicolorplugins"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="btn-primary"
-          data-i18n="supportButton"
-        >
-          ☕ Postaw kawę
-        </a>
-      </div>
-    </div>
-  </div>
-</section>
     </section>
   </div>
 
@@ -429,6 +525,7 @@
   <script src="./js/data/library.js"></script>
   <script src="./js/ui/shelf-view.js"></script>
   <script src="./js/ui/settings-view.js"></script>
+  <script src="./js/ui/settings-api-keys.js"></script>
   <script src="./js/system/audio-input.js"></script>
 </body>
 </html>
