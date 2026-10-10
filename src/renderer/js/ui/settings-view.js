@@ -453,7 +453,10 @@ if (typeof fillApiKeyFields === 'function') fillApiKeyFields();
   const langSel = document.getElementById('language-select');
   if (langSel) langSel.value = getSavedLanguage();
 
+  populateThemeSelect();
+
   bindLanguageSettings();
+  bindThemeSettings();
   applyI18n();
 
   document.querySelectorAll('.remove-platform-btn').forEach(btn => {
@@ -557,6 +560,11 @@ if (typeof fillApiKeyFields === 'function') fillApiKeyFields();
       await fetchMetadataForSelectedPlatforms(true);
     };
   }
+
+  // Panel „Menedżer gier" (ukrywanie plików per platforma).
+  if (typeof refreshGamesManager === 'function') {
+    refreshGamesManager();
+  }
 }
 
 function activateSettingsSubtab(name) {
@@ -569,6 +577,10 @@ function activateSettingsSubtab(name) {
   });
 
   panels.forEach(p => p.classList.toggle('active', p.dataset.subpanel === name));
+
+  if (name === 'games' && typeof refreshGamesManager === 'function') {
+    refreshGamesManager();
+  }
 }
 
 function switchToPage(page) {

@@ -1,10 +1,14 @@
 <!DOCTYPE html>
-<html lang="pl" data-lang="pl">
+<html lang="pl" data-lang="pl" data-theme="default">
 <head>
   <meta charset="UTF-8" />
   <title data-i18n-title="appTitle">Retro Launcher</title>
   <link rel="icon" type="image/png" href="./build/icon.png">
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="./themes/theme-wii.css" />
+  <link rel="stylesheet" href="./themes/theme-switch.css" />
+  <link rel="stylesheet" href="./themes/theme-ps3.css" />
+  <link rel="stylesheet" href="./themes/theme-xbox.css" />
 </head>
 <body>
   <div id="app">
@@ -144,6 +148,7 @@
           <button class="settings-subtab active" data-subtab="general" role="tab" aria-selected="true" data-i18n="general">Ogólne</button>
           <button class="settings-subtab" data-subtab="artwork" role="tab" aria-selected="false" data-i18n="artwork">Okładki</button>
           <button class="settings-subtab" data-subtab="platforms" role="tab" aria-selected="false" data-i18n="platforms">Platformy</button>
+          <button class="settings-subtab" data-subtab="games" role="tab" aria-selected="false" data-i18n="gamesManager">Menedżer gier</button>
           <button class="settings-subtab" data-subtab="system" role="tab" aria-selected="false" data-i18n="system">System</button>
           <button class="settings-subtab" data-subtab="about" role="tab" aria-selected="false" data-i18n="about">O aplikacji</button>
         </div>
@@ -191,6 +196,24 @@
                 <div class="settings-actions-row">
                   <button type="button" id="save-language" class="btn-primary" data-i18n="saveLanguage">
                     Zapisz język
+                  </button>
+                </div>
+              </div>
+
+              <div class="settings-card">
+                <h3 data-i18n="theme">Motyw</h3>
+                <p class="settings-note" data-i18n="themeNote">
+                  Wybierz motyw graficzny interfejsu. Zmiana jest widoczna od razu.
+                </p>
+
+                <label class="field-row field-row-stack">
+                  <span class="field-label" data-i18n="themeInterface">Motyw interfejsu</span>
+                  <select id="theme-select" class="field-select"></select>
+                </label>
+
+                <div class="settings-actions-row">
+                  <button type="button" id="save-theme" class="btn-primary" data-i18n="saveTheme">
+                    Zapisz motyw
                   </button>
                 </div>
               </div>
@@ -436,6 +459,46 @@
             </div>
           </section>
 
+          <section class="settings-subpanel" data-subpanel="games">
+            <div class="settings-card-grid">
+              <div class="settings-card settings-card-wide">
+                <h3 data-i18n="gamesManager">Menedżer gier</h3>
+                <p class="settings-note" data-i18n="gamesManagerNote">
+                  Wybierz platformę i schowaj (ukryj) wybrane gry lub pliki, aby nie pojawiały się na półce. Ukrycie jest zapisywane osobno dla każdej platformy i można je w każdej chwili cofnąć.
+                </p>
+
+                <div class="field-row field-row-stack">
+                  <div class="field-label" data-i18n="managerPlatform">Platforma</div>
+                  <select id="games-manager-platform" class="field-select"></select>
+                </div>
+
+                <div class="field-row field-row-stack">
+                  <div class="field-label" data-i18n="search">Szukaj...</div>
+                  <input
+                    id="games-manager-search"
+                    type="text"
+                    class="field-textinput"
+                    data-i18n-placeholder="managerSearchPlaceholder"
+                    placeholder="Szukaj gry lub pliku…"
+                  />
+                </div>
+
+                <div class="settings-actions-row gm-toolbar">
+                  <label class="gm-select-all" for="games-manager-select-all">
+                    <input type="checkbox" id="games-manager-select-all" />
+                    <span data-i18n="selectAll">Zaznacz wszystkie</span>
+                  </label>
+                  <button type="button" class="btn-secondary" id="games-manager-hide-selected" data-i18n="hideSelected">Ukryj zaznaczone</button>
+                  <button type="button" class="btn-secondary" id="games-manager-unhide-selected" data-i18n="unhideSelected">Odkryj zaznaczone</button>
+                  <button type="button" class="btn-secondary" id="games-manager-hide-all" data-i18n="hideAllGames">Ukryj wszystkie</button>
+                  <button type="button" class="btn-secondary" id="games-manager-unhide-all" data-i18n="unhideAllGames">Odkryj wszystkie</button>
+                </div>
+
+                <div class="games-manager-list" id="games-manager-list"></div>
+              </div>
+            </div>
+          </section>
+
           <section class="settings-subpanel" data-subpanel="system">
             <div class="settings-card-grid">
               <div class="settings-card">
@@ -525,7 +588,9 @@
   <script src="./js/data/library.js"></script>
   <script src="./js/ui/shelf-view.js"></script>
   <script src="./js/ui/settings-view.js"></script>
+  <script src="./js/ui/games-manager.js"></script>
   <script src="./js/ui/settings-api-keys.js"></script>
+  <script src="./js/ui/theme.js"></script>
   <script src="./js/system/audio-input.js"></script>
 </body>
 </html>

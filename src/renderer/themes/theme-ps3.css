@@ -1,0 +1,430 @@
+/* ============================================================
+   Motyw: PS3 / XMB — ciemny granat z falą i pasem światła
+   Aktywny gdy: <html data-theme="ps3">
+   Samodzielna skórka — nadpisuje reguły z style.css.
+   ============================================================ */
+
+/* ---------- Baza / tło aplikacji ---------- */
+html[data-theme="ps3"],
+html[data-theme="ps3"] body{
+  background:linear-gradient(180deg,#0b1626 0%,#061020 45%,#02040a 100%);
+  color:#eaf3ff;
+}
+html[data-theme="ps3"] body{ background:transparent; }
+
+/* ---------- Tło sceny półki (fala XMB) ---------- */
+html[data-theme="ps3"] #bgGradient{
+  background:
+    radial-gradient(circle at 20% 30%, rgba(74,163,255,0.34) 0%, transparent 42%),
+    radial-gradient(circle at 78% 26%, rgba(96,120,255,0.26) 0%, transparent 44%),
+    radial-gradient(circle at 50% 86%, rgba(30,90,190,0.30) 0%, transparent 48%),
+    linear-gradient(115deg, rgba(74,163,255,0.16) 0%, rgba(10,22,40,0.05) 38%, rgba(74,163,255,0.14) 62%, rgba(6,16,32,0) 100%),
+    linear-gradient(180deg,#0d1c30 0%,#071426 48%,#02040a 100%) !important;
+  animation:none;
+}
+html[data-theme="ps3"] .bg-gradient::before{
+  background:
+    linear-gradient(160deg, rgba(255,255,255,0.10) 0%, transparent 26%, transparent 62%, rgba(74,163,255,0.14) 82%, transparent 100%),
+    radial-gradient(circle at 34% 42%, rgba(143,208,255,0.16) 0%, transparent 30%),
+    radial-gradient(circle at 70% 60%, rgba(74,163,255,0.14) 0%, transparent 28%);
+  filter:blur(2px);
+  opacity:1;
+}
+html[data-theme="ps3"] .bg-gradient::after{
+  background:radial-gradient(circle at 50% 40%, transparent 0%, rgba(2,4,10,0.5) 68%, rgba(2,4,10,0.94) 100%);
+}
+html[data-theme="ps3"] .bg-blur{
+  opacity:.55;
+  filter:blur(46px) saturate(1.3) brightness(0.6) hue-rotate(-12deg);
+  mix-blend-mode:screen;
+}
+
+/* ---------- Górny pasek ---------- */
+html[data-theme="ps3"] .bp-topbar{
+  background:linear-gradient(180deg, rgba(11,22,38,0.9), rgba(4,10,20,0.7));
+  border-bottom:1px solid rgba(74,163,255,0.28);
+  box-shadow:0 2px 18px rgba(0,0,0,0.55);
+}
+html[data-theme="ps3"] .brand{ color:#ffffff; }
+html[data-theme="ps3"] .brand span{ color:#4aa3ff; opacity:1; }
+html[data-theme="ps3"] .tab{ color:rgba(255,255,255,0.5); }
+html[data-theme="ps3"] .tab.active{ color:#ffffff; }
+html[data-theme="ps3"] .tab-highlight{ background:rgba(74,163,255,0.20); }
+html[data-theme="ps3"] #search{
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(74,163,255,0.30);
+  color:#eaf3ff;
+}
+html[data-theme="ps3"] #search::placeholder{ color:rgba(255,255,255,0.42); }
+html[data-theme="ps3"] .icon-btn{
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(74,163,255,0.30);
+  color:#eaf3ff;
+}
+html[data-theme="ps3"] .icon-btn:hover{ background:rgba(74,163,255,0.20); }
+html[data-theme="ps3"] .icon-btn.active-view{
+  background:linear-gradient(180deg,#6fb8ff,#2f85e0);
+  border-color:#8fd0ff;
+  color:#03121f;
+}
+
+/* ---------- Pasek platform / dropdown ---------- */
+html[data-theme="ps3"] .platform-dropdown-btn{
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(74,163,255,0.30);
+  color:rgba(255,255,255,0.8);
+}
+html[data-theme="ps3"] .platform-dropdown-btn:hover{ background:rgba(74,163,255,0.18); color:#ffffff; }
+html[data-theme="ps3"] .platform-dropdown-btn.active{
+  background:linear-gradient(180deg,#6fb8ff,#2f85e0);
+  border-color:#8fd0ff;
+  color:#03121f;
+}
+html[data-theme="ps3"] .platform-dropdown-menu{
+  background:rgba(8,18,32,0.97);
+  border:1px solid rgba(74,163,255,0.28);
+  box-shadow:0 22px 55px rgba(0,0,0,0.7);
+}
+html[data-theme="ps3"] .pd-item{ color:rgba(255,255,255,0.72); }
+html[data-theme="ps3"] .pd-item:hover{ background:rgba(74,163,255,0.16); color:#ffffff; }
+html[data-theme="ps3"] .pd-item.active{ background:rgba(74,163,255,0.24); color:#bfe2ff; }
+html[data-theme="ps3"] .pd-item.pd-focus{
+  outline:2px solid #4aa3ff;
+  outline-offset:-2px;
+  background:rgba(74,163,255,0.12);
+}
+/* ---------- Okładki / półka ---------- */
+html[data-theme="ps3"] .sh-item{
+  box-shadow:
+    0 20px 46px rgba(0,0,0,0.66),
+    0 0 0 1px rgba(143,208,255,0.14);
+  opacity:.52;
+  filter:brightness(.7) saturate(.9);
+}
+html[data-theme="ps3"] .sh-item:hover:not(.focus){
+  opacity:.82 !important;
+  filter:brightness(.92) saturate(1) !important;
+}
+html[data-theme="ps3"] .sh-item.focus{
+  animation:none;
+  box-shadow:
+    0 10px 22px rgba(0,0,0,0.5),
+    0 30px 66px rgba(0,0,0,0.6),
+    0 0 0 2px rgba(143,208,255,0.95),
+    0 0 42px rgba(74,163,255,0.45);
+}
+html[data-theme="ps3"] .sh-tag{
+  background:linear-gradient(180deg,#6fb8ff,#2f85e0);
+  color:#03121f;
+}
+html[data-theme="ps3"] .bp-status-title{
+  color:#ffffff;
+  text-shadow:0 2px 12px rgba(0,0,0,0.95);
+}
+html[data-theme="ps3"] .shelf-viewport.mode-grid{
+  background:linear-gradient(180deg, rgba(2,4,10,0) 0%, rgba(6,16,32,0.94) 100%);
+}
+html[data-theme="ps3"] .shelf-viewport.mode-cascade::before{
+  background:
+    radial-gradient(circle at 50% 50%, rgba(143,208,255,0.10), transparent 32%),
+    radial-gradient(circle at 50% 62%, rgba(74,163,255,0.22), transparent 48%),
+    linear-gradient(160deg, rgba(255,255,255,0.06), rgba(74,163,255,0.08) 55%, transparent);
+}
+html[data-theme="ps3"] .shelf.mode-grid .sh-item{
+  box-shadow:0 10px 26px rgba(0,0,0,0.5);
+  opacity:.76;
+  filter:brightness(.8) saturate(.92);
+}
+html[data-theme="ps3"] .shelf.mode-grid .sh-item.focus{
+  filter:brightness(1) saturate(1.05);
+  box-shadow:
+    0 14px 28px rgba(0,0,0,0.5),
+    0 28px 60px rgba(0,0,0,0.6),
+    0 0 0 2px rgba(143,208,255,0.95),
+    0 0 36px rgba(74,163,255,0.42);
+}
+html[data-theme="ps3"] .shelf.mode-grid .bp-status-title{
+  text-shadow:0 2px 10px rgba(0,0,0,0.95);
+}
+html[data-theme="ps3"] .shelf.mode-cascade .sh-item{
+  box-shadow:0 10px 26px rgba(0,0,0,0.5);
+}
+html[data-theme="ps3"] .shelf.mode-cascade .sh-item::before{ background:rgba(0,0,0,0.55); }
+html[data-theme="ps3"] .empty-state{ color:rgba(255,255,255,0.42); }
+
+/* ---------- Info o grze + akcje ---------- */
+html[data-theme="ps3"] .shelf-info .plat{
+  background:linear-gradient(180deg, rgba(143,208,255,0.9), rgba(74,163,255,0.9));
+  color:#03121f;
+}
+html[data-theme="ps3"] .shelf-info h1{
+  color:#ffffff;
+  text-shadow:0 4px 26px rgba(0,0,0,0.9), 0 0 30px rgba(74,163,255,0.35);
+}
+html[data-theme="ps3"] .shelf-info .rating-mini{ color:#ffd54f; }
+html[data-theme="ps3"] .play-btn{
+  background:linear-gradient(180deg,#8fd0ff,#2f85e0) !important;
+  color:#03121f !important;
+  box-shadow:0 10px 28px rgba(74,163,255,0.45);
+}
+html[data-theme="ps3"] .details-btn{
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(143,208,255,0.34);
+  color:#eaf3ff;
+}
+html[data-theme="ps3"] .details-btn:hover{ background:rgba(74,163,255,0.20); }
+html[data-theme="ps3"] .shelf-info.grid-mode{
+  background:linear-gradient(180deg, rgba(9,20,36,0.94) 0%, rgba(3,8,16,0.98) 100%);
+  border-top:1px solid rgba(74,163,255,0.35);
+  box-shadow:0 -8px 26px rgba(0,0,0,0.62);
+}
+html[data-theme="ps3"] .shelf-info.grid-mode .plat{
+  background:rgba(74,163,255,0.16);
+  color:#9ad2ff;
+  border:1px solid rgba(74,163,255,0.34);
+}
+html[data-theme="ps3"] .shelf-info.grid-mode h1{ color:#ffffff; }
+html[data-theme="ps3"] .shelf-info.grid-mode .rating-mini{ color:rgba(255,255,255,0.62); }
+html[data-theme="ps3"] .shelf-info.grid-mode .play-btn{
+  box-shadow:0 8px 22px rgba(74,163,255,0.4);
+}
+html[data-theme="ps3"] .shelf-info.grid-mode .details-btn{
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(143,208,255,0.30);
+  color:#eaf3ff;
+}
+html[data-theme="ps3"] .shelf-info.grid-mode .details-btn:hover{ background:rgba(74,163,255,0.18); }
+
+/* ---------- Dolny pasek ---------- */
+html[data-theme="ps3"] .bp-footer{
+  background:linear-gradient(180deg, rgba(7,16,30,0.92), rgba(2,6,14,0.9));
+  border-top:1px solid rgba(74,163,255,0.24);
+  color:rgba(255,255,255,0.55);
+}
+html[data-theme="ps3"] .bp-footer b{ color:#bfe2ff; }
+
+/* ---------- Modal ---------- */
+html[data-theme="ps3"] .modal-overlay{ background:rgba(2,5,12,0.8); }
+html[data-theme="ps3"] .modal-card{
+  background:#081426;
+  border:1px solid rgba(74,163,255,0.26);
+  box-shadow:0 40px 100px rgba(0,0,0,0.78);
+}
+html[data-theme="ps3"] .modal-cover::after{
+  background:linear-gradient(to right, transparent 70%, #081426 100%);
+}
+html[data-theme="ps3"] .close-btn{ background:rgba(255,255,255,0.1); color:#eaf3ff; }
+html[data-theme="ps3"] .modal-platform{ background:rgba(74,163,255,0.18); color:#9ad2ff; }
+html[data-theme="ps3"] .modal-title{ color:#ffffff; }
+html[data-theme="ps3"] .rating-score,
+html[data-theme="ps3"] .stars{ color:#ffd54f; }
+html[data-theme="ps3"] .rating-count{ color:rgba(255,255,255,0.45); }
+html[data-theme="ps3"] .tag{
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(143,208,255,0.18);
+  color:rgba(255,255,255,0.78);
+}
+html[data-theme="ps3"] .tag:hover{ background:rgba(74,163,255,0.2); }
+html[data-theme="ps3"] .description{ color:rgba(255,255,255,0.76); }
+html[data-theme="ps3"] .meta-item .meta-label{ color:rgba(255,255,255,0.42); }
+html[data-theme="ps3"] .meta-item .meta-value{ color:#ffffff; }
+html[data-theme="ps3"] .modal-play-btn{
+  background:linear-gradient(180deg,#8fd0ff,#2f85e0);
+  color:#03121f;
+}
+html[data-theme="ps3"] .modal-secondary-btn{
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(143,208,255,0.32);
+  color:#eaf3ff;
+}
+html[data-theme="ps3"] .modal-secondary-btn:hover{ background:rgba(74,163,255,0.18); }
+html[data-theme="ps3"] .rename-game-button{ border-color:#4aa3ff; color:#9ad2ff; }
+html[data-theme="ps3"] .rename-game-button:hover{ background:#4aa3ff; color:#03121f; }
+html[data-theme="ps3"] .rename-game-input{
+  background:#03080f;
+  border:1px solid #24405f;
+  color:#eaf3ff;
+}
+
+/* ---------- Toast / przełącznik widoku / dźwięk ---------- */
+html[data-theme="ps3"] .toast{
+  background:#0b1a2e;
+  border:1px solid #4aa3ff;
+  color:#9ad2ff;
+}
+html[data-theme="ps3"] .view-mode-switch{
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(74,163,255,0.28);
+}
+html[data-theme="ps3"] .view-mode-floating{
+  background:rgba(6,14,28,0.85);
+  box-shadow:0 8px 26px rgba(0,0,0,0.6);
+}
+html[data-theme="ps3"] .vm-btn{ color:rgba(255,255,255,0.5); }
+html[data-theme="ps3"] .vm-btn:hover{ color:#ffffff; background:rgba(74,163,255,0.18); }
+html[data-theme="ps3"] .vm-btn.active{
+  background:linear-gradient(180deg,#6fb8ff,#2f85e0);
+  color:#03121f;
+}
+html[data-theme="ps3"] .sound-controls-floating{
+  background:rgba(6,14,28,0.85);
+  box-shadow:0 8px 26px rgba(0,0,0,0.6);
+}
+html[data-theme="ps3"] .sound-btn{
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(74,163,255,0.30);
+  color:#eaf3ff;
+}
+html[data-theme="ps3"] .sound-btn:hover{ background:rgba(74,163,255,0.20); }
+html[data-theme="ps3"] .volume-slider{ background:rgba(255,255,255,0.15); }
+html[data-theme="ps3"] .volume-slider::-webkit-slider-thumb{ background:#4aa3ff; }
+html[data-theme="ps3"] .now-playing{
+  background:rgba(6,14,28,0.92);
+  border:1px solid rgba(74,163,255,0.26);
+  color:rgba(255,255,255,0.6);
+}
+html[data-theme="ps3"] .now-playing .np-title{ color:#9ad2ff; }
+
+/* ---------- Ustawienia ---------- */
+html[data-theme="ps3"] .settings-page{
+  background:linear-gradient(180deg, rgba(8,18,34,0.97), rgba(2,6,14,0.99));
+  color:#eaf3ff;
+}
+html[data-theme="ps3"] .settings-close-btn{
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(74,163,255,0.30);
+  color:#eaf3ff;
+}
+html[data-theme="ps3"] .settings-close-btn:hover{ background:rgba(74,163,255,0.20); }
+html[data-theme="ps3"] .settings-subtab{
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(74,163,255,0.26);
+  color:rgba(255,255,255,0.8);
+}
+html[data-theme="ps3"] .settings-subtab.active{
+  background:linear-gradient(180deg,#6fb8ff,#2f85e0);
+  border-color:#8fd0ff;
+  color:#03121f;
+}
+html[data-theme="ps3"] .settings-subpanel{
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(74,163,255,0.18);
+}
+html[data-theme="ps3"] .settings-subpanel::-webkit-scrollbar-track{ background:rgba(255,255,255,0.05); }
+html[data-theme="ps3"] .settings-subpanel::-webkit-scrollbar-thumb{ background:rgba(74,163,255,0.45); }
+html[data-theme="ps3"] .settings-subpanel::-webkit-scrollbar-thumb:hover{ background:rgba(74,163,255,0.7); }
+html[data-theme="ps3"] .settings-note{ color:rgba(255,255,255,0.72); }
+html[data-theme="ps3"] .settings-card{
+  background:rgba(255,255,255,0.035);
+  border:1px solid rgba(74,163,255,0.16);
+}
+html[data-theme="ps3"] .settings-warning{
+  background:rgba(74,163,255,0.10);
+  border:1px solid rgba(74,163,255,0.28);
+  color:#9ad2ff;
+}
+html[data-theme="ps3"] .field-label{ color:rgba(255,255,255,0.6); }
+html[data-theme="ps3"] .field-input{
+  background:rgba(0,0,0,0.35);
+  border:1px solid rgba(143,208,255,0.2);
+  color:#eaf3ff;
+}
+html[data-theme="ps3"] .field-input.empty{ color:rgba(255,255,255,0.35); }
+html[data-theme="ps3"] .field-textinput,
+html[data-theme="ps3"] .field-select{
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(143,208,255,0.2);
+  color:#eaf3ff;
+}
+html[data-theme="ps3"] .field-textinput::placeholder{ color:rgba(255,255,255,0.4); }
+html[data-theme="ps3"] .field-select option{ color:#111; }
+html[data-theme="ps3"] .btn-primary{
+  background:linear-gradient(180deg,#6fb8ff,#2f85e0);
+  color:#03121f;
+}
+html[data-theme="ps3"] .btn-secondary{
+  background:transparent;
+  border:1px solid rgba(143,208,255,0.32);
+  color:#eaf3ff;
+}
+html[data-theme="ps3"] .browse-btn,
+html[data-theme="ps3"] .test-launch-btn{
+  background:rgba(74,163,255,0.12);
+  border:1px solid rgba(74,163,255,0.32);
+  color:#9ad2ff;
+}
+html[data-theme="ps3"] .browse-btn:hover,
+html[data-theme="ps3"] .test-launch-btn:hover{ background:rgba(74,163,255,0.24); color:#ffffff; }
+html[data-theme="ps3"] .save-bar{
+  background:linear-gradient(180deg, rgba(2,6,14,0), rgba(2,6,14,0.96) 26%);
+}
+html[data-theme="ps3"] .add-platform-form input[type="text"]{
+  background:rgba(0,0,0,0.35);
+  border:1px solid rgba(143,208,255,0.2);
+  color:#eaf3ff;
+}
+html[data-theme="ps3"] .add-platform-form input[type="color"]{ border:1px solid rgba(143,208,255,0.2); }
+html[data-theme="ps3"] .platform-block{
+  background:rgba(255,255,255,0.035);
+  border:1px solid rgba(74,163,255,0.16);
+}
+html[data-theme="ps3"] .ext-hint{ color:rgba(255,255,255,0.35); }
+html[data-theme="ps3"] .remove-platform-btn{
+  background:rgba(255,80,80,0.12);
+  border:1px solid rgba(255,80,80,0.32);
+  color:#ff9a9a;
+}
+html[data-theme="ps3"] .remove-platform-btn:hover{ background:rgba(255,80,80,0.25); }
+html[data-theme="ps3"] .bulk-progress{
+  border:1px solid rgba(74,163,255,0.2);
+  background:rgba(255,255,255,0.04);
+}
+html[data-theme="ps3"] .bulk-progress-bar-wrap{ background:rgba(255,255,255,0.10); }
+html[data-theme="ps3"] .bulk-progress-bar{ background:#4aa3ff; }
+html[data-theme="ps3"] .bulk-progress-text{ color:rgba(255,255,255,0.7); }
+html[data-theme="ps3"] .manual-cover-editor{
+  background:rgba(255,255,255,0.035);
+  border:1px solid rgba(74,163,255,0.16);
+}
+html[data-theme="ps3"] .manual-cover-preview{
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(74,163,255,0.16);
+}
+html[data-theme="ps3"] .manual-cover-preview.empty{ color:rgba(255,255,255,0.5); }
+html[data-theme="ps3"] .manual-cover-meta span{ color:rgba(255,255,255,0.65); }
+
+/* ---------- Menedżer gier ---------- */
+html[data-theme="ps3"] .gm-summary{ color:rgba(255,255,255,0.6); }
+html[data-theme="ps3"] .gm-empty{ border:1px dashed rgba(74,163,255,0.35); color:rgba(255,255,255,0.55); }
+html[data-theme="ps3"] .gm-row{
+  border:1px solid rgba(74,163,255,0.16);
+  background:rgba(255,255,255,0.03);
+}
+html[data-theme="ps3"] .gm-row:hover{ background:rgba(74,163,255,0.10); }
+html[data-theme="ps3"] .gm-row.is-hidden{ border-color:rgba(74,163,255,0.4); }
+html[data-theme="ps3"] .gm-info strong{ color:#ffffff; }
+html[data-theme="ps3"] .gm-info span{ color:rgba(255,255,255,0.55); }
+html[data-theme="ps3"] .gm-size{ color:rgba(255,255,255,0.6); }
+html[data-theme="ps3"] .gm-badge{ background:rgba(74,163,255,0.18); color:#9ad2ff; }
+html[data-theme="ps3"] .gm-badge.is-hidden{ background:rgba(255,140,168,0.18); color:#ff8ca8; }
+html[data-theme="ps3"] .gm-toggle{
+  border:1px solid rgba(143,208,255,0.26);
+  background:rgba(255,255,255,0.08);
+  color:#eaf3ff;
+}
+html[data-theme="ps3"] .gm-toggle:hover{ background:rgba(74,163,255,0.2); }
+html[data-theme="ps3"] .gm-toggle.is-hidden{
+  background:rgba(74,163,255,0.22);
+  border-color:rgba(74,163,255,0.5);
+  color:#cbe8ff;
+}
+html[data-theme="ps3"] .gm-select-all{
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(74,163,255,0.24);
+  color:#eaf3ff;
+}
+html[data-theme="ps3"] .gm-select-all input,
+html[data-theme="ps3"] .gm-check{ accent-color:#4aa3ff; }
+
+
+

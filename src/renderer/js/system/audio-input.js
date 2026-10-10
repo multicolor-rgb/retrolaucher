@@ -234,6 +234,8 @@ async function init() {
 
   viewMode = config.uiState?.shelfViewMode || 'flat';
 
+  initTheme();
+
   renderTabs();
   renderSettings();
 

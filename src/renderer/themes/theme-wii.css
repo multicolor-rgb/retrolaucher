@@ -1,0 +1,428 @@
+/* ============================================================
+   Motyw: WII — jasny, połysk (Wii Menu)
+   Aktywny gdy: <html data-theme="wii">
+   Samodzielna skórka — nadpisuje reguły z style.css.
+   ============================================================ */
+
+/* ---------- Baza / tło aplikacji ---------- */
+html[data-theme="wii"],
+html[data-theme="wii"] body{
+  background:linear-gradient(180deg,#f6fbff 0%,#dcecf9 55%,#c8dff2 100%);
+  color:#14364f;
+}
+html[data-theme="wii"] body{ background:transparent; }
+
+/* ---------- Tło sceny półki ---------- */
+html[data-theme="wii"] #bgGradient{
+  background:
+    radial-gradient(circle at 18% 22%, rgba(122,206,246,0.55) 0%, transparent 38%),
+    radial-gradient(circle at 80% 26%, rgba(178,226,250,0.55) 0%, transparent 40%),
+    radial-gradient(circle at 52% 82%, rgba(206,236,252,0.65) 0%, transparent 42%),
+    linear-gradient(180deg,#fbfdff 0%,#e5f2fb 45%,#c9dff2 100%) !important;
+  animation:none;
+}
+html[data-theme="wii"] .bg-gradient::before{
+  background:
+    radial-gradient(circle at 30% 34%, rgba(255,255,255,0.95) 0%, transparent 32%),
+    radial-gradient(circle at 72% 58%, rgba(150,215,250,0.45) 0%, transparent 30%),
+    radial-gradient(circle at 48% 18%, rgba(255,255,255,0.7) 0%, transparent 26%);
+  opacity:.9;
+}
+html[data-theme="wii"] .bg-gradient::after{
+  background:radial-gradient(circle at 50% 36%, transparent 0%, rgba(255,255,255,0.5) 62%, rgba(214,233,248,0.92) 100%);
+}
+html[data-theme="wii"] .bg-blur{
+  opacity:.26;
+  filter:blur(60px) saturate(1.2) brightness(1.8);
+  mix-blend-mode:screen;
+}
+
+/* ---------- Górny pasek ---------- */
+html[data-theme="wii"] .bp-topbar{
+  background:linear-gradient(180deg, #ffffff 0%, #eaf5fd 100%);
+  border-bottom:1px solid rgba(56,182,232,0.30);
+  box-shadow:0 2px 14px rgba(20,54,79,0.10);
+}
+html[data-theme="wii"] .brand{ color:#1c6d99; }
+html[data-theme="wii"] .brand span{ color:#8fb2c8; opacity:1; }
+html[data-theme="wii"] .tab{ color:#6a8ba3; }
+html[data-theme="wii"] .tab.active{ color:#123c58; }
+html[data-theme="wii"] .tab-highlight{ background:rgba(56,182,232,0.18); }
+html[data-theme="wii"] #search{
+  background:#ffffff;
+  border:1px solid rgba(56,182,232,0.38);
+  color:#123c58;
+}
+html[data-theme="wii"] #search::placeholder{ color:#93aec2; }
+html[data-theme="wii"] .icon-btn{
+  background:#ffffff;
+  border:1px solid rgba(56,182,232,0.38);
+  color:#1c6d99;
+}
+html[data-theme="wii"] .icon-btn:hover{ background:#eaf6fd; }
+html[data-theme="wii"] .icon-btn.active-view{
+  background:linear-gradient(180deg,#57c4ee,#2aa6dc);
+  border-color:#2aa6dc;
+  color:#ffffff;
+}
+
+/* ---------- Pasek platform / dropdown ---------- */
+html[data-theme="wii"] .platform-dropdown-btn{
+  background:#ffffff;
+  border:1px solid rgba(56,182,232,0.38);
+  color:#1c6d99;
+}
+html[data-theme="wii"] .platform-dropdown-btn:hover{ background:#eaf6fd; color:#123c58; }
+html[data-theme="wii"] .platform-dropdown-btn.active{
+  background:linear-gradient(180deg,#57c4ee,#2aa6dc);
+  border-color:#2aa6dc;
+  color:#ffffff;
+}
+html[data-theme="wii"] .platform-dropdown-menu{
+  background:rgba(255,255,255,0.98);
+  border:1px solid rgba(56,182,232,0.28);
+  box-shadow:0 20px 50px rgba(20,54,79,0.22);
+}
+html[data-theme="wii"] .pd-item{ color:#456a83; }
+html[data-theme="wii"] .pd-item:hover{ background:rgba(56,182,232,0.12); color:#123c58; }
+html[data-theme="wii"] .pd-item.active{ background:rgba(56,182,232,0.20); color:#1c6d99; }
+html[data-theme="wii"] .pd-item.pd-focus{
+  outline:2px solid #2aa6dc;
+  outline-offset:-2px;
+  background:rgba(56,182,232,0.12);
+}
+/* ---------- Okładki / półka ---------- */
+html[data-theme="wii"] .sh-item{
+  box-shadow:0 14px 32px rgba(20,54,79,0.28);
+  opacity:.58;
+  filter:brightness(.88) saturate(.95);
+}
+html[data-theme="wii"] .sh-item:hover:not(.focus){
+  opacity:.85 !important;
+  filter:brightness(.98) saturate(1) !important;
+}
+html[data-theme="wii"] .sh-item.focus{
+  box-shadow:
+    0 10px 20px rgba(20,54,79,0.20),
+    0 26px 54px rgba(20,54,79,0.26),
+    0 0 0 3px rgba(56,182,232,0.85),
+    0 0 34px rgba(56,182,232,0.35);
+  animation:none;
+}
+html[data-theme="wii"] .sh-tag{
+  background:linear-gradient(180deg,#57c4ee,#2aa6dc);
+  color:#ffffff;
+}
+html[data-theme="wii"] .bp-status-title{
+  color:#ffffff;
+  text-shadow:0 2px 10px rgba(7,32,50,0.95);
+}
+html[data-theme="wii"] .shelf-viewport.mode-grid{
+  background:linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(214,233,248,0.9) 100%);
+}
+html[data-theme="wii"] .shelf-viewport.mode-cascade::before{
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.85), transparent 34%),
+    radial-gradient(circle at 50% 60%, rgba(56,182,232,0.25), transparent 46%),
+    linear-gradient(180deg, rgba(255,255,255,0.4), rgba(255,255,255,0));
+}
+html[data-theme="wii"] .shelf.mode-grid .sh-item{
+  box-shadow:0 8px 20px rgba(20,54,79,0.22);
+  opacity:.78;
+  filter:brightness(.92) saturate(.96);
+}
+html[data-theme="wii"] .shelf.mode-grid .sh-item.focus{
+  filter:brightness(1) saturate(1.05);
+  box-shadow:
+    0 14px 28px rgba(20,54,79,0.22),
+    0 28px 60px rgba(20,54,79,0.28),
+    0 0 0 2px rgba(42,166,220,0.95),
+    0 0 34px rgba(56,182,232,0.4);
+}
+html[data-theme="wii"] .shelf.mode-grid .bp-status-title{
+  text-shadow:0 2px 10px rgba(7,32,50,0.95);
+}
+html[data-theme="wii"] .shelf.mode-cascade .sh-item{
+  box-shadow:0 10px 24px rgba(20,54,79,0.22);
+}
+html[data-theme="wii"] .shelf.mode-cascade .sh-item::before{ background:rgba(20,54,79,0.22); }
+html[data-theme="wii"] .empty-state{ color:#6a8ba3; }
+
+/* ---------- Info o grze + akcje ---------- */
+html[data-theme="wii"] .shelf-info .plat{
+  background:linear-gradient(180deg,#57c4ee,#2aa6dc);
+  color:#ffffff;
+}
+html[data-theme="wii"] .shelf-info h1{
+  color:#123c58;
+  text-shadow:0 2px 10px rgba(255,255,255,0.8);
+}
+html[data-theme="wii"] .shelf-info .rating-mini{ color:#e2a304; }
+html[data-theme="wii"] .play-btn{
+  background:linear-gradient(180deg,#57c4ee,#219fd6) !important;
+  color:#ffffff !important;
+  box-shadow:0 10px 24px rgba(42,166,220,0.35);
+}
+html[data-theme="wii"] .details-btn{
+  background:#ffffff;
+  border:1px solid rgba(56,182,232,0.45);
+  color:#1c6d99;
+}
+html[data-theme="wii"] .details-btn:hover{ background:#eaf6fd; }
+html[data-theme="wii"] .shelf-info.grid-mode{
+  background:linear-gradient(180deg, rgba(255,255,255,0.90) 0%, rgba(238,247,253,0.97) 100%);
+  border-top:1px solid rgba(56,182,232,0.32);
+  box-shadow:0 -8px 24px rgba(20,54,79,0.12);
+}
+html[data-theme="wii"] .shelf-info.grid-mode .plat{
+  background:rgba(56,182,232,0.16);
+  color:#1c6d99;
+  border:1px solid rgba(56,182,232,0.34);
+}
+html[data-theme="wii"] .shelf-info.grid-mode h1{
+  color:#123c58;
+  text-shadow:0 2px 10px rgba(255,255,255,0.7);
+}
+html[data-theme="wii"] .shelf-info.grid-mode .rating-mini{ color:#5b7b93; }
+html[data-theme="wii"] .shelf-info.grid-mode .play-btn{
+  box-shadow:0 8px 18px rgba(42,166,220,0.30);
+}
+html[data-theme="wii"] .shelf-info.grid-mode .details-btn{
+  background:#ffffff;
+  border:1px solid rgba(56,182,232,0.40);
+  color:#1c6d99;
+}
+html[data-theme="wii"] .shelf-info.grid-mode .details-btn:hover{ background:#eaf6fd; }
+/* ---------- Dolny pasek ---------- */
+html[data-theme="wii"] .bp-footer{
+  background:linear-gradient(180deg, rgba(255,255,255,0.94), rgba(234,245,253,0.98));
+  border-top:1px solid rgba(56,182,232,0.28);
+  color:#5b7b93;
+}
+html[data-theme="wii"] .bp-footer b{ color:#123c58; }
+
+/* ---------- Modal ---------- */
+html[data-theme="wii"] .modal-overlay{ background:rgba(20,54,79,0.42); }
+html[data-theme="wii"] .modal-card{
+  background:#f7fbfe;
+  border:1px solid rgba(56,182,232,0.28);
+  box-shadow:0 30px 80px rgba(20,54,79,0.35);
+}
+html[data-theme="wii"] .modal-cover::after{
+  background:linear-gradient(to right, transparent 70%, #f7fbfe 100%);
+}
+html[data-theme="wii"] .close-btn{ background:rgba(20,54,79,0.08); color:#123c58; }
+html[data-theme="wii"] .modal-platform{ background:rgba(56,182,232,0.18); color:#1c6d99; }
+html[data-theme="wii"] .modal-title{ color:#0f3049; }
+html[data-theme="wii"] .rating-score,
+html[data-theme="wii"] .stars{ color:#e2a304; }
+html[data-theme="wii"] .rating-count{ color:#6a8ba3; }
+html[data-theme="wii"] .tag{
+  background:rgba(20,54,79,0.06);
+  border:1px solid rgba(20,54,79,0.14);
+  color:#3c637d;
+}
+html[data-theme="wii"] .tag:hover{ background:rgba(56,182,232,0.16); }
+html[data-theme="wii"] .description{ color:#3c637d; }
+html[data-theme="wii"] .meta-item .meta-label{ color:#7897ae; }
+html[data-theme="wii"] .meta-item .meta-value{ color:#123c58; }
+html[data-theme="wii"] .modal-play-btn{
+  background:linear-gradient(180deg,#57c4ee,#219fd6);
+  color:#ffffff;
+}
+html[data-theme="wii"] .modal-secondary-btn{
+  background:#ffffff;
+  border:1px solid rgba(56,182,232,0.45);
+  color:#1c6d99;
+}
+html[data-theme="wii"] .modal-secondary-btn:hover{ background:#eaf6fd; }
+html[data-theme="wii"] .rename-game-button{ border-color:#2aa6dc; color:#1c6d99; }
+html[data-theme="wii"] .rename-game-button:hover{ background:#2aa6dc; color:#ffffff; }
+html[data-theme="wii"] .rename-game-input{
+  background:#ffffff;
+  border:1px solid #b9d4e9;
+  color:#123c58;
+}
+
+/* ---------- Toast / przełącznik widoku / dźwięk ---------- */
+html[data-theme="wii"] .toast{
+  background:#ffffff;
+  border:1px solid #2aa6dc;
+  color:#1c6d99;
+  box-shadow:0 10px 30px rgba(20,54,79,0.22);
+}
+html[data-theme="wii"] .view-mode-switch{
+  background:rgba(255,255,255,0.75);
+  border:1px solid rgba(56,182,232,0.34);
+}
+html[data-theme="wii"] .view-mode-floating{
+  background:rgba(255,255,255,0.85);
+  box-shadow:0 8px 24px rgba(20,54,79,0.20);
+}
+html[data-theme="wii"] .vm-btn{ color:#6a8ba3; }
+html[data-theme="wii"] .vm-btn:hover{ color:#123c58; background:rgba(56,182,232,0.14); }
+html[data-theme="wii"] .vm-btn.active{
+  background:linear-gradient(180deg,#57c4ee,#2aa6dc);
+  color:#ffffff;
+}
+html[data-theme="wii"] .sound-controls-floating{
+  background:rgba(255,255,255,0.85);
+  box-shadow:0 8px 24px rgba(20,54,79,0.20);
+}
+html[data-theme="wii"] .sound-btn{
+  background:#ffffff;
+  border:1px solid rgba(56,182,232,0.38);
+  color:#1c6d99;
+}
+html[data-theme="wii"] .sound-btn:hover{ background:#eaf6fd; }
+html[data-theme="wii"] .volume-slider{ background:rgba(20,54,79,0.18); }
+html[data-theme="wii"] .volume-slider::-webkit-slider-thumb{ background:#2aa6dc; }
+html[data-theme="wii"] .now-playing{
+  background:rgba(255,255,255,0.94);
+  border:1px solid rgba(56,182,232,0.30);
+  color:#5b7b93;
+}
+html[data-theme="wii"] .now-playing .np-title{ color:#1c6d99; }
+/* ---------- Ustawienia ---------- */
+html[data-theme="wii"] .settings-page{
+  background:linear-gradient(180deg, rgba(247,251,255,0.97), rgba(232,243,252,0.99));
+  color:#123c58;
+}
+html[data-theme="wii"] .settings-close-btn{
+  background:#ffffff;
+  border:1px solid rgba(56,182,232,0.40);
+  color:#1c6d99;
+}
+html[data-theme="wii"] .settings-close-btn:hover{ background:#eaf6fd; }
+html[data-theme="wii"] .settings-subtab{
+  background:rgba(255,255,255,0.85);
+  border:1px solid rgba(56,182,232,0.32);
+  color:#1c6d99;
+}
+html[data-theme="wii"] .settings-subtab.active{
+  background:linear-gradient(180deg,#57c4ee,#2aa6dc);
+  border-color:#2aa6dc;
+  color:#ffffff;
+}
+html[data-theme="wii"] .settings-subpanel{
+  background:rgba(255,255,255,0.78);
+  border:1px solid rgba(56,182,232,0.24);
+}
+html[data-theme="wii"] .settings-subpanel::-webkit-scrollbar-track{ background:rgba(20,54,79,0.06); }
+html[data-theme="wii"] .settings-subpanel::-webkit-scrollbar-thumb{ background:rgba(42,166,220,0.5); }
+html[data-theme="wii"] .settings-subpanel::-webkit-scrollbar-thumb:hover{ background:rgba(42,166,220,0.75); }
+html[data-theme="wii"] .settings-note{ color:#4f7290; }
+html[data-theme="wii"] .settings-card{
+  background:rgba(255,255,255,0.88);
+  border:1px solid rgba(56,182,232,0.24);
+}
+html[data-theme="wii"] .settings-warning{
+  background:rgba(56,182,232,0.10);
+  border:1px solid rgba(56,182,232,0.30);
+  color:#1c6d99;
+}
+html[data-theme="wii"] .field-label{ color:#4f7290; }
+html[data-theme="wii"] .field-input{
+  background:#ffffff;
+  border:1px solid #b9d4e9;
+  color:#123c58;
+}
+html[data-theme="wii"] .field-input.empty{ color:#93aec2; }
+html[data-theme="wii"] .field-textinput,
+html[data-theme="wii"] .field-select{
+  background:#ffffff;
+  border:1px solid #b9d4e9;
+  color:#123c58;
+}
+html[data-theme="wii"] .field-textinput::placeholder{ color:#93aec2; }
+html[data-theme="wii"] .field-select option{ color:#123c58; }
+html[data-theme="wii"] .btn-primary{
+  background:linear-gradient(180deg,#57c4ee,#219fd6);
+  color:#ffffff;
+}
+html[data-theme="wii"] .btn-secondary{
+  background:#ffffff;
+  border:1px solid rgba(56,182,232,0.42);
+  color:#1c6d99;
+}
+html[data-theme="wii"] .browse-btn,
+html[data-theme="wii"] .test-launch-btn{
+  background:rgba(56,182,232,0.12);
+  border:1px solid rgba(56,182,232,0.34);
+  color:#1c6d99;
+}
+html[data-theme="wii"] .browse-btn:hover,
+html[data-theme="wii"] .test-launch-btn:hover{ background:rgba(56,182,232,0.22); color:#123c58; }
+html[data-theme="wii"] .save-bar{
+  background:linear-gradient(180deg, rgba(232,243,252,0), rgba(232,243,252,0.96) 26%);
+}
+html[data-theme="wii"] .add-platform-form input[type="text"]{
+  background:#ffffff;
+  border:1px solid #b9d4e9;
+  color:#123c58;
+}
+html[data-theme="wii"] .add-platform-form input[type="color"]{ border:1px solid #b9d4e9; }
+html[data-theme="wii"] .platform-block{
+  background:rgba(255,255,255,0.88);
+  border:1px solid rgba(56,182,232,0.24);
+}
+html[data-theme="wii"] .ext-hint{ color:#93aec2; }
+html[data-theme="wii"] .remove-platform-btn{
+  background:rgba(214,69,69,0.10);
+  border:1px solid rgba(214,69,69,0.35);
+  color:#d64545;
+}
+html[data-theme="wii"] .remove-platform-btn:hover{ background:rgba(214,69,69,0.22); }
+html[data-theme="wii"] .bulk-progress{
+  border:1px solid rgba(56,182,232,0.28);
+  background:rgba(255,255,255,0.75);
+}
+html[data-theme="wii"] .bulk-progress-bar-wrap{ background:rgba(20,54,79,0.12); }
+html[data-theme="wii"] .bulk-progress-bar{ background:#2aa6dc; }
+html[data-theme="wii"] .bulk-progress-text{ color:#4f7290; }
+html[data-theme="wii"] .manual-cover-editor{
+  background:rgba(255,255,255,0.88);
+  border:1px solid rgba(56,182,232,0.24);
+}
+html[data-theme="wii"] .manual-cover-preview{
+  background:#ffffff;
+  border:1px solid #b9d4e9;
+}
+html[data-theme="wii"] .manual-cover-preview.empty{ color:#93aec2; }
+html[data-theme="wii"] .manual-cover-meta span{ color:#4f7290; }
+
+/* ---------- Menedżer gier ---------- */
+html[data-theme="wii"] .gm-summary{ color:#5b7b93; }
+html[data-theme="wii"] .gm-empty{ border:1px dashed rgba(56,182,232,0.4); color:#5b7b93; }
+html[data-theme="wii"] .gm-row{
+  border:1px solid rgba(56,182,232,0.22);
+  background:rgba(255,255,255,0.85);
+}
+html[data-theme="wii"] .gm-row:hover{ background:#ffffff; }
+html[data-theme="wii"] .gm-row.is-hidden{ border-color:rgba(42,166,220,0.45); }
+html[data-theme="wii"] .gm-info strong{ color:#123c58; }
+html[data-theme="wii"] .gm-info span{ color:#5b7b93; }
+html[data-theme="wii"] .gm-size{ color:#5b7b93; }
+html[data-theme="wii"] .gm-badge{ background:rgba(42,166,220,0.16); color:#1c6d99; }
+html[data-theme="wii"] .gm-badge.is-hidden{ background:rgba(214,69,69,0.14); color:#c23c3c; }
+html[data-theme="wii"] .gm-toggle{
+  border:1px solid rgba(56,182,232,0.34);
+  background:#ffffff;
+  color:#1c6d99;
+}
+html[data-theme="wii"] .gm-toggle:hover{ background:#eaf6fd; }
+html[data-theme="wii"] .gm-toggle.is-hidden{
+  background:rgba(42,166,220,0.18);
+  border-color:rgba(42,166,220,0.5);
+  color:#12506f;
+}
+html[data-theme="wii"] .gm-select-all{
+  background:#ffffff;
+  border:1px solid rgba(56,182,232,0.34);
+  color:#1c6d99;
+}
+html[data-theme="wii"] .gm-select-all input,
+html[data-theme="wii"] .gm-check{ accent-color:#2aa6dc; }
+
+
+

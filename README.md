@@ -22,6 +22,7 @@ Retro Launcher to desktopowy launcher gier retro inspirowany trybem Steam Big Pi
 - Zapamiętuje ustawienia użytkownika, platformy, ścieżki ROM-ów, emulatory, argumenty, okładki i preferencje widoku.
 - Obsługuje pełny ekran przy starcie oraz przełączanie fullscreen w trakcie pracy.
 - Ma efekty dźwiękowe UI, animowane tło i obsługę kilku trybów widoku półki z grami.
+- Oferuje cztery motywy graficzne całego interfejsu (Wii, Nintendo Switch, PlayStation 3, Xbox) wybierane w ustawieniach.
 - Działa z bezpiecznym mostkiem preload/IPC między rendererem a main process.
 
 ### Dla kogo
@@ -158,6 +159,15 @@ Sprawdź:
 
 Projekt rozwija launcher typu couch-gaming UI dla emulatorów i bibliotek ROM-ów, z naciskiem na prostą obsługę, sterowanie padem i szybkie uruchamianie gier.
 
+### Wersja 1.2.0
+
+- Dodano system motywów graficznych — cztery pełne skórki całego interfejsu:
+  - **Wii** — jasny, połyskliwy motyw w stylu Wii Menu,
+  - **Nintendo Switch** — ciemny motyw z czerwonym akcentem (`#e60012`),
+  - **PlayStation 3 (XMB)** — ciemnogranatowy motyw z falą i pasem światła,
+  - **Xbox** — ciemny motyw z zielonym akcentem (`#107c10`).
+- Motyw wybiera się w Ustawieniach → Ogólne (z podglądem na żywo) i jest zapisywany w konfiguracji.
+
 ### Wersja 1.1.0
 
 - Naprawienie focusowania po włączeniu emu (minimalizacja launchera i powrót po zamknięciu emu).
@@ -185,6 +195,7 @@ Retro Launcher is a desktop launcher for retro games, inspired by Steam's Big Pi
 - Remember user settings, platforms, ROM paths, emulators, arguments, cover art, and view preferences.
 - Support fullscreen on startup as well as toggling fullscreen while running.
 - Include UI sound effects, an animated background, and several shelf view modes for games.
+- Offer four graphical themes for the whole interface (Wii, Nintendo Switch, PlayStation 3, Xbox), selectable in settings.
 - Use a secure preload/IPC bridge between the renderer and the main process.
 
 ### Who it's for
@@ -320,6 +331,15 @@ Check:
 ### Project status
 
 The project is developing a couch-gaming UI launcher for emulators and ROM libraries, with a focus on ease of use, gamepad control, and fast game launching.
+
+### Version 1.2.0
+
+- Added a graphical theme system — four full UI skins:
+  - **Wii** — a light, glossy Wii Menu style theme,
+  - **Nintendo Switch** — a dark theme with a red accent (`#e60012`),
+  - **PlayStation 3 (XMB)** — a deep navy theme with a wave and a light band,
+  - **Xbox** — a dark theme with a green accent (`#107c10`).
+- The theme is selected in Settings → General (with live preview) and stored in the configuration.
 
 ### Version 1.1.0
 

@@ -985,4 +985,29 @@ body { min-height:100vh; }
     filter .2s ease !important;
 }
 
+
+/* ------------------------------------------------------------
+   Menedżer gier (ukrywanie plików per platforma)
+   ------------------------------------------------------------ */
+.games-manager-list{ margin-top:6px; display:flex; flex-direction:column; gap:8px; }
+.gm-summary{ font-size:12px; color:rgba(255,255,255,.6); padding:0 4px 4px; }
+.gm-empty{ padding:18px; border:1px dashed rgba(255,255,255,.15); border-radius:12px; color:rgba(255,255,255,.55); font-size:14px; text-align:center; }
+.gm-row{ display:flex; align-items:center; gap:12px; padding:10px 14px; border:1px solid rgba(255,255,255,.08); border-radius:12px; background:rgba(255,255,255,.03); transition:background .15s, border-color .15s; }
+.gm-row:hover{ background:rgba(255,255,255,.06); }
+.gm-row.is-hidden{ opacity:.6; border-color:rgba(56,224,255,.25); }
+.gm-info{ display:flex; flex-direction:column; gap:2px; min-width:0; flex:1; }
+.gm-info strong{ font-size:14px; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.gm-info span{ font-size:12px; color:rgba(255,255,255,.55); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.gm-size{ font-size:12px; color:rgba(255,255,255,.6); flex-shrink:0; white-space:nowrap; }
+.gm-badge{ font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; flex-shrink:0; background:rgba(56,224,255,.15); color:#38e0ff; }
+.gm-badge.is-hidden{ background:rgba(255,140,168,.18); color:#ff8ca8; }
+.gm-toggle{ flex-shrink:0; padding:8px 14px; border-radius:999px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); color:#fff; font-weight:600; font-size:13px; cursor:pointer; transition:background .15s, transform .1s; }
+.gm-toggle:hover{ background:rgba(255,255,255,.16); }
+.gm-toggle:active{ transform:scale(.96); }
+.gm-toggle.is-hidden{ background:rgba(56,224,255,.18); border-color:rgba(56,224,255,.4); color:#d7fbff; }
+.gm-toolbar{ align-items:center; margin-bottom:14px; }
+.gm-select-all{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:999px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); color:#fff; font-size:14px; cursor:pointer; user-select:none; }
+.gm-select-all input{ width:16px; height:16px; accent-color:#38e0ff; cursor:pointer; }
+.gm-check{ width:18px; height:18px; flex-shrink:0; accent-color:#38e0ff; cursor:pointer; }
+
  

@@ -97,8 +97,16 @@ async function refreshLibrary() {
     }
   }
 
+  // Pełna lista (z ukrytymi) — dla menedżera gier.
+  scannedGames.length = 0;
+  scannedGames.push(...merged);
+
+  // Na półkę trafiają tylko widoczne gry; ukryte są odfiltrowywane
+  // jeszcze przed filtrem platformy i wyszukiwania.
+  const visible = merged.filter(g => !isGameHidden(g.platform, g.id));
+
   games.length = 0;
-  games.push(...merged);
+  games.push(...visible);
 
   const q = (searchInput?.value || '').trim().toLowerCase();
 

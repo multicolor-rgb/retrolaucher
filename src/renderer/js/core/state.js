@@ -2,6 +2,11 @@
 
 const games = [];
 
+// Pełna lista plików wykrytych podczas ostatniego skanowania ROM-ów —
+// zawiera również gry ukryte przez użytkownika. Używana przez menedżera
+// gier, żeby dało się przywrócić (odkryć) schowane pozycje.
+const scannedGames = [];
+
 let config = {
   platforms: [
     {
@@ -69,6 +74,11 @@ let config = {
   manualCovers: {},
   userRatings: {},
 
+  // Ukryte gry/pliki per platforma: { [platformKey]: { [gameId]: true } }.
+  // Ukryte pozycje nie pojawiają się na półce ani w licznikach platform,
+  // ale nadal są dostępne w menedżerze gier, żeby można je było odkryć.
+  hiddenGames: {},
+
   // Klucze/dane logowania do scraperów metadanych. steamgrid i rawg to
   // jednolite klucze API. screenscraperUser/Password to login+hasło
   // konta ScreenScraper (nie klucz API — ich autoryzacja działa inaczej).
@@ -86,6 +96,7 @@ let config = {
     fullscreenOnLaunch: false,
     shelfViewMode: 'flat',
     language: 'pl',
+    theme: 'default',
     gameTitles: {}
   }
 };
@@ -188,6 +199,16 @@ const I18N = {
     languageNote: 'Wybierz język interfejsu aplikacji.',
     languageInterface: 'Język interfejsu',
     saveLanguage: 'Zapisz język',
+    theme: 'Motyw',
+    themeNote: 'Wybierz motyw graficzny interfejsu. Zmiana jest widoczna od razu.',
+    themeInterface: 'Motyw interfejsu',
+    saveTheme: 'Zapisz motyw',
+    themeDefault: 'Domyślny (ciemny)',
+    themeWii: 'Wii — jasny, połysk',
+    themeSwitch: 'Nintendo Switch — czerwień',
+    themePs3: 'PlayStation 3 — XMB',
+    themeXbox: 'Xbox — zieleń',
+    themeSaved: 'Zapisano motyw ✓',
     artworkMetaTitle: 'Okładki i opisy',
     artworkMetaNote: 'Wybierz platformę do pobierania danych.',
     fetchPlatform: 'Platforma do pobierania',
@@ -274,7 +295,26 @@ const I18N = {
 
     renameGame: 'Podaj nową nazwę gry:',
     gameNameEmpty: 'Nazwa gry nie może być pusta.',
-    gameRenamed: 'Nazwa gry została zmieniona.'
+    gameRenamed: 'Nazwa gry została zmieniona.',
+
+    gamesManager: 'Menedżer gier',
+    gamesManagerNote: 'Wybierz platformę i schowaj (ukryj) wybrane gry lub pliki, aby nie pojawiały się na półce. Ukrycie jest zapisywane osobno dla każdej platformy i można je w każdej chwili cofnąć.',
+    managerPlatform: 'Platforma',
+    managerSearchPlaceholder: 'Szukaj gry lub pliku…',
+    hideGame: 'Ukryj',
+    unhideGame: 'Odkryj',
+    hiddenBadge: 'Ukryta',
+    hideAllGames: 'Ukryj wszystkie',
+    unhideAllGames: 'Odkryj wszystkie',
+    visibleBadge: 'Widoczna',
+    noScannedGames: 'Brak plików — ustaw folder ROM-ów w zakładce Platformy.',
+    hiddenGamesSaved: 'Zapisano stan ukrycia',
+    platformHiddenCount: 'ukryte',
+    selectAll: 'Zaznacz wszystkie',
+    hideSelected: 'Ukryj zaznaczone',
+    unhideSelected: 'Odkryj zaznaczone',
+    selectedCount: 'zaznaczone',
+    managerNoSelection: 'Zaznacz gry, aby wykonać akcję'
   },
 
   en: {
@@ -326,6 +366,16 @@ const I18N = {
     languageNote: 'Choose the application interface language.',
     languageInterface: 'Interface language',
     saveLanguage: 'Save language',
+    theme: 'Theme',
+    themeNote: 'Choose the graphical theme of the interface. The change is applied instantly.',
+    themeInterface: 'Interface theme',
+    saveTheme: 'Save theme',
+    themeDefault: 'Default (dark)',
+    themeWii: 'Wii — light, glossy',
+    themeSwitch: 'Nintendo Switch — red',
+    themePs3: 'PlayStation 3 — XMB',
+    themeXbox: 'Xbox — green',
+    themeSaved: 'Theme saved ✓',
     artworkMetaTitle: 'Covers and descriptions',
     fetchPlatform: 'Fetch platform',
     fetchCovers: 'Fetch covers and descriptions',
@@ -409,7 +459,26 @@ const I18N = {
 
     renameGame: 'Enter a new game name:',
     gameNameEmpty: 'The game name cannot be empty.',
-    gameRenamed: 'Game name changed.'
+    gameRenamed: 'Game name changed.',
+
+    gamesManager: 'Games manager',
+    gamesManagerNote: 'Pick a platform and hide selected games or files so they no longer appear on the shelf. Hiding is saved separately for each platform and can be undone at any time.',
+    managerPlatform: 'Platform',
+    managerSearchPlaceholder: 'Search game or file…',
+    hideGame: 'Hide',
+    unhideGame: 'Unhide',
+    hiddenBadge: 'Hidden',
+    hideAllGames: 'Hide all',
+    unhideAllGames: 'Unhide all',
+    visibleBadge: 'Visible',
+    noScannedGames: 'No files — set the ROM folder in the Platforms tab.',
+    hiddenGamesSaved: 'Hidden state saved',
+    platformHiddenCount: 'hidden',
+    selectAll: 'Select all',
+    hideSelected: 'Hide selected',
+    unhideSelected: 'Unhide selected',
+    selectedCount: 'selected',
+    managerNoSelection: 'Select games to perform this action'
   }
 };
 
@@ -465,6 +534,11 @@ function ensureConfigDefaults() {
     config.uiState.language = 'pl';
   }
 
+  const allowedThemes = ['default', 'wii', 'switch', 'ps3', 'xbox'];
+  if (!allowedThemes.includes(config.uiState.theme)) {
+    config.uiState.theme = 'default';
+  }
+
   if (typeof config.uiState.settingsOpen !== 'boolean') {
     config.uiState.settingsOpen = false;
   }
@@ -499,6 +573,14 @@ function ensureConfigDefaults() {
 
   if (!config.userRatings || typeof config.userRatings !== 'object') {
     config.userRatings = {};
+  }
+
+  if (
+    !config.hiddenGames
+    || typeof config.hiddenGames !== 'object'
+    || Array.isArray(config.hiddenGames)
+  ) {
+    config.hiddenGames = {};
   }
 
   if (!config.apiKeys || typeof config.apiKeys !== 'object') {

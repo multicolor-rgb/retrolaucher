@@ -8,6 +8,7 @@ function ensurePresetEmulators() {
     if (!config.metadata[p.key]) config.metadata[p.key] = {};
     if (!config.manualCovers[p.key]) config.manualCovers[p.key] = {};
     if (!config.userRatings[p.key]) config.userRatings[p.key] = {};
+    if (!config.hiddenGames[p.key]) config.hiddenGames[p.key] = {};
     if (!p.aspect) p.aspect = 'standard';
   });
 
@@ -41,6 +42,12 @@ function ensurePresetEmulators() {
   // język
   if (!config.uiState.language) {
     config.uiState.language = 'pl';
+  }
+
+  // motyw interfejsu – odpowiada plikom w themes/*.css
+  const allowedThemes = ['default', 'wii', 'switch', 'ps3', 'xbox'];
+  if (!allowedThemes.includes(config.uiState.theme)) {
+    config.uiState.theme = 'default';
   }
 
   // customowe tytuły gier
@@ -92,6 +99,11 @@ function mergeStoredConfig(stored = {}) {
       ...((stored && stored.userRatings) || {})
     },
 
+    hiddenGames: {
+      ...(config.hiddenGames || {}),
+      ...((stored && stored.hiddenGames) || {})
+    },
+
     apiKeys: {
       ...(config.apiKeys || {}),
       ...((stored && stored.apiKeys) || {})
@@ -134,6 +146,7 @@ async function saveStoredConfig() {
     metadata: config.metadata,
     manualCovers: config.manualCovers,
     userRatings: config.userRatings,
+    hiddenGames: config.hiddenGames,
     apiKeys: config.apiKeys,
     uiState: config.uiState
   };
@@ -183,6 +196,38 @@ function getCoverForGame(game) {
   return getManualCover(game.platform, game.id)
     || game.cover
     || 'https://cdn2.steamgriddb.com/thumb/fd1b83d80a10d9a7ca298e8e6fe705f0.jpg';
+}
+
+// ------------------------------------------------------------
+// Ukrywanie gier/plików per platforma (menedżer gier)
+// ------------------------------------------------------------
+
+function getHiddenGames(platformKey) {
+  return (((config.hiddenGames || {})[platformKey]) || {});
+}
+
+function isGameHidden(platformKey, gameId) {
+  if (!platformKey || !gameId) return false;
+  return getHiddenGames(platformKey)[gameId] === true;
+}
+
+function setGameHidden(platformKey, gameId, hidden) {
+  if (!platformKey || !gameId) return;
+
+  if (!config.hiddenGames) config.hiddenGames = {};
+  if (!config.hiddenGames[platformKey]) config.hiddenGames[platformKey] = {};
+
+  if (hidden) {
+    config.hiddenGames[platformKey][gameId] = true;
+  } else {
+    delete config.hiddenGames[platformKey][gameId];
+  }
+}
+
+function toggleGameHidden(platformKey, gameId) {
+  const next = !isGameHidden(platformKey, gameId);
+  setGameHidden(platformKey, gameId, next);
+  return next;
 }
 
 function openManualCoverEditorForGame(game) {
