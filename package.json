@@ -10,17 +10,22 @@
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder",
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "dist": "tauri build -b deb,appimage",
+    "dist:deb": "tauri build -b deb",
     "dist:win": "electron-builder --win nsis",
-    "dist:linux": "electron-builder --linux AppImage deb"
+    "dist:linux": "tauri build -b deb,appimage"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2",
     "electron": "^43.2.0",
     "electron-builder": "^26.15.3"
   },
   "license": "MIT",
   "allowScripts": {
-    "electron@31.7.7": true
+    "electron@31.7.7": true,
+    "@tauri-apps/cli": true
   },
    "build": {
     "appId": "com.retrolauncher.app",

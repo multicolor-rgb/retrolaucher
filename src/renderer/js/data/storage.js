@@ -186,16 +186,24 @@ function setManualCover(platformKey, gameId, value) {
   }
 
   if (value) {
-    config.manualCovers[platformKey][gameId] = value;
+    // Tauri: ścieżki file:// → asset protocol (użytkownik może też wkleić URL)
+    const normalized = typeof window.toCoverUrl === 'function' ? window.toCoverUrl(value) : value;
+    config.manualCovers[platformKey][gameId] = normalized;
   } else {
     delete config.manualCovers[platformKey][gameId];
   }
 }
 
 function getCoverForGame(game) {
-  return getManualCover(game.platform, game.id)
-    || game.cover
+  return toCoverUrlSafe(getManualCover(game.platform, game.id))
+    || toCoverUrlSafe(game.cover)
     || 'https://cdn2.steamgriddb.com/thumb/fd1b83d80a10d9a7ca298e8e6fe705f0.jpg';
+}
+
+// toCoverUrl z bridge.js — stare configi z Electrona mają okładki jako file://
+function toCoverUrlSafe(value) {
+  if (typeof window.toCoverUrl !== 'function') return value;
+  return window.toCoverUrl(value);
 }
 
 // ------------------------------------------------------------
