@@ -90,7 +90,7 @@
       'download.appimage.text': 'One file, no installation. Ideal for testing or keeping the launcher on a USB drive.',
       'download.appimage.tag': 'portable',
       'download.appimage.cta': 'Download AppImage',
-      'download.note': 'Your configuration and playtime are stored in <code>~/.config/retro-launcher</code> (or the Windows equivalent) and are preserved when upgrading from 1.x. Need another build? Check the <a href="https://github.com/multicolor-rgb/retrolaucher/releases" target="_blank" rel="noopener">releases page</a>.',
+      'download.note': 'Your configuration and playtime are stored in <code>~/.config/retro-launcher</code> (or the Windows equivalent) and are preserved when upgrading from 1.x. Need another build? Check the <a href="https://github.com/multicolor-rgb/retrolaucher/releases" target="_blank" rel="noopener">releases page</a> — or verify the <a href="https://github.com/multicolor-rgb/retrolaucher/releases/download/rel%2F2.1/SHA256SUMS.txt" target="_blank" rel="noopener">SHA256 checksums</a>.',
 
       'faq.eyebrow': 'FAQ',
       'faq.title': 'Good to know',
@@ -201,7 +201,7 @@
       'download.appimage.text': 'Jeden plik, bez instalacji. Idealny do testów albo trzymania launchera na pendrive.',
       'download.appimage.tag': 'przenośny',
       'download.appimage.cta': 'Pobierz AppImage',
-      'download.note': 'Konfiguracja i czas gry są zapisywane w <code>~/.config/retro-launcher</code> (lub odpowiedniku na Windows) i pozostają zachowane przy aktualizacji z 1.x. Potrzebujesz innego builda? Zajrzyj na <a href="https://github.com/multicolor-rgb/retrolaucher/releases" target="_blank" rel="noopener">stronę wydań</a>.',
+      'download.note': 'Konfiguracja i czas gry są zapisywane w <code>~/.config/retro-launcher</code> (lub odpowiedniku na Windows) i pozostają zachowane przy aktualizacji z 1.x. Potrzebujesz innego builda? Zajrzyj na <a href="https://github.com/multicolor-rgb/retrolaucher/releases" target="_blank" rel="noopener">stronę wydań</a> lub zweryfikuj <a href="https://github.com/multicolor-rgb/retrolaucher/releases/download/rel%2F2.1/SHA256SUMS.txt" target="_blank" rel="noopener">sumy SHA256</a>.',
 
       'faq.eyebrow': 'FAQ',
       'faq.title': 'Warto wiedzieć',
