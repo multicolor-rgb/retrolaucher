@@ -65,10 +65,14 @@ fn data_dir(app: &AppHandle) -> PathBuf {
 }
 
 fn home_dir() -> PathBuf {
-    match std::env::var("HOME") {
-        Ok(h) if !h.is_empty() => PathBuf::from(h),
-        _ => PathBuf::from("."),
+    for key in ["HOME", "USERPROFILE"] {
+        if let Ok(value) = std::env::var(key) {
+            if !value.is_empty() {
+                return PathBuf::from(value);
+            }
+        }
     }
+    PathBuf::from(".")
 }
 
 fn ensure_data_files(app: &AppHandle) {
@@ -356,6 +360,7 @@ fn kill_last_pid(state: &LauncherState) -> bool {
 
 #[cfg(target_family = "windows")]
 fn kill_last_pid(state: &LauncherState) -> bool {
+    use std::os::windows::process::CommandExt;
     let pid = state.last_pid.load(Ordering::SeqCst);
     if pid == 0 {
         return false;
