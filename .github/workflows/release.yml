@@ -102,9 +102,15 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Generate checksums
-        working-directory: dist
-        run: sha256sum *.deb *.AppImage *.exe > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - name: Collect bundles and generate checksums
+        run: |
+          mkdir -p release
+          find dist -type f \( -name '*.deb' -o -name '*.AppImage' -o -name '*.exe' \) \
+            -exec cp {} release/ \;
+          cd release
+          find . -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0 \
+            | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+          cat SHA256SUMS.txt
 
       - name: Create release
         uses: softprops/action-gh-release@v2
@@ -121,7 +127,4 @@ jobs:
             - **Windows:** NSIS installer (WebView2 handled automatically)
             - Existing 1.x configuration in `~/.config/retro-launcher` is preserved.
           files: |
-            dist/*.deb
-            dist/*.AppImage
-            dist/*.exe
-            dist/SHA256SUMS.txt
+            release/*
