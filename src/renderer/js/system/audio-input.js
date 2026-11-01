@@ -35,6 +35,36 @@ const newPlatformName = document.getElementById('newPlatformName');
 const newPlatformExts = document.getElementById('newPlatformExts');
 const newPlatformColor = document.getElementById('newPlatformColor');
 const newPlatformAspect = document.getElementById('newPlatformAspect');
+const newPlatformKind = document.getElementById('newPlatformKind');
+const platformPresetsDatalist = document.getElementById('platformPresets');
+
+function populatePlatformPresets() {
+  if (!platformPresetsDatalist) return;
+  platformPresetsDatalist.innerHTML = '';
+  PLATFORM_PRESETS.forEach(preset => {
+    const option = document.createElement('option');
+    option.value = preset.label;
+    option.label = (preset.extensions || []).join(', ');
+    platformPresetsDatalist.appendChild(option);
+  });
+}
+
+function applyPlatformPreset(label) {
+  const preset = PLATFORM_PRESETS.find(p => p.label.toLowerCase() === String(label || '').trim().toLowerCase());
+  if (!preset) return null;
+
+  if (newPlatformExts) newPlatformExts.value = (preset.extensions || []).join(', ');
+  if (newPlatformColor) newPlatformColor.value = preset.color || '#38e0ff';
+  if (newPlatformAspect) newPlatformAspect.value = preset.aspect || 'standard';
+  if (newPlatformKind) newPlatformKind.value = preset.kind === 'pc' ? 'pc' : 'console';
+  return preset;
+}
+
+newPlatformName?.addEventListener('input', () => {
+  applyPlatformPreset(newPlatformName.value);
+});
+
+populatePlatformPresets();
 
 addPlatformForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -42,6 +72,7 @@ addPlatformForm?.addEventListener('submit', async (e) => {
   const label = newPlatformName?.value.trim();
   if (!label) return;
 
+  const preset = PLATFORM_PRESETS.find(p => p.label.toLowerCase() === label.toLowerCase());
   const key = slugify(label) || ('platform' + Date.now());
   if (config.platforms.some(p => p.key === key)) {
     showToast('Platforma o tym identyfikatorze już istnieje', true);
@@ -49,22 +80,34 @@ addPlatformForm?.addEventListener('submit', async (e) => {
   }
 
   const extsRaw = newPlatformExts?.value.trim() || '';
-  const extensions = extsRaw
+  const kind = newPlatformKind?.value === 'pc' ? 'pc' : 'console';
+  let extensions = extsRaw
     ? extsRaw.split(',').map(x => x.trim()).filter(Boolean).map(x => (x.startsWith('.') ? x : '.' + x))
-    : [];
+    : (preset?.extensions || []);
+
+  if (kind === 'pc' && !extensions.length) {
+    extensions = ['.exe', '.AppImage', '.sh'];
+  }
 
   config.platforms.push({
     key,
     label,
-    color: newPlatformColor?.value || '#38e0ff',
+    color: newPlatformColor?.value || preset?.color || '#38e0ff',
     icon: DEFAULT_PLATFORM_ICON,
     extensions,
-    aspect: newPlatformAspect?.value || 'standard'
+    aspect: newPlatformAspect?.value || preset?.aspect || 'standard',
+    aspectCustom: { width: 180, ratio: 0.72 },
+    kind,
+    scraperSystem: preset?.scraperSystem || null,
+    tgdb: preset?.tgdb || null
   });
+
+  ensurePresetEmulators();
 
   if (newPlatformName) newPlatformName.value = '';
   if (newPlatformExts) newPlatformExts.value = '';
   if (newPlatformAspect) newPlatformAspect.value = 'standard';
+  if (newPlatformKind) newPlatformKind.value = 'console';
 
   await saveStoredConfig();
   renderSettings();
@@ -100,7 +143,8 @@ document.addEventListener('click', (e) => {
 });
 
 function setShelfViewMode(mode) {
-  const allowed = ['flat', 'arc', 'stack', 'cascade', 'grid'];
+  // Lista zgodna z getAllowedShelfViewModes() w shelf-view.js.
+  const allowed = ['flat', 'arc', 'stack', 'cascade', 'grid', 'detailed', 'hero', 'bigbox', 'framed'];
   if (!allowed.includes(mode)) return;
   if (viewMode === mode) return;
 
@@ -117,6 +161,8 @@ function setShelfViewMode(mode) {
   });
 
   document.querySelector('.shelf-stage')?.classList.toggle('cascade-bg', mode === 'cascade');
+  // framed dostaje ramkę w kolorze platformy na stage'u (CSS .framed-bg).
+  document.querySelector('.shelf-stage')?.classList.toggle('framed-bg', mode === 'framed');
 
   saveStoredConfig();
   renderShelf();
@@ -124,7 +170,7 @@ function setShelfViewMode(mode) {
 }
 
 function cycleShelfViewMode(step) {
-  const modes = ['flat', 'arc', 'stack', 'cascade', 'grid'];
+  const modes = ['flat', 'arc', 'stack', 'cascade', 'grid', 'detailed', 'hero', 'bigbox', 'framed'];
   const currentIndex = Math.max(0, modes.indexOf(viewMode));
   const nextIndex = mod(currentIndex + step, modes.length);
   setShelfViewMode(modes[nextIndex]);
@@ -146,15 +192,40 @@ detailsBtn?.addEventListener('click', () => {
   if (g) openDetails(g);
 });
 
+document.getElementById('favoriteBtn')?.addEventListener('click', () => {
+  const g = filtered[current];
+  if (g) toggleFavoriteForGame(g);
+});
+
+document.getElementById('modalFavoriteBtn')?.addEventListener('click', () => {
+  if (overlay?.currentGame) toggleFavoriteForGame(overlay.currentGame);
+});
+
+document.getElementById('randomBtn')?.addEventListener('click', () => randomGame());
+
+document.getElementById('library-sort')?.addEventListener('change', async (e) => {
+  config.uiState = config.uiState || {};
+  config.uiState.librarySort = e.target.value;
+  await saveStoredConfig();
+  // reapplyLibraryOrdering zachowuje aktualnie wybraną grę (o ile nadal
+  // jest widoczna po zmianie filtra).
+  reapplyLibraryOrdering();
+});
+
 document.getElementById('closeBtn')?.addEventListener('click', () => {
+  stopModalTrailer?.();
   overlay?.classList.remove('open');
 });
 
 overlay?.addEventListener('click', (e) => {
-  if (e.target === overlay) overlay.classList.remove('open');
+  if (e.target === overlay) {
+    stopModalTrailer?.();
+    overlay.classList.remove('open');
+  }
 });
 
 document.getElementById('modalPlayBtn')?.addEventListener('click', () => {
+  stopModalTrailer?.();
   if (overlay?.currentGame) launchGame(overlay.currentGame);
   overlay?.classList.remove('open');
 });
@@ -164,6 +235,71 @@ document.getElementById('modalCoverBtn')?.addEventListener('click', () => {
     overlay.classList.remove('open');
     openManualCoverEditorForGame(overlay.currentGame);
   }
+});
+
+document.getElementById('modalOpenFolderBtn')?.addEventListener('click', async () => {
+  const game = overlay?.currentGame;
+  if (!game?.rom) return;
+
+  const api = window.launcherAPI;
+  if (!api?.showItemInFolder) {
+    showToast(t('openFolderUnavailable'), true);
+    return;
+  }
+
+  const res = await api.showItemInFolder(game.rom);
+  if (!res?.ok) showToast(t('openFolderUnavailable'), true);
+});
+
+document.getElementById('modalGameArgsSave')?.addEventListener('click', async () => {
+  const game = overlay?.currentGame;
+  const input = document.getElementById('modalGameArgs');
+  if (!game || !input) return;
+
+  const value = input.value.trim();
+  config.gameArgs = config.gameArgs || {};
+
+  if (value) config.gameArgs[game.id] = value;
+  else delete config.gameArgs[game.id];
+
+  await saveStoredConfig();
+  showToast(t('gameArgsSaved'));
+});
+
+document.getElementById('modalPcSave')?.addEventListener('click', async () => {
+  const game = overlay?.currentGame;
+  if (!game) return;
+
+  config.pcGameSettings = config.pcGameSettings || {};
+  const runner = document.getElementById('modalPcRunner')?.value || '';
+  const prefix = document.getElementById('modalPcPrefix')?.value.trim() || '';
+  const env = document.getElementById('modalPcEnv')?.value.trim() || '';
+
+  if (runner || prefix || env) {
+    config.pcGameSettings[game.id] = { runner, prefix, env };
+  } else {
+    delete config.pcGameSettings[game.id];
+  }
+
+  await saveStoredConfig();
+  showToast(t('pcOverrideSaved') || 'Zapisano ustawienia uruchamiania gry');
+});
+
+document.getElementById('modalPcReset')?.addEventListener('click', async () => {
+  const game = overlay?.currentGame;
+  if (!game) return;
+
+  if (config.pcGameSettings) delete config.pcGameSettings[game.id];
+
+  const runnerSel = document.getElementById('modalPcRunner');
+  if (runnerSel) runnerSel.value = '';
+  const prefixInput = document.getElementById('modalPcPrefix');
+  if (prefixInput) prefixInput.value = '';
+  const envInput = document.getElementById('modalPcEnv');
+  if (envInput) envInput.value = '';
+
+  await saveStoredConfig();
+  showToast(t('pcOverrideReset') || 'Wyczyszczono nadpisania gry');
 });
 
 searchInput?.addEventListener('input', refreshLibrary);
@@ -183,10 +319,15 @@ document.querySelectorAll('.settings-subtab').forEach(t => {
 
 window.addEventListener('hashchange', () => {
   const page = location.hash.replace('#', '') || 'home';
+
+  // switchToPage() samo ustawia hash — bez tego strażnika hashchange
+  // resetował aktywną zakładkę ustawień do „Ogólne” przy każdym wejściu.
   if (page === 'settings') {
-    switchToPage('settings');
-    activateSettingsSubtab('general');
-  } else {
+    if (settingsPanel.hidden) {
+      switchToPage('settings');
+      activateSettingsSubtab('general');
+    }
+  } else if (!settingsPanel.hidden) {
     switchToPage('home');
   }
 });
@@ -203,8 +344,10 @@ window.addEventListener('keydown', (e) => {
   }
 
   if (e.key === 'Escape') {
-    if (overlay.classList.contains('open')) overlay.classList.remove('open');
-    else if (settingsActive) switchToPage('home');
+    if (overlay.classList.contains('open')) {
+      stopModalTrailer?.();
+      overlay.classList.remove('open');
+    } else if (settingsActive) switchToPage('home');
   }
 
   if (settingsActive) return;
@@ -212,11 +355,48 @@ window.addEventListener('keydown', (e) => {
   const tag = document.activeElement?.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
+  // Skróty akcji: R = losowa gra, F = ulubione.
+  if (
+    !overlay.classList.contains('open')
+    && !e.ctrlKey && !e.altKey && !e.metaKey
+  ) {
+    if (e.key === 'r' || e.key === 'R') {
+      e.preventDefault();
+      randomGame();
+      return;
+    }
+    if (e.key === 'f' || e.key === 'F') {
+      e.preventDefault();
+      const focused = filtered[current];
+      if (focused) toggleFavoriteForGame(focused);
+      return;
+    }
+  }
+
+  // Szybki skok po literze/cyfrze (jak w EmulationStation) — tylko gdy
+  // biblioteka jest widoczna i modal nie jest otwarty.
+  if (
+    !overlay.classList.contains('open')
+    && e.key.length === 1
+    && /[a-z0-9]/i.test(e.key)
+    && !e.ctrlKey && !e.altKey && !e.metaKey
+  ) {
+    if (jumpToLetter(e.key)) {
+      e.preventDefault();
+      return;
+    }
+  }
+
   if (viewMode === 'grid') {
     if (e.key === 'ArrowLeft') { e.preventDefault(); moveGridSelection(-1, 0); return; }
     if (e.key === 'ArrowRight') { e.preventDefault(); moveGridSelection(1, 0); return; }
     if (e.key === 'ArrowUp') { e.preventDefault(); moveGridSelection(0, -1); return; }
     if (e.key === 'ArrowDown') { e.preventDefault(); moveGridSelection(0, 1); return; }
+  } else if (viewMode === 'detailed' || viewMode === 'hero') {
+    // Panele dwupanelowe: pionowa lista — up/down zmieniają zaznaczenie,
+    // left/right działają jak w carouselu.
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); prev(); }
   } else {
     if (e.key === 'ArrowRight') next();
     if (e.key === 'ArrowLeft') prev();
@@ -232,6 +412,12 @@ async function init() {
   await loadStoredConfig();
   ensurePresetEmulators();
 
+  // W trybie przenośnym od razu przepisujemy konfigurację, żeby ścieżki
+  // znajdujące się na pendrive zamieniły się na znaczniki {{PORTABLE}}.
+  if (portableInfo.portable) {
+    await saveStoredConfig();
+  }
+
   viewMode = config.uiState?.shelfViewMode || 'flat';
 
   initTheme();
@@ -244,6 +430,7 @@ async function init() {
   });
 
   document.querySelector('.shelf-stage')?.classList.toggle('cascade-bg', viewMode === 'cascade');
+  document.querySelector('.shelf-stage')?.classList.toggle('framed-bg', viewMode === 'framed');
 
   if (config.uiState?.fullscreenOnLaunch) {
     const tryFullscreen = () => {
@@ -270,6 +457,18 @@ async function init() {
   } else {
     switchToPage('home');
   }
+
+  // Auto-uzupełnianie metadanych w tle (jeśli włączone w Ustawieniach).
+  if (typeof autoFetchMetadataInBackground === 'function' && config.uiState?.autoFetchOnStart) {
+    setTimeout(() => { autoFetchMetadataInBackground(); }, 15000);
+  }
+
+  // Sortowanie, ulubione i tryb atrakcji.
+  const sortSelect = document.getElementById('library-sort');
+  if (sortSelect) sortSelect.value = config.uiState?.librarySort || 'default';
+
+  if (typeof initAttractMode === 'function') initAttractMode();
+  if (typeof updateFavoriteButtons === 'function') updateFavoriteButtons();
 }
 
 // ---------- Obsługa pada (Gamepad API) ----------
@@ -687,6 +886,10 @@ function handleLibraryGamepad(gp, now) {
     if (right) { moveGridSelection(1, 0); return; }
     if (up) { moveGridSelection(0, -1); return; }
     if (down) { moveGridSelection(0, 1); return; }
+  } else if (viewMode === 'detailed' || viewMode === 'hero') {
+    // Panele dwupanelowe: D-pad up/down też przechodzi między grami.
+    if (left || up) { prev(); return; }
+    if (right || down) { next(); return; }
   } else {
     if (left) { prev(); return; }
     if (right) { next(); return; }
@@ -773,6 +976,12 @@ function gamepadLoop() {
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];
   const gp = gamepadIndex !== null ? pads[gamepadIndex] : null;
   if (gp && gp.connected) {
+    // Każdy sygnał z pada wybudza z trybu atrakcji.
+    const anyPressed = gp.buttons.some(b => b.pressed);
+    const anyAxis =
+      Math.abs(gp.axes?.[0] || 0) > 0.5 || Math.abs(gp.axes?.[1] || 0) > 0.5;
+    if (anyPressed || anyAxis) noteUserActivity();
+
     handleStopCombo(gp);
     handleGamepadInput(gp);
   }
@@ -909,7 +1118,7 @@ function applyFilter(platform, tabEl) {
   sfxPlatform();
 
   setTimeout(() => {
-    filtered = platform === 'all' ? games : games.filter(g => g.platform === platform);
+    filtered = sortLibraryList(getFilteredLibraryBase());
     current = 0;
     renderShelf();
     shelf.classList.remove('switching');

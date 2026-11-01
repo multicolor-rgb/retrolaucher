@@ -99,7 +99,7 @@ function applyFilter(platform, tabEl) {
   shelfInfo.classList.add('switching');
 
   setTimeout(() => {
-    filtered = platform === 'all' ? games : games.filter(g => g.platform === platform);
+    filtered = sortLibraryList(getFilteredLibraryBase());
     current = 0;
     renderShelf();
 

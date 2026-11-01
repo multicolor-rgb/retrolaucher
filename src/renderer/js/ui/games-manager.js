@@ -175,9 +175,11 @@ function buildGamesManagerRow(game) {
   const toggle = document.createElement('button');
   toggle.type = 'button';
   toggle.className = 'gm-toggle' + (hidden ? ' is-hidden' : '');
-  toggle.textContent = hidden
-    ? (t('unhideGame') || 'Odkryj')
-    : (t('hideGame') || 'Ukryj');
+  // Ikona pokazuje akcję: przy widocznej grze "ukryj" (eye-off),
+  // przy ukrytej — "odkryj" (eye).
+  toggle.innerHTML = hidden
+    ? `${svgIcon('i-eye')}<span>${t('unhideGame') || 'Odkryj'}</span>`
+    : `${svgIcon('i-eye-off')}<span>${t('hideGame') || 'Ukryj'}</span>`;
 
   toggle.addEventListener('click', async () => {
     toggleGameHidden(game.platform, game.id);

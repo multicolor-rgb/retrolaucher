@@ -10,7 +10,36 @@ function ensurePresetEmulators() {
     if (!config.userRatings[p.key]) config.userRatings[p.key] = {};
     if (!config.hiddenGames[p.key]) config.hiddenGames[p.key] = {};
     if (!p.aspect) p.aspect = 'standard';
+    if (p.kind !== 'pc') p.kind = 'console';
+    if (!p.aspectCustom || typeof p.aspectCustom !== 'object') {
+      p.aspectCustom = { width: 180, ratio: 0.72 };
+    }
+    if (p.kind === 'pc' && !config.pcGames[p.key]) config.pcGames[p.key] = [];
   });
+
+  if (
+    !config.pcGames
+    || typeof config.pcGames !== 'object'
+    || Array.isArray(config.pcGames)
+  ) {
+    config.pcGames = {};
+  }
+
+  if (
+    !config.pcGameSettings
+    || typeof config.pcGameSettings !== 'object'
+    || Array.isArray(config.pcGameSettings)
+  ) {
+    config.pcGameSettings = {};
+  }
+
+  if (
+    !config.gameArgs
+    || typeof config.gameArgs !== 'object'
+    || Array.isArray(config.gameArgs)
+  ) {
+    config.gameArgs = {};
+  }
 
   // API keys
   if (!config.apiKeys || typeof config.apiKeys !== 'object') {
@@ -33,10 +62,35 @@ function ensurePresetEmulators() {
     config.uiState.fullscreenOnLaunch = false;
   }
 
-  // view mode – rozszerz o grid, skoro masz go w renderShelf
-  const allowedViewModes = ['flat', 'arc', 'stack', 'cascade', 'grid'];
+  // view mode – lista musi zgadzać się z getAllowedShelfViewModes()
+  const allowedViewModes = ['flat', 'arc', 'stack', 'cascade', 'grid', 'detailed', 'hero', 'bigbox', 'framed'];
   if (!allowedViewModes.includes(config.uiState.shelfViewMode)) {
     config.uiState.shelfViewMode = 'flat';
+  }
+
+  if (typeof config.uiState.autoFetchOnStart !== 'boolean') {
+    config.uiState.autoFetchOnStart = false;
+  }
+
+  // Ulubione gry: { [gameId]: true }. Musi być zwykłym obiektem — stare
+  // configi mogą mieć tu śmieci z ręcznych edycji pliku JSON.
+  if (
+    !config.uiState.favorites
+    || typeof config.uiState.favorites !== 'object'
+    || Array.isArray(config.uiState.favorites)
+  ) {
+    config.uiState.favorites = {};
+  }
+
+  // Sortowanie biblioteki — wartości muszą zgadzać się z opcjami w UI.
+  const allowedSorts = ['default', 'recent', 'favorites', 'title', 'playtime'];
+  if (!allowedSorts.includes(config.uiState.librarySort)) {
+    config.uiState.librarySort = 'default';
+  }
+
+  // Tryb atrakcji (wygaszacz) — domyślnie włączony.
+  if (typeof config.uiState.attractMode !== 'boolean') {
+    config.uiState.attractMode = true;
   }
 
   // język
@@ -58,6 +112,133 @@ function ensurePresetEmulators() {
   ) {
     config.uiState.gameTitles = {};
   }
+}
+
+// ------------------------------------------------------------
+// Tryb przenośny — znaczniki ścieżek na pendrive
+// ------------------------------------------------------------
+
+let portableInfo = { loaded: false, portable: false, root: '', dataDir: '' };
+
+const PORTABLE_MARK = '{{PORTABLE}}';
+const PORTABLE_FILE_MARK = '{{PORTABLE_FILE}}';
+
+async function loadPortableInfo(force = false) {
+  if (portableInfo.loaded && !force) return portableInfo;
+
+  try {
+    const res = await window.launcherAPI?.getPortableInfo?.();
+    portableInfo = res?.ok
+      ? { ...res, loaded: true }
+      : { loaded: true, portable: false, root: '', dataDir: '' };
+  } catch (e) {
+    portableInfo = { loaded: true, portable: false, root: '', dataDir: '' };
+  }
+
+  return portableInfo;
+}
+
+function getPortableRoot() {
+  return (portableInfo.root || '').replace(/[\\/]+$/, '');
+}
+
+function getPortableSep() {
+  return getPortableRoot().includes('\\') ? '\\' : '/';
+}
+
+function normalizePortablePath(value) {
+  return String(value || '').replace(/\\/g, '/').replace(/\/+$/, '');
+}
+
+function encodePortableString(value) {
+  if (typeof value !== 'string' || !value) return value;
+  if (!portableInfo.portable || !portableInfo.root) return value;
+
+  const root = normalizePortablePath(portableInfo.root);
+  let isFileUrl = false;
+  let raw = value;
+
+  if (/^file:\/\//i.test(raw)) {
+    isFileUrl = true;
+    raw = raw.slice(7);
+    try { raw = decodeURIComponent(raw); } catch (_) {}
+    raw = raw.replace(/^\/([A-Za-z]:\/)/, '$1');
+  }
+
+  const normalized = normalizePortablePath(raw);
+  let rest = '';
+
+  if (normalized === root) {
+    rest = '';
+  } else if (normalized.startsWith(`${root}/`)) {
+    rest = normalized.slice(root.length);
+  } else {
+    return value;
+  }
+
+  return (isFileUrl ? PORTABLE_FILE_MARK : PORTABLE_MARK) + rest;
+}
+
+function decodePortableString(value) {
+  if (typeof value !== 'string') return value;
+
+  const isFileUrl = value.startsWith(PORTABLE_FILE_MARK);
+  if (!isFileUrl && !value.startsWith(PORTABLE_MARK)) return value;
+
+  const root = getPortableRoot();
+  if (!root) return value;
+
+  const mark = isFileUrl ? PORTABLE_FILE_MARK : PORTABLE_MARK;
+  const rest = value.slice(mark.length).replace(/^[/\\]+/, '');
+  const sep = getPortableSep();
+  const parts = rest ? rest.split('/').filter(Boolean) : [];
+  const full = parts.length ? root + sep + parts.join(sep) : root;
+
+  if (!isFileUrl) return full;
+
+  let normalized = full.replace(/\\/g, '/');
+  if (!normalized.startsWith('/')) normalized = '/' + normalized;
+  return 'file://' + encodeURI(normalized).replace(/#/g, '%23');
+}
+
+function mapPortablePaths(value, fn, depth = 0) {
+  if (depth > 8 || value == null) return value;
+  if (typeof value === 'string') return fn(value);
+  if (Array.isArray(value)) {
+    return value.map(item => mapPortablePaths(item, fn, depth + 1));
+  }
+  if (typeof value === 'object') {
+    const out = {};
+    Object.keys(value).forEach(key => {
+      out[key] = mapPortablePaths(value[key], fn, depth + 1);
+    });
+    return out;
+  }
+  return value;
+}
+
+function mapPcGamePaths(store, fn) {
+  const out = {};
+  const source = store && typeof store === 'object' ? store : {};
+  Object.keys(source).forEach(platformKey => {
+    const list = Array.isArray(source[platformKey]) ? source[platformKey] : [];
+    out[platformKey] = list.map(entry => ({
+      ...entry,
+      path: entry?.path ? fn(entry.path) : entry?.path
+    }));
+  });
+  return out;
+}
+
+function mergePcGames(base, stored) {
+  const out = { ...(base || {}) };
+  const source = stored && typeof stored === 'object' ? stored : {};
+  Object.keys(source).forEach(platformKey => {
+    if (Array.isArray(source[platformKey])) {
+      out[platformKey] = source[platformKey];
+    }
+  });
+  return out;
 }
 
 function mergeStoredConfig(stored = {}) {
@@ -84,6 +265,11 @@ function mergeStoredConfig(stored = {}) {
       ...((stored && stored.launchArgs) || {})
     },
 
+    gameArgs: {
+      ...(config.gameArgs || {}),
+      ...((stored && stored.gameArgs) || {})
+    },
+
     metadata: {
       ...(config.metadata || {}),
       ...((stored && stored.metadata) || {})
@@ -104,6 +290,13 @@ function mergeStoredConfig(stored = {}) {
       ...((stored && stored.hiddenGames) || {})
     },
 
+    pcGames: mergePcGames(config.pcGames, stored && stored.pcGames),
+
+    pcGameSettings: {
+      ...(config.pcGameSettings || {}),
+      ...((stored && stored.pcGameSettings) || {})
+    },
+
     apiKeys: {
       ...(config.apiKeys || {}),
       ...((stored && stored.apiKeys) || {})
@@ -121,6 +314,8 @@ async function loadStoredConfig() {
   try {
     let stored = null;
 
+    await loadPortableInfo();
+
     if (window.launcherAPI?.loadConfig) {
       stored = await window.launcherAPI.loadConfig();
     } else {
@@ -134,15 +329,29 @@ async function loadStoredConfig() {
     config = mergeStoredConfig({});
   }
 
+  // Tryb przenośny: w pliku konfiguracji ścieżki leżące na pendrive są
+  // zapisane ze znacznikiem {{PORTABLE}} — rozwijamy je do bieżącej litery
+  // dysku / punktu montowania.
+  if (portableInfo.portable) {
+    config.romFolders = mapPortablePaths(config.romFolders, decodePortableString);
+    config.manualCovers = mapPortablePaths(config.manualCovers, decodePortableString);
+    config.metadata = mapPortablePaths(config.metadata, decodePortableString);
+    config.pcGames = mapPcGamePaths(config.pcGames, decodePortableString);
+    config.pcGameSettings = mapPortablePaths(config.pcGameSettings, decodePortableString);
+  }
+
   ensurePresetEmulators();
 }
 
 async function saveStoredConfig() {
-  const payload = {
+  let payload = {
     platforms: config.platforms,
     romFolders: config.romFolders,
     emulators: config.emulators,
     launchArgs: config.launchArgs,
+    gameArgs: config.gameArgs,
+    pcGames: config.pcGames,
+    pcGameSettings: config.pcGameSettings,
     metadata: config.metadata,
     manualCovers: config.manualCovers,
     userRatings: config.userRatings,
@@ -150,6 +359,17 @@ async function saveStoredConfig() {
     apiKeys: config.apiKeys,
     uiState: config.uiState
   };
+
+  if (portableInfo.portable) {
+    payload = {
+      ...payload,
+      romFolders: mapPortablePaths(payload.romFolders, encodePortableString),
+      manualCovers: mapPortablePaths(payload.manualCovers, encodePortableString),
+      metadata: mapPortablePaths(payload.metadata, encodePortableString),
+      pcGames: mapPcGamePaths(payload.pcGames, encodePortableString),
+      pcGameSettings: mapPortablePaths(payload.pcGameSettings, encodePortableString)
+    };
+  }
 
   try {
     if (window.launcherAPI?.saveConfig) {
@@ -197,7 +417,7 @@ function setManualCover(platformKey, gameId, value) {
 function getCoverForGame(game) {
   return toCoverUrlSafe(getManualCover(game.platform, game.id))
     || toCoverUrlSafe(game.cover)
-    || 'https://cdn2.steamgriddb.com/thumb/fd1b83d80a10d9a7ca298e8e6fe705f0.jpg';
+    || COVER_PLACEHOLDER;
 }
 
 // toCoverUrl z bridge.js — stare configi z Electrona mają okładki jako file://
@@ -235,6 +455,34 @@ function setGameHidden(platformKey, gameId, hidden) {
 function toggleGameHidden(platformKey, gameId) {
   const next = !isGameHidden(platformKey, gameId);
   setGameHidden(platformKey, gameId, next);
+  return next;
+}
+
+// ------------------------------------------------------------
+// Ulubione gry (globalnie, gameId zawiera już prefiks platformy)
+// ------------------------------------------------------------
+
+function isGameFavorite(gameId) {
+  if (!gameId) return false;
+  return (((config.uiState || {}).favorites || {})[gameId]) === true;
+}
+
+function setGameFavorite(gameId, favorite) {
+  if (!gameId) return;
+
+  if (!config.uiState) config.uiState = {};
+  if (!config.uiState.favorites) config.uiState.favorites = {};
+
+  if (favorite) {
+    config.uiState.favorites[gameId] = true;
+  } else {
+    delete config.uiState.favorites[gameId];
+  }
+}
+
+function toggleGameFavorite(gameId) {
+  const next = !isGameFavorite(gameId);
+  setGameFavorite(gameId, next);
   return next;
 }
 

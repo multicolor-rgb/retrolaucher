@@ -33,12 +33,35 @@ struct LauncherState {
 
 // ---------------------------------------------------------------- util
 
-fn data_dir(app: &AppHandle) -> PathBuf {
+fn exe_dir() -> PathBuf {
+    std::env::current_exe()
+        .ok()
+        .and_then(|p| p.parent().map(|d| d.to_path_buf()))
+        .unwrap_or_else(|| PathBuf::from("."))
+}
+
+fn portable_root() -> Option<PathBuf> {
+    let dir = exe_dir();
+    if dir.join("portable.flag").exists() {
+        Some(dir)
+    } else {
+        None
+    }
+}
+
+fn default_data_dir(app: &AppHandle) -> PathBuf {
     if let Ok(dir) = app.path().app_config_dir() {
         return dir;
     }
     // fallback — identyczny z Electron userData
     home_dir().join(".config").join("retro-launcher")
+}
+
+fn data_dir(app: &AppHandle) -> PathBuf {
+    if let Some(root) = portable_root() {
+        return root.join("LauncherData");
+    }
+    default_data_dir(app)
 }
 
 fn home_dir() -> PathBuf {
@@ -170,7 +193,13 @@ fn get_playtime_entry(app: &AppHandle, game_id: &str) -> Value {
     read_playtime_store(app)["playtime"]
         .get(game_id)
         .cloned()
-        .unwrap_or_else(|| json!({ "totalMs": 0, "lastStartAt": null, "running": false }))
+        .unwrap_or_else(|| json!({
+            "totalMs": 0,
+            "lastStartAt": null,
+            "running": false,
+            "lastPlayedAt": null,
+            "plays": 0
+        }))
 }
 
 fn set_playtime_entry(app: &AppHandle, game_id: &str, entry: Value) {
@@ -187,6 +216,8 @@ fn start_playtime(app: &AppHandle, game_id: &str) {
     if !entry["running"].as_bool().unwrap_or(false) {
         entry["running"] = json!(true);
         entry["lastStartAt"] = json!(now_ms());
+        entry["lastPlayedAt"] = json!(now_ms());
+        entry["plays"] = json!(entry["plays"].as_i64().unwrap_or(0) + 1);
         set_playtime_entry(app, game_id, entry);
     }
 }
@@ -203,6 +234,7 @@ fn stop_playtime(app: &AppHandle, game_id: &str) {
         }
         entry["running"] = json!(false);
         entry["lastStartAt"] = json!(null);
+        entry["lastPlayedAt"] = json!(now_ms());
         set_playtime_entry(app, game_id, entry);
     }
 }
@@ -661,6 +693,593 @@ fn scan_files_recursive(root: &Path, exts: &HashSet<String>, base_dir: &Path, ou
     }
 }
 
+// ---------------------------------------------------------------- platformy PC
+
+fn expand_home(input: &str) -> String {
+    let value = input.trim();
+    if value == "~" {
+        return home_dir().to_string_lossy().to_string();
+    }
+    if let Some(rest) = value.strip_prefix("~/") {
+        return home_dir().join(rest).to_string_lossy().to_string();
+    }
+    value.to_string()
+}
+
+fn path_is_file(path: &Path) -> bool {
+    path.is_file()
+}
+
+fn path_is_executable(path: &Path) -> bool {
+    if !path.is_file() {
+        return false;
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if let Ok(meta) = fs::metadata(path) {
+            return meta.permissions().mode() & 0o111 != 0;
+        }
+        false
+    }
+    #[cfg(not(unix))]
+    {
+        true
+    }
+}
+
+fn find_in_path(bin_name: &str) -> Option<String> {
+    let path_var = std::env::var("PATH").unwrap_or_default();
+    for dir in std::env::split_paths(&path_var) {
+        let candidate = dir.join(bin_name);
+        if path_is_executable(&candidate) {
+            return Some(candidate.to_string_lossy().to_string());
+        }
+        #[cfg(windows)]
+        {
+            let exe = dir.join(format!("{}.exe", bin_name));
+            if path_is_file(&exe) {
+                return Some(exe.to_string_lossy().to_string());
+            }
+        }
+    }
+    None
+}
+
+fn list_child_dirs(root: &Path) -> Vec<PathBuf> {
+    let mut out = Vec::new();
+    let Ok(entries) = fs::read_dir(root) else { return out };
+    for entry in entries.flatten() {
+        if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
+            out.push(entry.path());
+        }
+    }
+    out.sort();
+    out
+}
+
+fn steam_roots() -> Vec<PathBuf> {
+    let home = home_dir();
+    let candidates = [
+        home.join(".steam").join("steam"),
+        home.join(".steam").join("root"),
+        home.join(".local").join("share").join("Steam"),
+    ];
+    let mut out = Vec::new();
+    for candidate in candidates {
+        if candidate.is_dir() && !out.contains(&candidate) {
+            out.push(candidate);
+        }
+    }
+    out
+}
+
+fn resolve_wine_binary(value: &str) -> Option<String> {
+    let expanded = expand_home(value);
+    if expanded.is_empty() {
+        return None;
+    }
+    let path = PathBuf::from(&expanded);
+    if path_is_executable(&path) {
+        return Some(expanded);
+    }
+    let candidates = [
+        path.join("bin").join("wine"),
+        path.join("files").join("bin").join("wine"),
+        path.join("wine"),
+        path.join("wine64"),
+    ];
+    candidates
+        .into_iter()
+        .find(|candidate| path_is_executable(candidate))
+        .map(|candidate| candidate.to_string_lossy().to_string())
+}
+
+fn resolve_proton_binary(value: &str) -> Option<String> {
+    let expanded = expand_home(value);
+    if expanded.is_empty() {
+        return None;
+    }
+    let path = PathBuf::from(&expanded);
+    if path_is_executable(&path) {
+        return Some(expanded);
+    }
+    let candidate = path.join("proton");
+    if path_is_executable(&candidate) {
+        Some(candidate.to_string_lossy().to_string())
+    } else {
+        None
+    }
+}
+
+fn proton_dirs() -> Vec<Value> {
+    let home = home_dir();
+    let mut bases: Vec<PathBuf> = Vec::new();
+    for root in steam_roots() {
+        bases.push(root.join("compatibilitytools.d"));
+        bases.push(root.join("steamapps").join("common"));
+    }
+    bases.push(home.join(".local").join("share").join("retro-launcher").join("compatibilitytools.d"));
+
+    let mut out = Vec::new();
+    let mut seen = HashSet::new();
+    for base in bases {
+        for child in list_child_dirs(&base) {
+            if !path_is_file(&child.join("proton")) || !seen.insert(child.clone()) {
+                continue;
+            }
+            out.push(json!({
+                "name": child.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default(),
+                "path": child.to_string_lossy().to_string()
+            }));
+        }
+    }
+    out.sort_by(|a, b| b["name"].as_str().unwrap_or("").cmp(a["name"].as_str().unwrap_or("")));
+    out
+}
+
+fn wine_ge_dirs() -> Vec<Value> {
+    let home = home_dir();
+    let bases = [
+        home.join(".local").join("share").join("retro-launcher").join("runners").join("wine"),
+        home.join(".local").join("share").join("lutris").join("runners").join("wine"),
+        home.join(".local").join("share").join("bottles").join("runners"),
+    ];
+
+    let mut out = Vec::new();
+    let mut seen = HashSet::new();
+    for base in bases {
+        for child in list_child_dirs(&base) {
+            let child_str = child.to_string_lossy().to_string();
+            if seen.contains(&child_str) || resolve_wine_binary(&child_str).is_none() {
+                continue;
+            }
+            seen.insert(child_str.clone());
+            out.push(json!({
+                "name": child.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default(),
+                "path": child_str
+            }));
+        }
+    }
+    out.sort_by(|a, b| b["name"].as_str().unwrap_or("").cmp(a["name"].as_str().unwrap_or("")));
+    out
+}
+
+fn default_wine_prefix() -> String {
+    home_dir().join("Games").join("retro-launcher").to_string_lossy().to_string()
+}
+
+#[tauri::command]
+fn fs_scan_executables(folder_path: String, extensions: Option<Vec<String>>) -> Vec<Value> {
+    let root = PathBuf::from(&folder_path);
+    if !root.is_dir() {
+        return Vec::new();
+    }
+    let exts: HashSet<String> = extensions
+        .unwrap_or_else(|| vec![".exe".into(), ".appimage".into(), ".sh".into(), ".bat".into(), ".cmd".into(), ".lnk".into()])
+        .iter()
+        .map(|e| {
+            let e = e.trim().to_lowercase();
+            if e.starts_with('.') { e } else { format!(".{}", e) }
+        })
+        .filter(|e| !e.is_empty())
+        .collect();
+
+    let mut out = Vec::new();
+    scan_files_recursive(&root, &exts, &root, &mut out);
+    out.sort_by(|a, b| {
+        let ta = a["title"].as_str().unwrap_or("").to_lowercase();
+        let tb = b["title"].as_str().unwrap_or("").to_lowercase();
+        ta.cmp(&tb)
+    });
+    out
+}
+
+#[tauri::command]
+fn pc_detect_runners() -> Value {
+    json!({
+        "ok": true,
+        "platform": std::env::consts::OS,
+        "wine": find_in_path("wine"),
+        "winetricks": find_in_path("winetricks"),
+        "steamRoot": steam_roots().first().map(|p| p.to_string_lossy().to_string()),
+        "proton": proton_dirs(),
+        "wineGe": wine_ge_dirs(),
+        "defaultPrefix": default_wine_prefix()
+    })
+}
+
+fn parse_env_text(raw: &str) -> std::collections::HashMap<String, String> {
+    let mut out = std::collections::HashMap::new();
+    for line in raw.split(|c| c == '\n' || c == ';') {
+        let line = line.trim();
+        if line.is_empty() { continue; }
+        if let Some(eq) = line.find('=') {
+            if eq > 0 {
+                out.insert(line[..eq].trim().to_string(), line[eq + 1..].trim().to_string());
+            }
+        }
+    }
+    out
+}
+
+fn spawn_pc(command: &str, args: &[String], envs: &std::collections::HashMap<String, String>) -> Result<std::process::Child, String> {
+    #[cfg(target_family = "unix")]
+    {
+        use std::os::unix::process::CommandExt;
+        let mut c = Command::new(command);
+        c.args(args)
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .envs(envs)
+            .process_group(0);
+        return c.spawn().map_err(|e| e.to_string());
+    }
+    #[cfg(target_family = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        const CREATE_NEW_PROCESS_GROUP: u32 = 0x0000_0200;
+        let mut c = Command::new(command);
+        c.args(args)
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .envs(envs)
+            .creation_flags(CREATE_NO_WINDOW | CREATE_NEW_PROCESS_GROUP);
+        return c.spawn().map_err(|e| e.to_string());
+    }
+}
+
+#[tauri::command]
+fn pc_launch(app: AppHandle, window: WebviewWindow, payload: Value) -> Value {
+    let game_id = payload["gameId"].as_str().unwrap_or("").to_string();
+    let game_path = expand_home(payload["gamePath"].as_str().unwrap_or(""));
+    if game_path.is_empty() || !Path::new(&game_path).is_file() {
+        return json!({ "ok": false, "error": "Nie znaleziono pliku gry." });
+    }
+
+    let platform = &payload["platform"];
+    let override_settings = &payload["override"];
+    let runner = override_settings["runner"].as_str()
+        .filter(|v| !v.is_empty())
+        .or_else(|| platform["pcRunner"].as_str().filter(|v| !v.is_empty()))
+        .unwrap_or("native");
+
+    let prefix = {
+        let custom = override_settings["prefix"].as_str().unwrap_or("");
+        let platform_prefix = platform["pcPrefix"].as_str().unwrap_or("");
+        let chosen = if !custom.trim().is_empty() { custom } else { platform_prefix };
+        if chosen.trim().is_empty() { default_wine_prefix() } else { expand_home(chosen) }
+    };
+
+    let mut envs = std::collections::HashMap::new();
+    for source in [platform["pcEnv"].as_str().unwrap_or(""), override_settings["env"].as_str().unwrap_or("")] {
+        envs.extend(parse_env_text(source));
+    }
+
+    let extra_args: Vec<String> = payload["extraArgs"]
+        .as_array()
+        .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect())
+        .unwrap_or_default();
+
+    let is_windows = cfg!(target_os = "windows");
+    let native_launch = is_windows || runner == "native";
+    let mut command = game_path.clone();
+    let mut args: Vec<String> = extra_args.clone();
+
+    if !native_launch {
+        let _ = fs::create_dir_all(&prefix);
+
+        if runner == "wine" || runner == "wine-ge" {
+            let configured = platform["pcRunnerPath"].as_str().unwrap_or("");
+            let mut wine_bin = resolve_wine_binary(configured);
+            if wine_bin.is_none() && runner == "wine" {
+                wine_bin = find_in_path("wine");
+            }
+            if wine_bin.is_none() && runner == "wine-ge" {
+                wine_bin = wine_ge_dirs().first()
+                    .and_then(|entry| entry["path"].as_str())
+                    .and_then(resolve_wine_binary);
+            }
+            let Some(wine_bin) = wine_bin else {
+                return json!({ "ok": false, "error": if runner == "wine" { "Nie znaleziono Wine w systemie." } else { "Nie znaleziono Wine-GE." } });
+            };
+            command = wine_bin;
+            args = std::iter::once(game_path.clone()).chain(extra_args).collect();
+            envs.insert("WINEPREFIX".into(), prefix);
+        } else if runner == "proton-ge" || runner == "proton" {
+            let configured = platform["pcRunnerPath"].as_str().unwrap_or("");
+            let mut proton_bin = resolve_proton_binary(configured);
+            if proton_bin.is_none() {
+                proton_bin = proton_dirs().first()
+                    .and_then(|entry| entry["path"].as_str())
+                    .and_then(resolve_proton_binary);
+            }
+            let Some(proton_bin) = proton_bin else {
+                return json!({ "ok": false, "error": "Nie znaleziono Proton-GE." });
+            };
+            let Some(steam_root) = steam_roots().first().map(|p| p.to_string_lossy().to_string()) else {
+                return json!({ "ok": false, "error": "Nie znaleziono katalogu Steam (wymagany przez Proton)." });
+            };
+            command = proton_bin;
+            args = std::iter::once("run".to_string())
+                .chain(std::iter::once(game_path.clone()))
+                .chain(extra_args)
+                .collect();
+            envs.insert("STEAM_COMPAT_CLIENT_INSTALL_PATH".into(), steam_root);
+            envs.insert("STEAM_COMPAT_DATA_PATH".into(), prefix);
+        } else {
+            return json!({ "ok": false, "error": format!("Nieznany runner: {}", runner) });
+        }
+    }
+
+    let child = match spawn_pc(&command, &args, &envs) {
+        Ok(c) => c,
+        Err(e) => return json!({ "ok": false, "error": e }),
+    };
+    let pid = child.id();
+
+    {
+        let state: State<LauncherState> = app.state();
+        state.last_pid.store(pid, Ordering::SeqCst);
+        *state.last_command.lock().unwrap() = Some(command);
+        state.game_running.store(true, Ordering::SeqCst);
+        if !game_id.is_empty() {
+            start_playtime(&app, &game_id);
+        }
+    }
+
+    let thread_app = app.clone();
+    let thread_window = window.clone();
+    std::thread::spawn(move || {
+        let mut child = child;
+        let _ = child.wait();
+        let state: State<LauncherState> = thread_app.state();
+        if !game_id.is_empty() {
+            stop_playtime(&thread_app, &game_id);
+        }
+        state.game_running.store(false, Ordering::SeqCst);
+        state.last_pid.store(0, Ordering::SeqCst);
+        *state.last_command.lock().unwrap() = None;
+        show_launcher(&thread_window, &state);
+    });
+
+    {
+        let state: State<LauncherState> = app.state();
+        hide_launcher_for_game(&window, &state);
+    }
+    json!({ "ok": true, "pid": pid })
+}
+
+fn install_runner_impl(runner: &str) -> Value {
+    if !cfg!(target_os = "linux") {
+        return json!({ "ok": false, "error": "Automatyczna instalacja runnerów jest dostępna tylko na Linuksie." });
+    }
+
+    let (repo, is_proton) = match runner {
+        "proton-ge" => ("GloriousEggroll/proton-ge-custom", true),
+        "wine-ge" => ("GloriousEggroll/wine-ge-custom", false),
+        _ => return json!({ "ok": false, "error": "Nieznany runner." }),
+    };
+
+    let api_url = format!("https://api.github.com/repos/{}/releases/latest", repo);
+    let response = match ureq::get(&api_url)
+        .set("User-Agent", "Retro-Launcher")
+        .set("Accept", "application/vnd.github+json")
+        .timeout(Duration::from_secs(60))
+        .call()
+    {
+        Ok(r) => r,
+        Err(e) => return json!({ "ok": false, "error": e.to_string() }),
+    };
+    let data: Value = match serde_json::from_reader(response.into_reader()) {
+        Ok(v) => v,
+        Err(e) => return json!({ "ok": false, "error": e.to_string() }),
+    };
+    let Some(assets) = data["assets"].as_array() else {
+        return json!({ "ok": false, "error": "Brak assetów w wydaniu." });
+    };
+    let arch = if cfg!(target_arch = "aarch64") { "aarch64" } else { "x86_64" };
+    let asset = assets.iter().find(|asset| {
+        let name = asset["name"].as_str().unwrap_or("");
+        if !name.contains(arch) || name.contains(".sha") {
+            return false;
+        }
+        if is_proton { name.ends_with(".tar.gz") } else { name.ends_with(".tar.xz") }
+    });
+    let Some(asset) = asset else {
+        return json!({ "ok": false, "error": "Nie znaleziono archiwum w najnowszym wydaniu." });
+    };
+    let url = asset["browser_download_url"].as_str().unwrap_or("");
+    let asset_name = asset["name"].as_str().unwrap_or("runner.tar.gz");
+    if url.is_empty() {
+        return json!({ "ok": false, "error": "Brak adresu archiwum." });
+    }
+
+    let target_base = if is_proton {
+        let steam = steam_roots().first().cloned()
+            .unwrap_or_else(|| home_dir().join(".local").join("share").join("Steam"));
+        steam.join("compatibilitytools.d")
+    } else {
+        home_dir().join(".local").join("share").join("retro-launcher").join("runners").join("wine")
+    };
+    if fs::create_dir_all(&target_base).is_err() {
+        return json!({ "ok": false, "error": "Nie można utworzyć katalogu docelowego." });
+    }
+
+    let staging = match tempfile_dir(&target_base) {
+        Ok(p) => p,
+        Err(e) => return json!({ "ok": false, "error": e }),
+    };
+    let archive = staging.join(asset_name);
+
+    let download = (|| -> Result<(), String> {
+        let resp = ureq::get(url)
+            .set("User-Agent", "Retro-Launcher")
+            .timeout(Duration::from_secs(900))
+            .call()
+            .map_err(|e| e.to_string())?;
+        let mut reader = resp.into_reader();
+        let mut file = fs::File::create(&archive).map_err(|e| e.to_string())?;
+        std::io::copy(&mut reader, &mut file).map_err(|e| e.to_string())?;
+        Ok(())
+    })();
+
+    if let Err(e) = download {
+        let _ = fs::remove_dir_all(&staging);
+        return json!({ "ok": false, "error": e });
+    }
+
+    let tar_flag = if is_proton { "-xzf" } else { "-xJf" };
+    let extract = Command::new("tar")
+        .arg(tar_flag)
+        .arg(&archive)
+        .arg("-C")
+        .arg(&staging)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status();
+
+    if !matches!(extract, Ok(status) if status.success()) {
+        let _ = fs::remove_dir_all(&staging);
+        return json!({ "ok": false, "error": "Nie udało się rozpakować archiwum." });
+    }
+
+    let extracted = list_child_dirs(&staging).into_iter().next();
+    let Some(extracted) = extracted else {
+        let _ = fs::remove_dir_all(&staging);
+        return json!({ "ok": false, "error": "Archiwum nie zawiera katalogu runnera." });
+    };
+    let name = extracted.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+    let final_path = target_base.join(&name);
+
+    if final_path.is_dir() {
+        let _ = fs::remove_dir_all(&staging);
+        return json!({ "ok": true, "alreadyInstalled": true, "path": final_path.to_string_lossy().to_string(), "name": name });
+    }
+
+    if let Err(e) = fs::rename(&extracted, &final_path) {
+        let _ = fs::remove_dir_all(&staging);
+        return json!({ "ok": false, "error": e.to_string() });
+    }
+    let _ = fs::remove_dir_all(&staging);
+
+    json!({ "ok": true, "path": final_path.to_string_lossy().to_string(), "name": name })
+}
+
+fn tempfile_dir(base: &Path) -> Result<PathBuf, String> {
+    for i in 0..1000 {
+        let candidate = base.join(format!(".download-{}-{}", std::process::id(), i));
+        if !candidate.exists() {
+            fs::create_dir_all(&candidate).map_err(|e| e.to_string())?;
+            return Ok(candidate);
+        }
+    }
+    Err("Nie można utworzyć katalogu tymczasowego.".into())
+}
+
+#[tauri::command]
+async fn pc_install_runner(runner: String) -> Value {
+    tauri::async_runtime::spawn_blocking(move || install_runner_impl(&runner))
+        .await
+        .unwrap_or_else(|e| json!({ "ok": false, "error": e.to_string() }))
+}
+
+#[tauri::command]
+fn pc_winetricks(payload: Value) -> Value {
+    let prefix = expand_home(payload["prefix"].as_str().unwrap_or(""));
+    let prefix = if prefix.is_empty() { default_wine_prefix() } else { prefix };
+    let _ = fs::create_dir_all(&prefix);
+    let runner = payload["runner"].as_str().unwrap_or("native");
+    let runner_path = payload["runnerPath"].as_str().unwrap_or("");
+    let verbs = payload["verbs"].as_str().unwrap_or("");
+
+    let mut winetricks = find_in_path("winetricks");
+    if winetricks.is_none() {
+        let target = home_dir().join(".local").join("share").join("retro-launcher").join("winetricks");
+        if !path_is_executable(&target) {
+            let _ = fs::create_dir_all(target.parent().unwrap_or(Path::new(".")));
+            let download = ureq::get("https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks")
+                .set("User-Agent", "Retro-Launcher")
+                .timeout(Duration::from_secs(120))
+                .call();
+            match download {
+                Ok(resp) => {
+                    let mut reader = resp.into_reader();
+                    let mut text = String::new();
+                    if reader.read_to_string(&mut text).is_err() {
+                        return json!({ "ok": false, "error": "Nie udało się pobrać winetricks." });
+                    }
+                    if fs::write(&target, text).is_err() {
+                        return json!({ "ok": false, "error": "Nie można zapisać winetricks." });
+                    }
+                    #[cfg(unix)]
+                    {
+                        use std::os::unix::fs::PermissionsExt;
+                        let _ = fs::set_permissions(&target, fs::Permissions::from_mode(0o755));
+                    }
+                }
+                Err(e) => return json!({ "ok": false, "error": e.to_string() }),
+            }
+        }
+        winetricks = Some(target.to_string_lossy().to_string());
+    }
+
+    let mut envs = std::collections::HashMap::new();
+    let mut wine_prefix = prefix;
+    if runner == "proton-ge" {
+        wine_prefix = Path::new(&wine_prefix).join("pfx").to_string_lossy().to_string();
+        let _ = fs::create_dir_all(&wine_prefix);
+        let proton_dir = if runner_path.trim().is_empty() {
+            proton_dirs().first().and_then(|entry| entry["path"].as_str().map(|s| s.to_string()))
+        } else {
+            Some(expand_home(runner_path))
+        };
+        if let Some(dir) = proton_dir {
+            let wine_bin = Path::new(&dir).join("files").join("bin").join("wine");
+            if path_is_executable(&wine_bin) {
+                envs.insert("WINE".into(), wine_bin.to_string_lossy().to_string());
+            }
+        }
+    }
+    envs.insert("WINEPREFIX".into(), wine_prefix);
+    if runner == "wine-ge" {
+        if let Some(wine_bin) = resolve_wine_binary(runner_path)
+            .or_else(|| wine_ge_dirs().first().and_then(|entry| entry["path"].as_str()).and_then(resolve_wine_binary))
+        {
+            envs.insert("WINE".into(), wine_bin);
+        }
+    }
+
+    let args = parse_command_string(verbs);
+    match spawn_pc(winetricks.as_deref().unwrap_or("winetricks"), &args, &envs) {
+        Ok(child) => json!({ "ok": true, "pid": child.id() }),
+        Err(e) => json!({ "ok": false, "error": e }),
+    }
+}
+
 #[tauri::command]
 fn game_launch(
     app: AppHandle,
@@ -799,6 +1418,130 @@ fn game_get_playtime_raw(app: AppHandle, game_id: String) -> Value {
     json!({ "ok": true, "entry": get_playtime_entry(&app, &game_id) })
 }
 
+#[tauri::command]
+fn game_get_playtime_all(app: AppHandle) -> Value {
+    let store = read_playtime_store(&app);
+    json!({ "ok": true, "playtime": store["playtime"].clone() })
+}
+
+// ---------------------------------------------------------------- tryb przenośny
+
+fn copy_data_files(from: &Path, to: &Path) {
+    let _ = fs::create_dir_all(to);
+    for name in ["retro-launcher-config.json", "retro-launcher-playtime.json"] {
+        let src = from.join(name);
+        if src.exists() {
+            let _ = fs::copy(&src, to.join(name));
+        }
+    }
+    let covers_src = from.join("covers");
+    if covers_src.exists() {
+        let _ = copy_dir_recursive(&covers_src, &to.join("covers"));
+    }
+}
+
+fn copy_dir_recursive(src: &Path, dst: &Path) -> std::io::Result<()> {
+    fs::create_dir_all(dst)?;
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let ty = entry.file_type()?;
+        let target = dst.join(entry.file_name());
+        if ty.is_dir() {
+            copy_dir_recursive(&entry.path(), &target)?;
+        } else if ty.is_file() {
+            fs::copy(entry.path(), target)?;
+        }
+    }
+    Ok(())
+}
+
+#[tauri::command]
+fn portable_get(app: AppHandle) -> Value {
+    let root = portable_root();
+    json!({
+        "ok": true,
+        "portable": root.is_some(),
+        "root": root.as_ref().map(|p| p.to_string_lossy().to_string()).unwrap_or_default(),
+        "dataDir": data_dir(&app).to_string_lossy().to_string(),
+        "defaultDataDir": default_data_dir(&app).to_string_lossy().to_string(),
+        "flagPath": exe_dir().join("portable.flag").to_string_lossy().to_string()
+    })
+}
+
+#[tauri::command]
+fn portable_enable(app: AppHandle) -> Value {
+    if portable_root().is_some() {
+        return json!({ "ok": true, "already": true, "portable": true });
+    }
+
+    let root = exe_dir();
+    let data = root.join("LauncherData");
+    copy_data_files(&default_data_dir(&app), &data);
+
+    if fs::write(root.join("portable.flag"), "").is_err() {
+        return json!({ "ok": false, "error": "Nie udało się zapisać flagi portable." });
+    }
+
+    std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_millis(600));
+        app.restart();
+    });
+
+    json!({ "ok": true, "restarting": true })
+}
+
+#[tauri::command]
+fn portable_disable(app: AppHandle) -> Value {
+    if portable_root().is_none() {
+        return json!({ "ok": true, "already": true, "portable": false });
+    }
+
+    let root = exe_dir();
+    copy_data_files(&root.join("LauncherData"), &default_data_dir(&app));
+    let _ = fs::remove_file(root.join("portable.flag"));
+
+    std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_millis(600));
+        app.restart();
+    });
+
+    json!({ "ok": true, "restarting": true })
+}
+
+#[tauri::command]
+fn shell_show_item(target_path: String) -> Value {
+    let path = PathBuf::from(&target_path);
+    let dir = if path.is_dir() {
+        path.clone()
+    } else {
+        path.parent()
+            .map(|p| p.to_path_buf())
+            .unwrap_or_else(|| PathBuf::from("."))
+    };
+
+    #[cfg(target_os = "windows")]
+    {
+        let _ = Command::new("explorer")
+            .arg(format!("/select,{}", target_path))
+            .spawn();
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let _ = Command::new("open").arg("-R").arg(&target_path).spawn();
+    }
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        let _ = Command::new("xdg-open").arg(&dir).spawn();
+    }
+
+    json!({ "ok": true })
+}
+
+#[tauri::command]
+fn fs_path_exists(target_path: String) -> Value {
+    json!({ "ok": true, "exists": Path::new(&target_path).exists() })
+}
+
 // ---------------------------------------------------------------- start aplikacji
 
 fn main() {
@@ -856,13 +1599,24 @@ fn main() {
             image_cache_remote,
             http_proxy,
             roms_scan,
+            fs_scan_executables,
             game_launch,
+            pc_launch,
+            pc_detect_runners,
+            pc_install_runner,
+            pc_winetricks,
             game_stop_last,
             emulator_test,
             game_focus,
             game_last_pid,
             game_get_playtime,
             game_get_playtime_raw,
+            game_get_playtime_all,
+            portable_get,
+            portable_enable,
+            portable_disable,
+            shell_show_item,
+            fs_path_exists,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

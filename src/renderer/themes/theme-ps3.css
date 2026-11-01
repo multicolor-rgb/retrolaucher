@@ -332,12 +332,14 @@ html[data-theme="ps3"] .field-input{
 html[data-theme="ps3"] .field-input.empty{ color:rgba(255,255,255,0.35); }
 html[data-theme="ps3"] .field-textinput,
 html[data-theme="ps3"] .field-select{
+  color-scheme:dark;
   background:rgba(255,255,255,0.06);
   border:1px solid rgba(143,208,255,0.2);
   color:#eaf3ff;
 }
 html[data-theme="ps3"] .field-textinput::placeholder{ color:rgba(255,255,255,0.4); }
-html[data-theme="ps3"] .field-select option{ color:#111; }
+html[data-theme="ps3"] .field-select option{ color:#eaf3ff; background-color:#081120; }
+html[data-theme="ps3"] .field-select option:checked{ background-color:#123a5e; }
 html[data-theme="ps3"] .btn-primary{
   background:linear-gradient(180deg,#6fb8ff,#2f85e0);
   color:#03121f;

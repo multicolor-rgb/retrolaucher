@@ -19,6 +19,25 @@ const settingsPanel = document.getElementById('settings-panel');
 
 const colorCache = {};
 
+// Każdy obrazek okładki, który nie wczyta się (404, uszkodzony plik),
+// dostaje lokalny placeholder zamiast złamanej ikonki.
+document.addEventListener('error', (event) => {
+  const el = event.target;
+  if (!el || el.tagName !== 'IMG') return;
+  if (el.dataset.coverFallback === '1') return;
+
+  el.dataset.coverFallback = '1';
+  el.classList.add('is-placeholder');
+  el.src = COVER_PLACEHOLDER;
+}, true);
+
+// Zwraca markup ikony z SVG sprite'a (index.html → #i-*).
+// Używane w dynamicznie budowanym HTML (listy, przyciski, pigułki).
+function svgIcon(id, extraClass = '') {
+  const cls = ['icon', extraClass].filter(Boolean).join(' ');
+  return `<svg class="${cls}" aria-hidden="true"><use href="#${id}"/></svg>`;
+}
+
 function getDominantColor(src, cb) {
   if (!src) {
     cb({ r: 20, g: 22, b: 30 });

@@ -330,12 +330,14 @@ html[data-theme="wii"] .field-input{
 html[data-theme="wii"] .field-input.empty{ color:#93aec2; }
 html[data-theme="wii"] .field-textinput,
 html[data-theme="wii"] .field-select{
+  color-scheme:light;
   background:#ffffff;
   border:1px solid #b9d4e9;
   color:#123c58;
 }
 html[data-theme="wii"] .field-textinput::placeholder{ color:#93aec2; }
-html[data-theme="wii"] .field-select option{ color:#123c58; }
+html[data-theme="wii"] .field-select option{ color:#123c58; background-color:#ffffff; }
+html[data-theme="wii"] .field-select option:checked{ background-color:#b9d4e9; }
 html[data-theme="wii"] .btn-primary{
   background:linear-gradient(180deg,#57c4ee,#219fd6);
   color:#ffffff;
@@ -426,3 +428,34 @@ html[data-theme="wii"] .gm-check{ accent-color:#2aa6dc; }
 
 
 
+
+/* Tryb ciemny → jasny dla nowych elementów biblioteki (Wii). */
+html[data-theme="wii"] .sort-select{
+  background:rgba(255,255,255,.78);
+  border-color:rgba(18,60,88,.18);
+  color:#123c58;
+  color-scheme:light;
+}
+html[data-theme="wii"] .sort-select:hover{ background:#eaf6fd; }
+html[data-theme="wii"] .sort-select option{ background:#fff; color:#123c58; }
+html[data-theme="wii"] .sort-select option:checked{ background:#b9d4e9; }
+
+html[data-theme="wii"] .fav-btn{
+  background:rgba(255,255,255,.78);
+  border-color:rgba(18,60,88,.2);
+  color:#5c7b91;
+}
+html[data-theme="wii"] .fav-btn:hover{ background:#eaf6fd; color:#123c58; }
+html[data-theme="wii"] .fav-btn.is-active{
+  color:#b8860b;
+  border-color:rgba(184,134,11,.55);
+  background:rgba(255,214,102,.35);
+}
+
+html[data-theme="wii"] .portable-status{
+  background:rgba(255,255,255,.72);
+  border-color:rgba(18,60,88,.18);
+  color:#123c58;
+}
+html[data-theme="wii"] .portable-status strong{ color:#2aa6dc; }
+html[data-theme="wii"] .portable-status code{ color:#3d5f75; }

@@ -5,20 +5,16 @@
 // scrapery dla platform retro, gdzie RAWG/SteamGridDB mają słabe
 // pokrycie (SNES, Genesis, PSX, arcade, handheldy itd.).
 
-function getSteamGridDimensionsForAspect(aspect) {
-  switch (aspect) {
-    case 'square':
-      return '512x512';
-    case 'wide':
-      return '920x430';
-    case 'bigpic':
-      return '460x215';
-    case 'psp':
-      return '660x930';
-    case 'standard':
-    default:
-      return '600x900';
-  }
+function getSteamGridDimensionsForAspect(aspect, custom) {
+  const ratio = getAspectVars(aspect || 'standard', custom).ratioNumber;
+
+  if (aspect === 'square') return '512x512';
+  if (aspect === 'wide' || aspect === 'banner' || aspect === 'bigpic' || aspect === 'marquee') return '920x430';
+  if (aspect === 'psp') return '660x930';
+  if (aspect === 'portrait' || aspect === 'steam') return '600x900';
+  if (ratio > 1.5) return '920x430';
+  if (ratio > 0.85) return '512x512';
+  return '600x900';
 }
 
 function getRawgApiKey() {
@@ -29,14 +25,58 @@ function getSteamGridApiKey() {
   return config.apiKeys?.steamgrid?.trim() || '';
 }
 
-// ScreenScraper wymaga konta (darmowego) + opcjonalnie dewelopera
-// (softname/devid/devpassword są przypisywane per-aplikacja, ale dla
-// użytku osobistego wystarczy user/pass konta — patrz ustawienia).
+// ScreenScraper wymaga DWÓCH par danych:
+// 1) dev id/dev password — identyfikator aplikacji (prosi się o niego
+//    przez formularz na screenscraper.fr, sekcja "API");
+// 2) ssid/sspassword — login i hasło zwykłego konta użytkownika.
+// Bez pełnej czwórki API zwraca błąd autoryzacji — dlatego nie trzymamy
+// tu żadnych "fałszywych" wartości domyślnych i pomijamy źródło, aż
+// użytkownik wpisze dane w Ustawienia → Okładki.
 function getScreenScraperCredentials() {
   return {
+    devId: config.apiKeys?.screenscraperDevId?.trim() || '',
+    devPassword: config.apiKeys?.screenscraperDevPass?.trim() || '',
     user: config.apiKeys?.screenscraperUser?.trim() || '',
     password: config.apiKeys?.screenscraperPassword?.trim() || ''
   };
+}
+
+function screenScraperConfigured() {
+  const c = getScreenScraperCredentials();
+  return Boolean(c.devId && c.devPassword && c.user && c.password);
+}
+
+// Lekki test autoryzacji — ssuserInfos.php zwraca info o koncie.
+// Używany przez przycisk "Test" w panelu kluczy API.
+async function testScreenScraperConnection() {
+  const c = getScreenScraperCredentials();
+  if (!c.devId || !c.devPassword || !c.user || !c.password) {
+    return { ok: false, error: 'Uzupełnij wszystkie 4 pola ScreenScraper (Dev ID, Dev Hasło, Login, Hasło).' };
+  }
+
+  const params = new URLSearchParams({
+    devid: c.devId,
+    devpassword: c.devPassword,
+    ssid: c.user,
+    sspassword: c.password,
+    output: 'json'
+  });
+
+  try {
+    const res = await fetch(`https://www.screenscraper.fr/api2/ssuserInfos.php?${params.toString()}`);
+    if (!res.ok) {
+      return { ok: false, error: `Serwer zwrócił HTTP ${res.status}` };
+    }
+    const data = await res.json();
+    const okFlag = data?.header?.success === 'true' || data?.response?.user;
+    if (!okFlag) {
+      return { ok: false, error: 'Serwer odrzucił dane logowania (header.success != true).' };
+    }
+    const user = data.response?.user || {};
+    return { ok: true, message: `OK — konto: ${user.id || c.user}, poziom: ${user.level ?? '?'}` };
+  } catch (e) {
+    return { ok: false, error: 'Błąd sieci: ' + (e?.message || e) };
+  }
 }
 
 // TheGamesDB — od 2021 wymaga darmowego klucza API (rejestracja przez
@@ -91,6 +131,22 @@ const THEGAMESDB_PLATFORM_IDS = {
   gamecube: 21,
   wii: 9
 };
+
+// Mapy są fallbackiem dla starych configów; nowe platformy zapisują
+// własne `scraperSystem` / `tgdb` z presetu (działa też po zmianie nazwy).
+function getScraperSystemId(platformKey) {
+  const platform = getPlatform(platformKey);
+  const custom = Number(platform?.scraperSystem);
+  if (Number.isFinite(custom) && custom > 0) return custom;
+  return SCREENSCRAPER_SYSTEM_IDS[platformKey];
+}
+
+function getTheGamesDbPlatformId(platformKey) {
+  const platform = getPlatform(platformKey);
+  const custom = Number(platform?.tgdb);
+  if (Number.isFinite(custom) && custom > 0) return custom;
+  return THEGAMESDB_PLATFORM_IDS[platformKey];
+}
 
 function normalizeRawgYear(dateString) {
   if (!dateString) return '';
@@ -164,7 +220,7 @@ async function fetchSteamGridCoverByName(name, platformKey) {
 
   const platform = getPlatform(platformKey);
   const aspect = platform?.aspect || 'standard';
-  const dimensions = getSteamGridDimensionsForAspect(aspect);
+  const dimensions = getSteamGridDimensionsForAspect(aspect, platform?.aspectCustom);
 
   const searchRes = await fetch(`${STEAMGRIDBASE}/search/autocomplete/${query}`, {
     headers: { Authorization: `Bearer ${apiKey}` }
@@ -290,6 +346,8 @@ async function fetchRawgMetadataByName(name) {
     data: {
       title: details?.name || normalizedName,
       description: details?.description_raw || details?.description || '',
+      desc_en: details?.description_raw || details?.description || '',
+      desc_pl: '',
       genres: normalizeRawgGenres(details?.genres),
       developer: pickRawgDeveloper(details),
       year: normalizeRawgYear(details?.released),
@@ -318,12 +376,12 @@ const SCREENSCRAPER_DEV_PASSWORD = 'twojDevPassword';
 const SCREENSCRAPER_SOFTNAME = 'RetroLauncher';
 
 async function fetchScreenScraperMetadataByName(name, platformKey) {
-  const { user, password } = getScreenScraperCredentials();
-  if (!user || !password) {
-    return { ok: false, error: 'Brak danych logowania ScreenScraper w ustawieniach.' };
+  const { devId, devPassword, user, password } = getScreenScraperCredentials();
+  if (!devId || !devPassword || !user || !password) {
+    return { ok: false, error: 'Brak pełnych danych ScreenScraper (Dev ID/Hasło + Login/Hasło) w ustawieniach.' };
   }
 
-  const systemeid = SCREENSCRAPER_SYSTEM_IDS[platformKey];
+  const systemeid = getScraperSystemId(platformKey);
   if (!systemeid) {
     return { ok: false, error: `Brak mapowania platformy "${platformKey}" na systemeid ScreenScraper.` };
   }
@@ -332,8 +390,8 @@ async function fetchScreenScraperMetadataByName(name, platformKey) {
   const normalizedName = normalizeGameName(rawName);
 
   const params = new URLSearchParams({
-    devid: SCREENSCRAPER_DEV_ID,
-    devpassword: SCREENSCRAPER_DEV_PASSWORD,
+    devid: devId,
+    devpassword: devPassword,
     softname: SCREENSCRAPER_SOFTNAME,
     ssid: user,
     sspassword: password,
@@ -360,10 +418,13 @@ async function fetchScreenScraperMetadataByName(name, platformKey) {
     return { ok: false, error: 'Nie udało się dobrać trafnego wyniku w ScreenScraper.' };
   }
 
-  const synopsisEntry =
-    (jeu.synopsis || []).find(s => s.langue === 'pl') ||
-    (jeu.synopsis || []).find(s => s.langue === 'en') ||
-    (jeu.synopsis || [])[0];
+  // Dwujęzyczne opisy: PL preferowane, EN fallback; zapisujemy OBA w
+  // config.metadata, żeby przy zmianie języka UI nie trzeba było
+  // odświeżać danych z sieci.
+  const synopses = Array.isArray(jeu.synopsis) ? jeu.synopsis : [];
+  const descPl = (synopses.find(s => s.langue === 'pl') || {}).text || '';
+  const descEn = (synopses.find(s => s.langue === 'en') || synopses[0] || {}).text || '';
+  const synopsisEntry = descPl ? { text: descPl } : { text: descEn };
 
   const genresList = Array.isArray(jeu.genres)
     ? jeu.genres.map(g => {
@@ -374,6 +435,15 @@ async function fetchScreenScraperMetadataByName(name, platformKey) {
 
   const boxArt = (jeu.medias || []).find(m => m.type === 'box-2D' && m.url);
   const remoteCover = boxArt?.url || null;
+
+  // Dodatkowe media (przydatne w trybach hero/bigbox i w trailerze).
+  const fanart = (jeu.medias || []).find(m => m.type === 'fanart' && m.url)?.url || '';
+  const wheel = (jeu.medias || []).find(
+    m => (m.type === 'wheel' || m.type === 'wheel-hd') && m.url
+  )?.url || '';
+  const video = (jeu.medias || []).find(
+    m => (m.type === 'video' || m.type === 'video-normalized') && m.url
+  )?.url || '';
 
   let cover = remoteCover;
   if (remoteCover && window.launcherAPI?.cacheRemoteImage) {
@@ -392,6 +462,8 @@ async function fetchScreenScraperMetadataByName(name, platformKey) {
     data: {
       title: jeu.nom || normalizedName,
       description: synopsisEntry?.text || '',
+      desc_pl: descPl || '',
+      desc_en: descEn || '',
       genres: genresList,
       developer: jeu.developpeur?.text || '',
       year: jeu?.dates?.[0]?.text ? Number(String(jeu.dates[0].text).slice(0, 4)) || '' : '',
@@ -399,6 +471,9 @@ async function fetchScreenScraperMetadataByName(name, platformKey) {
       communityRating: jeu.note?.text ? Number(jeu.note.text) : null,
       cover,
       remoteCover,
+      fanart,
+      wheel,
+      video,
       source: 'ScreenScraper',
       sourceUrl: 'https://www.screenscraper.fr'
     }
@@ -418,7 +493,7 @@ async function fetchTheGamesDbMetadataByName(name, platformKey) {
     return { ok: false, error: 'Brak klucza TheGamesDB w ustawieniach.' };
   }
 
-  const platformId = THEGAMESDB_PLATFORM_IDS[platformKey];
+  const platformId = getTheGamesDbPlatformId(platformKey);
   const rawName = String(name || '').trim();
   const normalizedName = normalizeGameName(rawName);
 
@@ -539,8 +614,13 @@ async function fetchCombinedGameMetadata(name, platformKey) {
       rawgData.description ||
       ssData.description ||
       'Gra dopasowana automatycznie na podstawie zewnętrznych baz danych.',
+    desc_pl: ssData.desc_pl || '',
+    desc_en: ssData.desc_en || rawgData.desc_en || '',
     cover: resolvedCover,
     remoteCover: resolvedRemoteCover,
+    fanart: ssData.fanart || '',
+    wheel: ssData.wheel || '',
+    video: ssData.video || '',
     genres: (Array.isArray(rawgData.genres) && rawgData.genres.length)
       ? rawgData.genres
       : (Array.isArray(ssData.genres) ? ssData.genres : []),
@@ -568,14 +648,19 @@ async function fetchCombinedGameMetadata(name, platformKey) {
   return { ok: true, data: merged };
 }
 
-async function enrichPlatformMetadata(platformKey, force = false) {
+async function enrichPlatformMetadata(platformKey, force = false, opts = {}) {
+  // opts.onProgress(done, total) — callback dla pigułki na półce i
+  // auto-upełniania w tle; opts.silent — bez toastów (auto-run).
+  const onProgress = typeof opts.onProgress === 'function' ? opts.onProgress : null;
+  const silent = opts.silent === true;
+
   const progressEl = document.getElementById('bulk-progress');
   const progressBar = document.getElementById('bulk-progress-bar');
   const progressText = document.getElementById('bulk-progress-text');
   const platformGames = games.filter(g => g.platform === platformKey && g.rom);
 
   if (!platformGames.length) {
-    showToast('Brak gier do pobrania metadanych', true);
+    if (!silent) showToast('Brak gier do pobrania metadanych', true);
     return;
   }
 
@@ -605,6 +690,7 @@ async function enrichPlatformMetadata(platformKey, force = false) {
     if (!force && hasEnoughData) {
       if (progressBar) progressBar.style.width = `${Math.round((processed / platformGames.length) * 100)}%`;
       if (progressText) progressText.textContent = `${processed} / ${platformGames.length}`;
+      onProgress?.(processed, platformGames.length);
       continue;
     }
 
@@ -633,6 +719,7 @@ async function enrichPlatformMetadata(platformKey, force = false) {
 
     if (progressBar) progressBar.style.width = `${Math.round((processed / platformGames.length) * 100)}%`;
     if (progressText) progressText.textContent = `${processed} / ${platformGames.length}`;
+    onProgress?.(processed, platformGames.length);
   }
 
   setTimeout(() => {
@@ -641,5 +728,58 @@ async function enrichPlatformMetadata(platformKey, force = false) {
 
   await refreshLibrary();
   renderShelf();
-  showToast(updated ? `Pobrano metadane dla ${updated} gier` : 'Nie było nowych metadanych do pobrania');
+  if (!silent) {
+    showToast(updated ? `Pobrano metadane dla ${updated} gier` : 'Nie było nowych metadanych do pobrania');
+  }
+}
+
+// ============================================================
+// Auto-uzupełnianie metadanych w tle po starcie (opcja w Ustawienia →
+// Okładki). Bezpieczne domyślnie: włącza się tylko gdy użytkownik
+// zaznaczy opcję, przerywa się gdy otwarte jest Ustawienia/modal lub
+// gra właśnie wystartowała (now-playing). Idzie po platformach po
+// kolei, bez force — uzupełnia tylko braki.
+// ============================================================
+
+let metadataAutoFetchRunning = false;
+let metadataAutoFetchDone = false;
+
+async function autoFetchMetadataInBackground() {
+  if (metadataAutoFetchRunning || metadataAutoFetchDone) return;
+  if (config.uiState?.autoFetchOnStart !== true) return;
+
+  // Bez żadnych kluczy nie ma czego robić w sieci — odpuść od razu.
+  if (!getSteamGridApiKey() && !getRawgApiKey() && !screenScraperConfigured() && !getTheGamesDbApiKey()) {
+    return;
+  }
+
+  metadataAutoFetchRunning = true;
+
+  try {
+    for (const p of config.platforms) {
+      // Przerwij, gdy użytkownik wszedł w ustawienia/modal albo odpala grę.
+      if (!settingsPanel?.hidden) break;
+      if (overlay?.classList?.contains('open')) break;
+      if (document.querySelector('.now-playing.show')) break;
+
+      const platformGames = games.filter(g => g.platform === p.key && g.rom);
+      if (!platformGames.length) continue;
+
+      const missing = platformGames.filter(g => {
+        const meta = getStoredGameMeta(p.key, g.id);
+        return !meta.cover || !(meta.description || meta.desc);
+      }).length;
+
+      if (missing === 0) continue;
+
+      try {
+        await enrichPlatformMetadata(p.key, false, { silent: true });
+      } catch (e) {
+        console.warn('autoFetch: enrich failed for', p.key, e);
+      }
+    }
+  } finally {
+    metadataAutoFetchRunning = false;
+    metadataAutoFetchDone = true;
+  }
 }

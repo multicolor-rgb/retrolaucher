@@ -17,7 +17,17 @@ let gridColsCacheTime = 0;
 let lastBuiltShelfMode = null;
 
 function getAllowedShelfViewModes() {
-  return ['flat', 'arc', 'stack', 'cascade', 'grid'];
+  return ['flat', 'arc', 'stack', 'cascade', 'grid', 'detailed', 'hero', 'bigbox', 'framed'];
+}
+
+// Tryby dwupanelowe (lista + panel opisu) — mają własny builder DOM,
+// podobnie jak 'grid'. bigbox/framed korzystają z generycznego carouselu.
+const PANE_VIEW_MODES = ['detailed', 'hero'];
+
+function viewModeGroup(mode) {
+  if (mode === 'grid') return 'grid';
+  if (PANE_VIEW_MODES.includes(mode)) return 'pane';
+  return 'carousel';
 }
 
 function getSavedShelfViewMode() {
@@ -81,7 +91,7 @@ function animateShelfInfoChange() {
 
 function applyCoverGeometry(el, platformKey, focused = false) {
   const platform = getPlatform(platformKey);
-  const vars = getAspectVars(platform?.aspect || 'standard');
+  const vars = getAspectVars(platform?.aspect || 'standard', platform?.aspectCustom);
 
   el.style.setProperty('--cover-width', `${vars.width || 180}px`);
   el.style.setProperty('--cover-ratio', vars.ratio || '0.70 / 1');
@@ -140,8 +150,10 @@ function onShelfWheel(e) {
   if (overlay?.classList?.contains('open')) return;
   if (settingsPanel && !settingsPanel.hidden) return;
 
-  // W grid: pozwól na natywne przewijanie kontenera, nie przełączaj gier
-  if (viewMode === 'grid') return;
+  // W grid: pozwól na natywne przewijanie kontenera, nie przełączaj gier.
+  // W trybach dwupanelowych (detailed/hero) kółko scrolluje listę/opis
+  // natywnie — nawigacja gier działa strzałkami/klikiem/padem.
+  if (viewMode === 'grid' || PANE_VIEW_MODES.includes(viewMode)) return;
 
   const absY = Math.abs(e.deltaY);
   const absX = Math.abs(e.deltaX);
@@ -210,7 +222,28 @@ function getGameHltb(game) {
 
 function getGamePlaytimeText(game) {
   if (!game?.id) return t('noData');
-  return playtimeCache[game.id] || t('noData');
+  const text = playtimeCache[game.id];
+  if (!text || text === '0s' || text === '0m 00s') return t('noData');
+  return text;
+}
+
+function getGameBackgroundImage(game) {
+  return game?.fanart || getCoverForGame(game);
+}
+
+function applyGameBackground(game) {
+  const cover = getCoverForGame(game);
+  const background = getGameBackgroundImage(game);
+
+  bgBlur.style.backgroundImage = `url('${background}')`;
+  // Gradient liczymy z okładki — fanart bywa zbyt ciemny lub zbyt jasny.
+  getDominantColor(cover, applyGradient);
+}
+
+function stopModalTrailer() {
+  const video = document.getElementById('modalTrailer');
+  if (!video) return;
+  try { video.pause(); } catch (_) {}
 }
 
 function renderShelfSubinfo(game) {
@@ -221,7 +254,7 @@ function renderShelfSubinfo(game) {
   const parts = [];
 
   if (playtime && playtime !== t('noData')) {
-    parts.push(`Czas gry: ${playtime}`);
+    parts.push(`${t('playtimeLabel') || 'Czas gry'}: ${playtime}`);
   }
 
   if (metacritic != null && metacritic !== '') {
@@ -270,8 +303,18 @@ function stopPlaytimeAutoRefresh() {
 }
 
 function updateGameDetailsPlaytime(g, formatted) {
-  const el = document.getElementById('modalPlaytime');
-  if (el) el.textContent = formatted || playtimeCache[g.id] || t('noData');
+  const el = document.getElementById('modalPlaytimeValue');
+  const clean = formatted && formatted !== '0s' ? formatted : '';
+  if (el) {
+    el.textContent = clean || formatPlaytimeMs(getGameTotalPlaytimeMs(g.id)) || t('noData');
+  }
+
+  const stats = getPlaytimeStatsEntry(g.id);
+  const countEl = document.getElementById('modalPlayCount');
+  if (countEl) countEl.textContent = String(stats?.plays || 0);
+
+  const lastEl = document.getElementById('modalLastPlayed');
+  if (lastEl) lastEl.textContent = formatLastPlayedDate(getGameLastPlayedAt(g.id));
 }
 
 
@@ -371,7 +414,196 @@ async function renameGameCore(game, newTitle, onDone) {
 //koniec zmiany nazwy
 
 
-// Buduje/aktualizuje shelf w trybach carousel (flat, arc, stack, cascade).
+function escapeHtmlText(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Utnij opis do zadanej liczby znaków na granicy słowa (półka/panel).
+function truncateDescription(text, maxLen) {
+  const clean = String(text || '').replace(/\s+/g, ' ').trim();
+  if (clean.length <= maxLen) return clean;
+  const cut = clean.slice(0, maxLen);
+  const lastSpace = cut.lastIndexOf(' ');
+  return (lastSpace > maxLen * 0.6 ? cut.slice(0, lastSpace) : cut) + '…';
+}
+
+// ============================================================
+// Tryby dwupanelowe (detailed / hero) — EmulationStation-style:
+// lewa lista gier, prawa okładka + OPIS + metadane. DOM budowany raz
+// (per zestaw gier), zmiana zaznaczenia = updatePaneFocusOnly().
+// Zasada identyczna jak w gridzie: nie przebudowywać listy przy
+// każdym przestawieniu, żeby nie gubić scrolla i nie migać.
+// ============================================================
+
+let paneLastBuildKey = null;
+
+function paneBuildKey() {
+  return filtered.map(g => g.id).join('|');
+}
+
+function destroyPaneIfStale(key) {
+  if (paneLastBuildKey === key) return;
+  shelf.innerHTML = '';
+  paneLastBuildKey = null;
+}
+
+function buildPaneListRow(g, idx) {
+  const row = document.createElement('div');
+  row.className = 'pane-row';
+  row.dataset.index = String(idx);
+  row.dataset.gameId = g.id;
+  applyCoverGeometry(row, g.platform, false);
+
+  const coverSrc = getCoverForGame(g);
+  row.innerHTML = `
+    <img src="${coverSrc}" alt="" draggable="false">
+    <span class="pane-row-title">${escapeHtmlText(getDisplayTitle(g))}</span>
+  `;
+
+  row.addEventListener('click', () => {
+    if (current === idx) return;
+    current = idx;
+    updatePaneFocusOnly();
+    if (typeof sfxMove === 'function') sfxMove();
+  });
+
+  row.addEventListener('dblclick', () => launchGame(g));
+  return row;
+}
+
+function renderPaneShelf() {
+  const key = paneBuildKey();
+  destroyPaneIfStale(key);
+
+  let listWrap = shelf.querySelector('.pane-list');
+  if (!listWrap || shelf.children.length !== 2) {
+    shelf.innerHTML = '';
+
+    const detailWrap = document.createElement('div');
+    detailWrap.className = 'pane-info';
+
+    listWrap = document.createElement('div');
+    listWrap.className = 'pane-list';
+    filtered.forEach((g, idx) => {
+      listWrap.appendChild(buildPaneListRow(g, idx));
+    });
+
+    detailWrap.innerHTML = `
+      <img class="pane-cover" src="" alt="" draggable="false">
+      <div class="pane-text">
+        <div class="pane-plat"></div>
+        <h2 class="pane-title"></h2>
+        <p class="pane-desc"></p>
+        <div class="pane-chips"></div>
+        <div class="pane-meta"></div>
+      </div>
+    `;
+
+    shelf.appendChild(listWrap);
+    shelf.appendChild(detailWrap);
+    paneLastBuildKey = key;
+  } else {
+    paneLastBuildKey = key;
+  }
+
+  updatePaneFocusOnly();
+}
+
+// Aktualizacja zaznaczenia + prawego panelu (opis, metadane) w trybach
+// detailed/hero. Nie przebudowuje DOM-u — analogicznie do gridowego
+// updateGridFocusOnly().
+function updatePaneFocusOnly(skipScrollIntoView = false) {
+  const rows = shelf.querySelectorAll('.pane-row');
+  rows.forEach((el, idx) => {
+    el.classList.toggle('focus', idx === current);
+  });
+
+  if (!skipScrollIntoView) {
+    const focusRow = rows[current];
+    focusRow?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  const g = filtered[current];
+  if (!g) return;
+
+  const pf = getPlatform(g.platform) || { label: g.platform || t('unknownPlatform'), color: '#38e0ff' };
+  const infoWrap = shelf.querySelector('.pane-info');
+  if (infoWrap) {
+    const geometry = getAspectVars(pf.aspect || 'standard', pf.aspectCustom);
+    infoWrap.style.setProperty('--cover-ratio', geometry.ratio);
+    const coverEl = infoWrap.querySelector('.pane-cover');
+    const coverSrc = getCoverForGame(g);
+    if (coverEl && coverEl.getAttribute('src') !== coverSrc) coverEl.src = coverSrc;
+
+    const platElp = infoWrap.querySelector('.pane-plat');
+    if (platElp) {
+      platElp.textContent = pf.label;
+      platElp.style.background = (pf.color || '#38e0ff') + '33';
+      platElp.style.color = pf.color || '#38e0ff';
+    }
+
+    const titleElp = infoWrap.querySelector('.pane-title');
+    if (titleElp) titleElp.textContent = getDisplayTitle(g) || t('unknownGame');
+
+    const descEl = infoWrap.querySelector('.pane-desc');
+    if (descEl) {
+      descEl.textContent = g.desc || g.description || t('noDescription');
+    }
+
+    const chipsEl = infoWrap.querySelector('.pane-chips');
+    if (chipsEl) {
+      const chips = [];
+      if (g.year) chips.push(String(g.year));
+      (g.genres || []).slice(0, 4).forEach(genre => chips.push(escapeHtmlText(genre)));
+      if (g.dev) chips.push(escapeHtmlText(g.dev));
+      chipsEl.innerHTML = chips
+        .map(c => `<span class="pane-chip">${c}</span>`)
+        .join('');
+    }
+
+    const metaEl = infoWrap.querySelector('.pane-meta');
+    if (metaEl) {
+      const bits = [];
+      const playtime = getGamePlaytimeText(g);
+      const metacritic = getGameMetacritic(g);
+      const hltb = getGameHltb(g);
+      const fileSize = getGameFileSize(g);
+
+      if (playtime && playtime !== t('noData')) {
+        bits.push(`<span><b>${t('playtimeLabel') || 'Czas gry'}</b> ${escapeHtmlText(playtime)}</span>`);
+      }
+      if (metacritic != null && metacritic !== '') {
+        bits.push(`<span><b>Metacritic</b> ${metacritic}/100</span>`);
+      }
+      if (hltb != null && hltb !== '') {
+        bits.push(`<span><b>HLTB</b> ${escapeHtmlText(formatHltb(hltb))}</span>`);
+      }
+      if (fileSize != null) {
+        bits.push(`<span><b>${t('fileSize') || 'Waga pliku'}</b> ${escapeHtmlText(formatBytes(fileSize))}</span>`);
+      }
+      metaEl.innerHTML = bits.join('');
+    }
+  }
+
+  // Spójność z resztą aplikacji: dolny pasek info + tło.
+  titleEl.textContent = getDisplayTitle(g) || t('unknownGame');
+  platEl.textContent = pf.label;
+  if (ratingMini) ratingMini.textContent = renderShelfSubinfo(g);
+
+  const activeCover = getCoverForGame(g);
+  applyGameBackground(g);
+
+  refreshCurrentGamePlaytime();
+  updateFavoriteButtons();
+}
+
+// Buduje/aktualizuje shelf w trybach carousel (flat, arc, stack, cascade,
+// bigbox, framed). bigbox/framed to pure-CSS warianty tej samej maszyny.
 //
 // POPRAWKA: dwa realne problemy, które psuły stylowanie i wyglądały jak
 // "przeskakiwanie":
@@ -390,15 +622,51 @@ function renderCarouselShelf() {
   const len = filtered.length;
   const range = 3;
 
+  // Gdy biblioteka jest mniejsza niż okno ±3, mod() powtarzałby te same
+  // gry 7 razy (przy 1 grze wyglądało to jak 7 identycznych okładek).
+  // Dla małych bibliotek renderujemy każdą grę tylko raz, z offsetami
+  // symetrycznymi wokół 0, żeby aktualna gra była wyśrodkowana.
   const desired = [];
-  for (let offset = -range; offset <= range; offset++) {
-    desired.push({ offset, idx: mod(current + offset, len) });
+  if (len < range * 2 + 1) {
+    const half = Math.floor((len - 1) / 2);
+    const offsets = [];
+    for (let o = -half; o <= half; o++) offsets.push(o);
+    if (len % 2 === 0) offsets.push(half + 1);
+
+    for (const offset of offsets) {
+      desired.push({ offset, idx: mod(current + offset, len) });
+    }
+  } else {
+    for (let offset = -range; offset <= range; offset++) {
+      desired.push({ offset, idx: mod(current + offset, len) });
+    }
   }
 
   const existing = new Map();
   shelf.querySelectorAll('.sh-item').forEach(el => {
     existing.set(el.dataset.gameId, el);
   });
+
+  // bigbox/framed pokazują tytuł na okładce (duża typografia na dole)
+  const withTitle = viewMode === 'bigbox' || viewMode === 'framed';
+  const titleFor = (game) => {
+    if (!withTitle) return '';
+    return `<span class="sh-title">${escapeHtmlText(getDisplayTitle(game))}</span>`;
+  };
+
+  // bigbox steruje szerokością okładek wyłącznie w CSS (skala od wysokości
+  // okna). Inline --cover-width z applyCoverGeometry nadpisałby CSS i
+  // okładka zostałaby mała, dlatego dla tego trybu czyścimy inline var.
+  const usesDynamicCoverWidth = viewMode === 'bigbox';
+  const applyCarouselGeometry = (el, platform, focused) => {
+    if (usesDynamicCoverWidth) {
+      el.style.removeProperty('--cover-width');
+      el.style.removeProperty('--cover-ratio');
+      el.classList.toggle('focus', focused);
+      return;
+    }
+    applyCoverGeometry(el, platform, focused);
+  };
 
   const usedIds = new Set();
   const newlyCreated = [];
@@ -416,7 +684,7 @@ function renderCarouselShelf() {
       el.dataset.gameId = gameId;
 
       const coverSrc = getCoverForGame(g);
-      el.innerHTML = `<img src="${coverSrc}" alt="${getDisplayTitle(g)}"/>`;
+      el.innerHTML = `<img src="${coverSrc}" alt="${getDisplayTitle(g)}"/>${titleFor(g)}`;
 
       el.addEventListener('click', () => {
         const liveIdx = filtered.indexOf(g);
@@ -432,7 +700,7 @@ function renderCarouselShelf() {
       el.style.setProperty('--offset', startOffset);
       el.style.transition = 'none';
 
-      applyCoverGeometry(el, g.platform, false);
+      applyCarouselGeometry(el, g.platform, false);
       newlyCreated.push(el);
     }
 
@@ -449,8 +717,21 @@ function renderCarouselShelf() {
     anchor = el;
 
     el.dataset.platform = g.platform;
-    el.classList.toggle('focus', offset === 0);
-    applyCoverGeometry(el, g.platform, offset === 0);
+    applyCarouselGeometry(el, g.platform, offset === 0);
+
+    // Elementy są reużywane między trybami carousel — trzeba zadbać,
+    // żeby etykieta tytułu (tylko bigbox/framed) nie zostawała w flat
+    // ani nie znikała po powrocie do bigbox/framed.
+    const titleEls = el.querySelectorAll('.sh-title');
+    if (withTitle) {
+      if (!titleEls.length) {
+        el.insertAdjacentHTML('beforeend', `<span class="sh-title">${escapeHtmlText(getDisplayTitle(g))}</span>`);
+      } else {
+        titleEls.forEach(node => { node.textContent = getDisplayTitle(g); });
+      }
+    } else {
+      titleEls.forEach(node => node.remove());
+    }
 
     usedIds.add(gameId);
 
@@ -483,6 +764,97 @@ function renderCarouselShelf() {
   }
 }
 
+// ============================================================
+// Pigułka "Uzupełnij okładki (n)" — szybka akcja na półce dla
+// aktywnej platformy (albo wszystkich przy 'all'), bez wchodzenia
+// w Ustawienia → Okładki. Liczy gry bez okładki w metadanych.
+// ============================================================
+
+let coversPillBusy = false;
+let coversPillBound = false;
+
+function countMissingCovers() {
+  const base = activePlatform && activePlatform !== 'all'
+    ? games.filter(g => g.platform === activePlatform)
+    : games;
+
+  let missing = 0;
+  base.forEach(g => {
+    if (getManualCover(g.platform, g.id)) return;
+    const meta = getStoredGameMeta(g.platform, g.id);
+    if (!meta.cover) missing += 1;
+  });
+
+  return { total: base.length, missing };
+}
+
+function updateCoversPill() {
+  const pill = document.getElementById('coversPill');
+  if (!pill || coversPillBusy) return;
+
+  const { missing } = countMissingCovers();
+  if (missing <= 0) {
+    pill.hidden = true;
+    return;
+  }
+
+  pill.hidden = false;
+  pill.disabled = false;
+  pill.classList.remove('busy');
+  pill.innerHTML = `${svgIcon('i-image')}<span>${t('fetchMissingCovers') || 'Uzupełnij okładki'} (${missing})</span>`;
+}
+
+function bindCoversPill() {
+  const pill = document.getElementById('coversPill');
+  if (!pill || coversPillBound || pill.dataset.bound === 'true') return;
+
+  pill.addEventListener('click', async () => {
+    if (coversPillBusy) return;
+
+    const targets = activePlatform && activePlatform !== 'all'
+      ? [activePlatform]
+      : usedPlatforms().map(p => p.key);
+
+    if (!targets.length) return;
+
+    coversPillBusy = true;
+    pill.classList.add('busy');
+    pill.disabled = true;
+    pill.innerHTML = `${svgIcon('i-refresh', 'icon--spin')}<span>${t('fetchingCovers') || 'Pobieram okładki…'}</span>`;
+
+    let done = 0;
+    const total = targets.length;
+
+    try {
+      for (const key of targets) {
+        await enrichPlatformMetadata(key, false, {
+          silent: true,
+          onProgress: (processed, all) => {
+            if (coversPillBusy) {
+              pill.innerHTML = `${svgIcon('i-refresh', 'icon--spin')}<span>${key}: ${processed} / ${all}</span>`;
+            }
+          }
+        });
+        done += 1;
+      }
+      showToast(
+        done > 1
+          ? (t('coversFetchedPlatforms') || 'Uzupełniono metadane dla platform') + ` (${done}/${total})`
+          : (t('coversFetchedDone') || 'Gotowe — odświeżono okładki i opisy')
+      );
+    } catch (e) {
+      console.warn('coversPill enrich failed', e);
+      showToast(t('coversFetchError') || 'Nie udało się pobrać metadanych', true);
+    } finally {
+      coversPillBusy = false;
+      updateCoversPill();
+    }
+  });
+
+  pill.dataset.bound = 'true';
+  coversPillBound = true;
+}
+
 function renderShelf() {
   const len = filtered.length;
 
@@ -495,15 +867,24 @@ function renderShelf() {
   }
 
   syncViewModeButtons();
+  bindCoversPill();
+  updateCoversPill();
+  updateFavoriteButtons();
 
-  // Dodaj klasę grid-mode na shelf-info, jeśli tryb grid
+  // shelf-info: grid dostaje własny pasek, panele ukrywają zdublowany
+  // tytuł (jest już w panelu po prawej) i zostawiają same przyciski.
   const shelfInfo = document.getElementById('shelfInfo');
   if (shelfInfo) {
     shelfInfo.classList.toggle('grid-mode', viewMode === 'grid');
+    shelfInfo.classList.toggle('pane-mode', PANE_VIEW_MODES.includes(viewMode));
   }
 
   if (len === 0) {
-    shelfViewport.innerHTML = `<div class="empty-state">${t('noGamesForPlatform')}</div>`;
+    const emptyMessage =
+      (config.uiState?.librarySort || 'default') === 'favorites'
+        ? t('noFavoriteGames')
+        : t('noGamesForPlatform');
+    shelfViewport.innerHTML = `<div class="empty-state">${emptyMessage}</div>`;
     titleEl.textContent = '';
     platEl.textContent = '';
     if (ratingMini) ratingMini.textContent = '';
@@ -517,16 +898,41 @@ function renderShelf() {
     shelfViewport.appendChild(shelf);
   }
 
-  const modeGroup = viewMode === 'grid' ? 'grid' : 'carousel';
-  const lastGroup = lastBuiltShelfMode === 'grid' ? 'grid' : (lastBuiltShelfMode ? 'carousel' : null);
+  const modeGroup = viewModeGroup(viewMode);
+  const lastGroup = lastBuiltShelfMode ? viewModeGroup(lastBuiltShelfMode) : null;
   if (lastGroup !== null && lastGroup !== modeGroup) {
     shelf.innerHTML = '';
+    paneLastBuildKey = null;
     invalidateGridColsCache();
   }
 
   shelf.className = 'shelf mode-' + viewMode;
   shelf.dataset.mode = viewMode;
   shelfViewport.className = 'shelf-viewport mode-' + viewMode;
+
+  // Ramka/tło w trybie framed — kolor akcentu aktywnej platformy.
+  const stageEl = shelfViewport.closest('.shelf-stage');
+  if (stageEl) {
+    stageEl.classList.toggle('framed-bg', viewMode === 'framed');
+  }
+
+  // Panele dwukolumnowe (detailed/hero): własny builder + update focusu
+  if (PANE_VIEW_MODES.includes(viewMode)) {
+    renderPaneShelf();
+
+    const g = filtered[current];
+    const pf = getPlatform(g.platform) || { label: g.platform || t('unknownPlatform') };
+
+    if (stageEl && pf.color) {
+      stageEl.style.setProperty('--stage-accent', pf.color);
+    }
+
+    animateShelfInfoChange();
+    refreshCurrentGamePlaytime();
+    startPlaytimeAutoRefresh();
+    lastBuiltShelfMode = viewMode;
+    return;
+  }
 
   // Grid: aktualizuj tylko focus, nie buduj od nowa całej listy
   if (viewMode === 'grid') {
@@ -568,8 +974,7 @@ function renderShelf() {
     }
 
     const activeCover = getCoverForGame(g);
-    bgBlur.style.backgroundImage = `url('${activeCover}')`;
-    getDominantColor(activeCover, applyGradient);
+    applyGameBackground(g);
 
     refreshCurrentGamePlaytime();
     startPlaytimeAutoRefresh();
@@ -582,6 +987,10 @@ function renderShelf() {
   const g = filtered[current];
   const pf = getPlatform(g.platform) || { label: g.platform || t('unknownPlatform') };
 
+  if (stageEl && pf.color) {
+    stageEl.style.setProperty('--stage-accent', pf.color);
+  }
+
   titleEl.textContent = getDisplayTitle(g) || t('unknownGame');
   platEl.textContent = pf.label;
 
@@ -592,8 +1001,7 @@ function renderShelf() {
   animateShelfInfoChange();
 
   const activeCover = getCoverForGame(g);
-  bgBlur.style.backgroundImage = `url('${activeCover}')`;
-  getDominantColor(activeCover, applyGradient);
+  applyGameBackground(g);
 
   refreshCurrentGamePlaytime();
   startPlaytimeAutoRefresh();
@@ -624,10 +1032,10 @@ function updateGridFocusOnly(skipScrollIntoView = false) {
   }
 
   const activeCover = getCoverForGame(g);
-  bgBlur.style.backgroundImage = `url('${activeCover}')`;
-  getDominantColor(activeCover, applyGradient);
+  applyGameBackground(g);
 
   refreshCurrentGamePlaytime();
+  updateFavoriteButtons();
 }
 
 
@@ -712,6 +1120,142 @@ function moveGridSelection(dx, dy) {
   if (typeof sfxMove === 'function') sfxMove();
 }
 
+// ============================================================
+// Ulubione, losowa gra, szybki skok po literze i tryb atrakcji
+// ============================================================
+
+function getFocusedGameForFavorites() {
+  if (overlay?.classList?.contains('open') && overlay.currentGame) {
+    return overlay.currentGame;
+  }
+  return filtered[current] || null;
+}
+
+function updateFavoriteButtons() {
+  const game = getFocusedGameForFavorites();
+  const active = !!game && isGameFavorite(game.id);
+  const label = active ? t('favoriteRemove') : t('favoriteAdd');
+
+  ['favoriteBtn', 'modalFavoriteBtn'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.classList.toggle('is-active', active);
+    btn.title = label;
+    btn.setAttribute('aria-label', label);
+  });
+}
+
+async function toggleFavoriteForGame(game) {
+  if (!game?.id) return;
+
+  const next = toggleGameFavorite(game.id);
+  await saveStoredConfig();
+
+  // Gdy aktywne jest sortowanie „Ulubione”, lista musi się przefiltrować.
+  if ((config.uiState?.librarySort || 'default') === 'favorites') {
+    reapplyLibraryOrdering();
+  } else {
+    updateFavoriteButtons();
+  }
+
+  showToast(next ? t('favoriteAdded') : t('favoriteRemoved'));
+}
+
+function randomGame() {
+  if (!filtered.length) {
+    showToast(t('randomGameEmpty'), true);
+    return;
+  }
+
+  if (filtered.length > 1) {
+    let idx = current;
+    while (idx === current) idx = Math.floor(Math.random() * filtered.length);
+    current = idx;
+  }
+
+  renderShelf();
+  openDetails(filtered[current]);
+  showToast(t('randomGameToast') + getDisplayTitle(filtered[current]));
+}
+
+function jumpToLetter(char) {
+  if (!filtered.length || !char) return false;
+
+  const lang = getSavedLanguage();
+  const normalize = value => String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase(lang);
+
+  const needle = normalize(char);
+
+  for (let step = 1; step <= filtered.length; step++) {
+    const idx = mod(current + step, filtered.length);
+    if (normalize(getDisplayTitle(filtered[idx])).startsWith(needle)) {
+      current = idx;
+      renderShelf();
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// Tryb atrakcji: po bezczynności półka sama przewija gry (wygaszacz).
+const ATTRACT_IDLE_MS = 120000;
+const ATTRACT_STEP_MS = 7000;
+let attractWatchTimer = null;
+let attractStepTimer = null;
+let lastUserActivityAt = Date.now();
+
+function noteUserActivity() {
+  lastUserActivityAt = Date.now();
+  if (document.body.classList.contains('attract-mode')) stopAttractMode();
+}
+
+function isAttractBlocked() {
+  return !config.uiState?.attractMode
+    || (settingsPanel && !settingsPanel.hidden)
+    || overlay?.classList?.contains('open');
+}
+
+function startAttractMode() {
+  if (document.body.classList.contains('attract-mode')) return;
+
+  document.body.classList.add('attract-mode');
+  showToast(t('attractHint'));
+
+  attractStepTimer = setInterval(() => {
+    if (isAttractBlocked() || filtered.length < 2) {
+      stopAttractMode();
+      return;
+    }
+    next();
+  }, ATTRACT_STEP_MS);
+}
+
+function stopAttractMode() {
+  document.body.classList.remove('attract-mode');
+  if (attractStepTimer) {
+    clearInterval(attractStepTimer);
+    attractStepTimer = null;
+  }
+}
+
+function initAttractMode() {
+  stopAttractMode();
+
+  if (attractWatchTimer) clearInterval(attractWatchTimer);
+  attractWatchTimer = setInterval(() => {
+    if (isAttractBlocked()) return;
+    if (Date.now() - lastUserActivityAt >= ATTRACT_IDLE_MS) startAttractMode();
+  }, 5000);
+}
+
+['keydown', 'pointerdown', 'wheel'].forEach(evt => {
+  window.addEventListener(evt, noteUserActivity, { passive: true });
+});
+
 window.addEventListener('resize', invalidateGridColsCache);
 
 function showToast(msg, isError) {
@@ -726,9 +1270,52 @@ function showToast(msg, isError) {
 }
 
 async function launchGame(game) {
-  const emulatorPath = config.emulators[game.platform] || '';
+  const platform = getPlatform(game.platform);
   const rawArgs = config.launchArgs[game.platform] || '';
-  const extraArgs = parseArgString(rawArgs);
+  // Argumenty per gra dokładamy po platformowych — emulator stosuje
+  // ostatnią wartość danego przełącznika, więc gra może nadpisać platformę.
+  const perGameArgs = config.gameArgs?.[game.id] || '';
+  const extraArgs = [
+    ...parseArgString(rawArgs),
+    ...parseArgString(perGameArgs)
+  ];
+
+  if (platform?.kind === 'pc') {
+    if (!validatePathExists(game.rom)) {
+      showToast(t('missingGamePath'), true);
+      return;
+    }
+
+    if (window.launcherAPI?.launchPcGame) {
+      const isWindowsHost = /^Win/i.test(navigator.platform || '');
+      const selectedRunner = platform.pcRunner || 'native';
+      if (!isWindowsHost && /\.exe$/i.test(game.rom) && selectedRunner === 'native') {
+        showToast(t('pcExeNeedsRunner') || 'Plik .exe na Linuksie wymaga runnera Wine lub Proton.', true);
+        return;
+      }
+
+      const result = await window.launcherAPI.launchPcGame({
+        gameId: game.id,
+        gamePath: game.rom,
+        platform: {
+          pcRunner: platform.pcRunner || 'native',
+          pcPrefix: platform.pcPrefix || '',
+          pcEnv: platform.pcEnv || '',
+          pcRunnerPath: platform.pcRunnerPath || ''
+        },
+        override: config.pcGameSettings?.[game.id] || {},
+        extraArgs
+      });
+
+      if (!result.ok) showToast(t('errorLaunch') + result.error, true);
+      else showToast(t('launchGamePrefix') + getDisplayTitle(game));
+    } else {
+      showToast(t('demoLaunch') + getDisplayTitle(game));
+    }
+    return;
+  }
+
+  const emulatorPath = config.emulators[game.platform] || '';
 
   if (!validatePathExists(emulatorPath)) {
     showToast(t('missingEmulatorCommand'), true);
@@ -770,7 +1357,10 @@ function openDetails(g) {
   const fileSize = getGameFileSize(g);
   const location = getGameLocation(g);
 
-  document.getElementById('modalCoverImg').src = getCoverForGame(g);
+  const modalCover = document.getElementById('modalCoverImg');
+  const modalCoverSrc = getCoverForGame(g);
+  modalCover.src = modalCoverSrc;
+  modalCover.classList.toggle('is-placeholder', modalCoverSrc.includes('cover-placeholder.svg'));
 
   const platEl2 = document.getElementById('modalPlatform');
   platEl2.textContent = pf.label;
@@ -789,7 +1379,8 @@ function openDetails(g) {
 
   const renameButton = document.getElementById('renameGameButton');
   if (renameButton) {
-    renameButton.textContent = t('renameGame');
+    // Tekst tłumaczy <span data-i18n> (applyI18n) — nie nadpisujemy
+    // textContent, bo zjadłoby to ikonę ołówka.
     renameButton.onclick = () => openRenameInline(g);
   }
 
@@ -798,6 +1389,24 @@ function openDetails(g) {
 
   document.getElementById('modalDesc').textContent =
     g.desc || g.description || t('noDescription');
+
+  // Trailer ze ScreenScraper — odtwarzacz pojawia się tylko, gdy znamy URL.
+  const trailerWrap = document.getElementById('modalTrailerWrap');
+  const trailerVideo = document.getElementById('modalTrailer');
+  if (trailerWrap && trailerVideo) {
+    if (g.trailer) {
+      trailerWrap.hidden = false;
+      if (trailerVideo.getAttribute('src') !== g.trailer) {
+        trailerVideo.pause?.();
+        trailerVideo.setAttribute('src', g.trailer);
+      }
+    } else {
+      trailerWrap.hidden = true;
+      try { trailerVideo.pause(); } catch (_) {}
+      trailerVideo.removeAttribute('src');
+      trailerVideo.load?.();
+    }
+  }
 
   document.getElementById('modalFileSize').textContent = formatBytes(fileSize);
   document.getElementById('modalLocation').textContent = location;
@@ -809,28 +1418,36 @@ function openDetails(g) {
 
   document.getElementById('modalHltb').textContent = formatHltb(hltb);
 
-  const existingPlaytime = document.getElementById('modalPlaytime');
-  if (existingPlaytime) existingPlaytime.remove();
-
-  if (window.launcherAPI?.getPlaytime) {
-    window.launcherAPI.getPlaytime(g.id).then(res => {
-      if (!res?.ok) return;
-      if (!res.totalMs || res.totalMs <= 0) return;
-
-      const titleRow = document.getElementById('modalTitleRow');
-      if (!titleRow || !titleRow.parentElement) return;
-
-      const old = document.getElementById('modalPlaytime');
-      if (old) old.remove();
-
-      const div = document.createElement('div');
-      div.id = 'modalPlaytime';
-      div.className = 'modal-playtime';
-      div.textContent = res.formatted;
-
-      titleRow.insertAdjacentElement('afterend', div);
-    }).catch(() => {});
+  // Statystyki z pliku playtime: czas gry, liczba uruchomień, ostatnia gra.
+  const stats = getPlaytimeStatsEntry(g.id);
+  const totalMs = getGameTotalPlaytimeMs(g.id);
+  const playtimeValue = document.getElementById('modalPlaytimeValue');
+  if (playtimeValue) {
+    playtimeValue.textContent = totalMs > 0 ? formatPlaytimeMs(totalMs) : t('noData');
   }
+  const playCount = document.getElementById('modalPlayCount');
+  if (playCount) playCount.textContent = String(stats?.plays || 0);
+  const lastPlayed = document.getElementById('modalLastPlayed');
+  if (lastPlayed) lastPlayed.textContent = formatLastPlayedDate(getGameLastPlayedAt(g.id));
+
+  const argsInput = document.getElementById('modalGameArgs');
+  if (argsInput) argsInput.value = config.gameArgs?.[g.id] || '';
+
+  const platformInfo = getPlatform(g.platform);
+  const pcSettingsRow = document.getElementById('modalPcSettings');
+  if (pcSettingsRow) pcSettingsRow.hidden = platformInfo?.kind !== 'pc';
+
+  if (platformInfo?.kind === 'pc') {
+    const override = config.pcGameSettings?.[g.id] || {};
+    const runnerSel = document.getElementById('modalPcRunner');
+    if (runnerSel) runnerSel.value = override.runner || '';
+    const prefixInput = document.getElementById('modalPcPrefix');
+    if (prefixInput) prefixInput.value = override.prefix || '';
+    const envInput = document.getElementById('modalPcEnv');
+    if (envInput) envInput.value = override.env || '';
+  }
+
+  updateFavoriteButtons();
 
   overlay.classList.add('open');
   overlay.currentGame = g;
@@ -838,6 +1455,7 @@ function openDetails(g) {
 
 if (window.launcherAPI?.onWindowFocus) {
   window.launcherAPI.onWindowFocus(() => {
+    loadPlaytimeStats({ force: true });
     refreshCurrentGamePlaytime();
     renderShelf();
   });

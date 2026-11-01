@@ -25,6 +25,12 @@ function fillApiKeyFields() {
   const screenscraperPasswordInput = document.getElementById('screenscraper-password-input');
   if (screenscraperPasswordInput) screenscraperPasswordInput.value = config.apiKeys.screenscraperPassword || '';
 
+  const screenscraperDevIdInput = document.getElementById('screenscraper-devid-input');
+  if (screenscraperDevIdInput) screenscraperDevIdInput.value = config.apiKeys.screenscraperDevId || '';
+
+  const screenscraperDevPassInput = document.getElementById('screenscraper-devpass-input');
+  if (screenscraperDevPassInput) screenscraperDevPassInput.value = config.apiKeys.screenscraperDevPass || '';
+
   const gamesDbInput = document.getElementById('thegamesdb-api-key-input');
   if (gamesDbInput) gamesDbInput.value = config.apiKeys.thegamesdb || '';
 }
@@ -49,12 +55,39 @@ document.getElementById('save-screenscraper-credentials')?.addEventListener('cli
   ensureApiKeysConfig();
   const userInput = document.getElementById('screenscraper-user-input');
   const passwordInput = document.getElementById('screenscraper-password-input');
+  const devIdInput = document.getElementById('screenscraper-devid-input');
+  const devPassInput = document.getElementById('screenscraper-devpass-input');
 
   config.apiKeys.screenscraperUser = userInput?.value.trim() || '';
   config.apiKeys.screenscraperPassword = passwordInput?.value.trim() || '';
+  config.apiKeys.screenscraperDevId = devIdInput?.value.trim() || '';
+  config.apiKeys.screenscraperDevPass = devPassInput?.value.trim() || '';
 
   await saveStoredConfig();
   showToast('Zapisano dane logowania ScreenScraper ✔');
+});
+
+document.getElementById('test-screenscraper-credentials')?.addEventListener('click', async () => {
+  // Zapisz pola przed testem, żeby testowana była bieżąca zawartość inputów.
+  ensureApiKeysConfig();
+  const read = (id) => document.getElementById(id)?.value.trim() || '';
+  config.apiKeys.screenscraperUser = read('screenscraper-user-input');
+  config.apiKeys.screenscraperPassword = read('screenscraper-password-input');
+  config.apiKeys.screenscraperDevId = read('screenscraper-devid-input');
+  config.apiKeys.screenscraperDevPass = read('screenscraper-devpass-input');
+  await saveStoredConfig();
+
+  if (typeof testScreenScraperConnection !== 'function') {
+    showToast(t('screenscraperTestFail'), true);
+    return;
+  }
+
+  const result = await testScreenScraperConnection();
+  if (result.ok) {
+    showToast((t('screenscraperTestOk') || 'ScreenScraper działa ✓') + (result.message ? ` — ${result.message}` : ''));
+  } else {
+    showToast((t('screenscraperTestFail') || 'Test nieudany') + ` — ${result.error || '?'}`, true);
+  }
 });
 
 document.getElementById('save-thegamesdb-api-key')?.addEventListener('click', async () => {

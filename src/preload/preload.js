@@ -13,9 +13,16 @@ contextBridge.exposeInMainWorld('launcherAPI', {
   selectFolder: () => ipcRenderer.invoke('dialog:selectFolder'),
   selectExecutable: () => ipcRenderer.invoke('dialog:selectExecutable'),
   selectImageFile: () => ipcRenderer.invoke('dialog:selectImageFile'),
+  selectGamelist: () => ipcRenderer.invoke('dialog:selectGamelist'),
+  selectGameFiles: () => ipcRenderer.invoke('dialog:selectGameFiles'),
 
   scanRoms: (folderPath, extensions) => ipcRenderer.invoke('roms:scan', folderPath, extensions),
+  scanExecutables: (folderPath, extensions) => ipcRenderer.invoke('fs:scanExecutables', folderPath, extensions),
   launchGame: (payload) => ipcRenderer.invoke('game:launch', payload),
+  launchPcGame: (payload) => ipcRenderer.invoke('pc:launch', payload),
+  detectPcRunners: () => ipcRenderer.invoke('pc:detectRunners'),
+  installPcRunner: (runner) => ipcRenderer.invoke('pc:installRunner', { runner }),
+  runWinetricks: (payload) => ipcRenderer.invoke('pc:winetricks', payload),
   stopLastGame: () => ipcRenderer.invoke('game:stopLast'),
   testEmulator: (payload) => ipcRenderer.invoke('emulator:test', payload),
 
@@ -30,7 +37,19 @@ contextBridge.exposeInMainWorld('launcherAPI', {
 
   getPlaytime: (gameId) => ipcRenderer.invoke('game:getPlaytime', gameId),
   getPlaytimeRaw: (gameId) => ipcRenderer.invoke('game:getPlaytimeRaw', gameId),
+  getAllPlaytime: () => ipcRenderer.invoke('game:getPlaytimeAll'),
+
+  exportBackup: () => ipcRenderer.invoke('backup:export'),
+  importBackup: () => ipcRenderer.invoke('backup:import'),
+
+  getPortableInfo: () => ipcRenderer.invoke('portable:get'),
+  enablePortableMode: () => ipcRenderer.invoke('portable:enable'),
+  disablePortableMode: () => ipcRenderer.invoke('portable:disable'),
+
+  showItemInFolder: (targetPath) => ipcRenderer.invoke('shell:showItem', targetPath),
+  pathExists: (targetPath) => ipcRenderer.invoke('fs:pathExists', targetPath),
 
   onWindowFocus: (cb) => onChannel('app:window-focus', cb),
-  onWindowBlur: (cb) => onChannel('app:window-blur', cb)
+  onWindowBlur: (cb) => onChannel('app:window-blur', cb),
+  onRunnerProgress: (cb) => onChannel('runner:progress', cb)
 });

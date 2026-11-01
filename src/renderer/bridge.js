@@ -73,9 +73,25 @@
         ]
       })
       .then(v => v || null),
+    selectGameFiles: () => T.dialog
+      .open({
+        multiple: true,
+        filters: isWindows
+          ? [{ name: 'Gry', extensions: ['exe'] }]
+          : [
+              { name: 'Gry', extensions: ['exe', 'AppImage', 'sh', 'bin'] },
+              { name: 'Wszystkie pliki', extensions: ['*'] }
+            ]
+      })
+      .then(v => (Array.isArray(v) ? v : v ? [v] : [])),
 
     scanRoms: (folderPath, extensions) => invoke('roms_scan', { folderPath, extensions }),
+    scanExecutables: (folderPath, extensions) => invoke('fs_scan_executables', { folderPath, extensions }),
     launchGame: (payload) => invoke('game_launch', payload),
+    launchPcGame: (payload) => invoke('pc_launch', { payload }),
+    detectPcRunners: () => invoke('pc_detect_runners'),
+    installPcRunner: (runner) => invoke('pc_install_runner', { runner }),
+    runWinetricks: (payload) => invoke('pc_winetricks', { payload }),
     stopLastGame: () => invoke('game_stop_last'),
     testEmulator: (payload) => invoke('emulator_test', payload),
 
@@ -94,6 +110,14 @@
 
     getPlaytime: (gameId) => invoke('game_get_playtime', { gameId }),
     getPlaytimeRaw: (gameId) => invoke('game_get_playtime_raw', { gameId }),
+    getAllPlaytime: () => invoke('game_get_playtime_all'),
+
+    getPortableInfo: () => invoke('portable_get'),
+    enablePortableMode: () => invoke('portable_enable'),
+    disablePortableMode: () => invoke('portable_disable'),
+
+    showItemInFolder: (targetPath) => invoke('shell_show_item', { targetPath }),
+    pathExists: (targetPath) => invoke('fs_path_exists', { targetPath }),
 
     onWindowFocus: (cb) => {
       focusCbs.push(cb);
@@ -108,7 +132,8 @@
         const i = blurCbs.indexOf(cb);
         if (i >= 0) blurCbs.splice(i, 1);
       };
-    }
+    },
+    onRunnerProgress: () => () => {}
   };
 
   // src/renderer/input-watch.js używał watchAPI — watchdog przeniesiony do Rusta,

@@ -326,12 +326,14 @@ html[data-theme="switch"] .field-input{
 html[data-theme="switch"] .field-input.empty{ color:rgba(255,255,255,0.35); }
 html[data-theme="switch"] .field-textinput,
 html[data-theme="switch"] .field-select{
+  color-scheme:dark;
   background:rgba(255,255,255,0.06);
   border:1px solid rgba(255,255,255,0.14);
   color:#ffffff;
 }
 html[data-theme="switch"] .field-textinput::placeholder{ color:rgba(255,255,255,0.4); }
-html[data-theme="switch"] .field-select option{ color:#111; }
+html[data-theme="switch"] .field-select option{ color:#ffffff; background-color:#13131a; }
+html[data-theme="switch"] .field-select option:checked{ background-color:#4a0d16; }
 html[data-theme="switch"] .btn-primary{
   background:#e60012;
   color:#ffffff;

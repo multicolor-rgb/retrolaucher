@@ -11,6 +11,153 @@
   <link rel="stylesheet" href="./themes/theme-xbox.css" />
 </head>
 <body>
+  <!-- Sprite ikon SVG: jednolity styl (stroke 1.7, currentColor).
+       Użycie: <svg class="icon"><use href="#i-home"/></svg> -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+    <symbol id="i-home" viewBox="0 0 24 24">
+      <path d="M3.5 11.2 12 4l8.5 7.2"/>
+      <path d="M5.5 9.9V20h4.6v-5.2h3.8V20h4.6V9.9"/>
+    </symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="3.2"/>
+      <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.9 19.3a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.7 8.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.09A1.7 1.7 0 0 0 10.13 3V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.09a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.03z"/>
+    </symbol>
+    <symbol id="i-search" viewBox="0 0 24 24">
+      <circle cx="11" cy="11" r="6.5"/>
+      <path d="M16 16l4.5 4.5"/>
+    </symbol>
+    <symbol id="i-fullscreen" viewBox="0 0 24 24">
+      <path d="M8.5 3.5H5A1.5 1.5 0 0 0 3.5 5v3.5"/>
+      <path d="M15.5 3.5H19A1.5 1.5 0 0 1 20.5 5v3.5"/>
+      <path d="M8.5 20.5H5A1.5 1.5 0 0 1 3.5 19v-3.5"/>
+      <path d="M15.5 20.5H19a1.5 1.5 0 0 0 1.5-1.5v-3.5"/>
+    </symbol>
+    <symbol id="i-gamepad" viewBox="0 0 24 24">
+      <rect x="2.5" y="7" width="19" height="10" rx="4"/>
+      <path d="M7 10.2v3.6M5.2 12h3.6"/>
+      <circle cx="15.4" cy="11" r="1.05" fill="currentColor" stroke="none"/>
+      <circle cx="17.6" cy="13.4" r="1.05" fill="currentColor" stroke="none"/>
+    </symbol>
+    <symbol id="i-play" viewBox="0 0 24 24">
+      <path d="M8 5.2v13.6L19 12z" fill="currentColor" stroke="none"/>
+    </symbol>
+    <symbol id="i-info" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.5"/>
+      <path d="M12 11v5.5"/>
+      <circle cx="12" cy="7.8" r=".95" fill="currentColor" stroke="none"/>
+    </symbol>
+    <symbol id="i-image" viewBox="0 0 24 24">
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/>
+      <circle cx="8.6" cy="9.6" r="1.4"/>
+      <path d="M4.5 17.5 9.6 12.4l3.6 3.6 2.7-2.7 3.4 3.4"/>
+    </symbol>
+    <symbol id="i-x" viewBox="0 0 24 24">
+      <path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>
+    </symbol>
+    <symbol id="i-arrow-left" viewBox="0 0 24 24">
+      <path d="M19.5 12H4.5"/>
+      <path d="M10.5 6 4.5 12l6 6"/>
+    </symbol>
+    <symbol id="i-check" viewBox="0 0 24 24">
+      <path d="M4.5 12.5l5 5 10-11"/>
+    </symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24">
+      <path d="M6.5 9.5 12 15l5.5-5.5"/>
+    </symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24">
+      <path d="M3.5 6.5h5.6l2 2H20.5v11h-17z"/>
+    </symbol>
+    <symbol id="i-download" viewBox="0 0 24 24">
+      <path d="M12 4v11"/>
+      <path d="M7.5 11 12 15.5 16.5 11"/>
+      <path d="M4.5 19.5h15"/>
+    </symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24">
+      <path d="M12 15.5V4.5"/>
+      <path d="M7.5 9 12 4.5 16.5 9"/>
+      <path d="M4.5 19.5h15"/>
+    </symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24">
+      <path d="M20.5 12a8.5 8.5 0 0 1-14.4 6.1"/>
+      <path d="M3.5 12A8.5 8.5 0 0 1 17.9 5.9"/>
+      <path d="M17.4 2.6v3.8h-3.8"/>
+      <path d="M6.6 21.4v-3.8h3.8"/>
+    </symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24">
+      <path d="M2.8 12S6.3 6.2 12 6.2 21.2 12 21.2 12 17.7 17.8 12 17.8 2.8 12 2.8 12z"/>
+      <circle cx="12" cy="12" r="2.6"/>
+    </symbol>
+    <symbol id="i-eye-off" viewBox="0 0 24 24">
+      <path d="M3 3l18 18"/>
+      <path d="M10.6 6.4A9.4 9.4 0 0 1 12 6.2c5.7 0 9.2 5.8 9.2 5.8a16.5 16.5 0 0 1-2.7 3.3"/>
+      <path d="M6.6 7.2A16 16 0 0 0 2.8 12s3.5 5.8 9.2 5.8a9.8 9.8 0 0 0 4-.9"/>
+      <path d="M9.9 9.9a2.9 2.9 0 0 0 4.1 4.1"/>
+    </symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24">
+      <path d="M4.5 19.5l4.2-.9L19.4 7.9a2.1 2.1 0 0 0-3-3L5.7 15.6z"/>
+      <path d="M14.8 6.4l2.8 2.8"/>
+    </symbol>
+    <symbol id="i-star" viewBox="0 0 24 24">
+      <path d="M12 3.6l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 17l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>
+    </symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24">
+      <path d="M16 3.5h4.5V8"/>
+      <path d="M20.5 3.5 3.5 20.5"/>
+      <path d="M20.5 16v4.5H16"/>
+      <path d="M14.5 14.5l6 6"/>
+      <path d="M3.5 3.5l5 5"/>
+    </symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24">
+      <path d="M4.5 7h15"/>
+      <path d="M9.5 7V4.5h5V7"/>
+      <path d="M6.5 7l1 13h9l1-13"/>
+      <path d="M10.2 10.5v6M13.8 10.5v6"/>
+    </symbol>
+    <symbol id="i-view-flat" viewBox="0 0 24 24">
+      <rect x="7" y="4" width="10" height="16" rx="1.8"/>
+    </symbol>
+    <symbol id="i-view-arc" viewBox="0 0 24 24">
+      <rect x="8.2" y="5" width="7.6" height="14" rx="1.4"/>
+      <path d="M5.6 6.4 3.2 8.6v6.8l2.4 2.2M18.4 6.4l2.4 2.2v6.8l-2.4 2.2"/>
+    </symbol>
+    <symbol id="i-view-stack" viewBox="0 0 24 24">
+      <rect x="8.6" y="3.8" width="10" height="13.2" rx="1.4"/>
+      <path d="M5.6 7.6v11.2a1.4 1.4 0 0 0 1.4 1.4h9.1"/>
+    </symbol>
+    <symbol id="i-view-cascade" viewBox="0 0 24 24">
+      <rect x="3.6" y="7.6" width="4.8" height="11" rx="1" transform="rotate(-14 6 13.1)"/>
+      <rect x="15.6" y="7.6" width="4.8" height="11" rx="1" transform="rotate(14 18 13.1)"/>
+      <rect x="9.2" y="4.2" width="5.6" height="15.6" rx="1.2"/>
+    </symbol>
+    <symbol id="i-view-grid" viewBox="0 0 24 24">
+      <rect x="3.5" y="3.5" width="7.2" height="7.2" rx="1.2"/>
+      <rect x="13.3" y="3.5" width="7.2" height="7.2" rx="1.2"/>
+      <rect x="3.5" y="13.3" width="7.2" height="7.2" rx="1.2"/>
+      <rect x="13.3" y="13.3" width="7.2" height="7.2" rx="1.2"/>
+    </symbol>
+    <symbol id="i-view-list" viewBox="0 0 24 24">
+      <rect x="3.2" y="4.2" width="4.8" height="4.8" rx="1"/>
+      <path d="M10.6 6.6h10.1"/>
+      <rect x="3.2" y="9.6" width="4.8" height="4.8" rx="1"/>
+      <path d="M10.6 12h10.1"/>
+      <rect x="3.2" y="15" width="4.8" height="4.8" rx="1"/>
+      <path d="M10.6 17.4h10.1"/>
+    </symbol>
+    <symbol id="i-view-hero" viewBox="0 0 24 24">
+      <rect x="3.5" y="4.5" width="17" height="11" rx="1.8"/>
+      <path d="M6.5 19h11"/>
+    </symbol>
+    <symbol id="i-view-bigbox" viewBox="0 0 24 24">
+      <rect x="8.2" y="3.8" width="7.6" height="16.4" rx="1.4"/>
+      <rect x="3.2" y="8" width="2.8" height="8" rx=".8"/>
+      <rect x="18" y="8" width="2.8" height="8" rx=".8"/>
+    </symbol>
+    <symbol id="i-view-framed" viewBox="0 0 24 24">
+      <rect x="2.8" y="4.5" width="18.4" height="15" rx="2"/>
+      <rect x="5.8" y="7.5" width="12.4" height="9" rx=".8"/>
+    </symbol>
+  </svg>
+
   <div id="app">
     <header class="bp-topbar">
       <div class="brand">RETRO<span>LAUNCHER</span></div>
@@ -22,17 +169,39 @@
       <div class="platform-dropdown" id="platformDropdown">
         <button class="platform-dropdown-btn" id="platformDropdownBtn" data-i18n-title="platforms">
           <span id="platformDropdownLabel" data-i18n="platforms">Platformy</span>
-          <span class="pd-arrow">▾</span>
+          <span class="pd-arrow"><svg class="icon"><use href="#i-chevron-down"/></svg></span>
         </button>
         <div class="platform-dropdown-menu" id="platformDropdownMenu"></div>
       </div>
 
+      <select id="library-sort" class="sort-select" data-i18n-title="sortBy">
+        <option value="default" data-i18n="sortDefault">Domyślnie</option>
+        <option value="recent" data-i18n="sortRecent">Ostatnio grane</option>
+        <option value="favorites" data-i18n="sortFavorites">Ulubione</option>
+        <option value="title" data-i18n="sortTitle">A–Z</option>
+        <option value="playtime" data-i18n="sortPlaytime">Czas gry</option>
+      </select>
+
       <div class="bp-actions">
-        <button class="icon-btn active-view" id="navHome" data-i18n-title="library">⌂</button>
-        <button class="icon-btn" id="navSettings" data-i18n-title="settings">⚙</button>
-        <input id="search" type="text" data-i18n-placeholder="search" />
-        <button class="icon-btn" id="fullscreenBtn" data-i18n-title="fullscreenHint">⛶</button>
-        <span class="gamepad-indicator" id="gamepadIndicator" data-i18n-title="gamepadStatus">🎮</span>
+        <button class="icon-btn active-view" id="navHome" data-i18n-title="library">
+          <svg class="icon"><use href="#i-home"/></svg>
+        </button>
+        <button class="icon-btn" id="navSettings" data-i18n-title="settings">
+          <svg class="icon"><use href="#i-settings"/></svg>
+        </button>
+        <button class="icon-btn" id="randomBtn" data-i18n-title="randomGame">
+          <svg class="icon"><use href="#i-shuffle"/></svg>
+        </button>
+        <label class="search-field">
+          <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+          <input id="search" type="text" data-i18n-placeholder="search" />
+        </label>
+        <button class="icon-btn" id="fullscreenBtn" data-i18n-title="fullscreenHint">
+          <svg class="icon"><use href="#i-fullscreen"/></svg>
+        </button>
+        <span class="gamepad-indicator" id="gamepadIndicator" data-i18n-title="gamepadStatus">
+          <svg class="icon"><use href="#i-gamepad"/></svg>
+        </span>
       </div>
     </header>
 
@@ -50,8 +219,17 @@
           <h1 id="gameTitle" data-i18n="chooseGame">Wybierz grę</h1>
           <div class="rating-mini" id="ratingMini"></div>
           <div class="action-row">
-            <button class="play-btn" id="playBtn" data-i18n="launch">▶ Uruchom</button>
-            <button class="details-btn" id="detailsBtn" data-i18n="details">Szczegóły</button>
+            <button class="play-btn" id="playBtn">
+              <svg class="icon" aria-hidden="true"><use href="#i-play"/></svg>
+              <span data-i18n="launch">Uruchom</span>
+            </button>
+            <button class="details-btn" id="detailsBtn">
+              <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
+              <span data-i18n="details">Szczegóły</span>
+            </button>
+            <button class="fav-btn" id="favoriteBtn" data-i18n-title="favoriteAdd" aria-label="Ulubione">
+              <svg class="icon"><use href="#i-star"/></svg>
+            </button>
           </div>
         </div>
       </div>
@@ -61,15 +239,22 @@
       <span class="hint"><b>◄ ►</b> <span data-i18n="navHint">Nawigacja</span></span>
        <span class="hint"><b>LB/RB</b> <span data-i18n="changePlatformHint">Zmień platformę</span></span>
       <span class="hint"><b>Enter</b> <span data-i18n="launchHint">Uruchom</span></span>
+      <span class="hint"><b>R</b> <span data-i18n="randomGame">Losowa gra</span></span>
+      <span class="hint"><b>F</b> <span data-i18n="favoriteAdd">Dodaj do ulubionych</span></span>
       <span class="hint"><b>F11/Alt + Enter</b> <span data-i18n="fullscreenHintLabel">Pełny ekran</span></span>
       <span class="hint"><b>Esc</b> <span data-i18n="closeHint">Zamknij</span></span>
     </footer>
 
     <div class="modal-overlay" id="overlay">
       <div class="modal-card">
-        <button class="close-btn" id="closeBtn">✕</button>
+        <button class="close-btn" id="closeBtn" aria-label="Zamknij">
+          <svg class="icon"><use href="#i-x"/></svg>
+        </button>
         <div class="modal-cover">
           <img id="modalCoverImg" src="" alt="cover" />
+          <button class="modal-fav-btn" id="modalFavoriteBtn" data-i18n-title="favoriteAdd" aria-label="Ulubione">
+            <svg class="icon"><use href="#i-star"/></svg>
+          </button>
         </div>
         <div class="modal-content">
           <div class="modal-platform" id="modalPlatform">PSP</div>
@@ -81,20 +266,28 @@
               style="margin-top:20px; width:100%;"
               id="renameGameButton"
               class="rename-game-button"
-              data-i18n="renameGame"
             >
-              Zmień nazwę
+              <svg class="icon" aria-hidden="true"><use href="#i-pencil"/></svg>
+              <span data-i18n="renameGame">Zmień nazwę</span>
             </button>
           </div>
 
           <div id="renameGameRow" class="rename-game-row" hidden>
             <input id="renameGameInput" type="text" class="rename-game-input" />
-            <button type="button" id="renameGameSave" class="rename-game-save">OK</button>
-            <button type="button" id="renameGameCancel" class="rename-game-cancel">✕</button>
+            <button type="button" id="renameGameSave" class="rename-game-save" aria-label="OK">
+              <svg class="icon"><use href="#i-check"/></svg>
+            </button>
+            <button type="button" id="renameGameCancel" class="rename-game-cancel" aria-label="Anuluj">
+              <svg class="icon"><use href="#i-x"/></svg>
+            </button>
           </div>
 
           <div class="tags-row" id="modalTags"></div>
-          <p class="description" style="display:none;" id="modalDesc"></p>
+          <p class="description" id="modalDesc"></p>
+
+          <div class="modal-trailer" id="modalTrailerWrap" hidden>
+            <video id="modalTrailer" controls preload="none" playsinline></video>
+          </div>
 
           <div class="meta-grid">
             <div class="meta-item">
@@ -104,6 +297,18 @@
             <div class="meta-item">
               <div class="meta-label" data-i18n="location">Lokalizacja</div>
               <div class="meta-value" id="modalLocation"></div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label" data-i18n="playtimeLabel">Czas gry</div>
+              <div class="meta-value" id="modalPlaytimeValue">—</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label" data-i18n="launchCount">Liczba uruchomień</div>
+              <div class="meta-value" id="modalPlayCount">—</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label" data-i18n="lastPlayed">Ostatnio grane</div>
+              <div class="meta-value" id="modalLastPlayed">—</div>
             </div>
             <div class="meta-item" style="display:none;">
               <div class="meta-label">Metacritic</div>
@@ -115,11 +320,60 @@
             </div>
           </div>
 
-          <button class="modal-play-btn" style="display:block;width:100%;" id="modalPlayBtn" data-i18n="playGame">
-            ▶ Uruchom grę
+          <div class="game-args-row">
+            <label class="field-label" for="modalGameArgs" data-i18n="gameLaunchArgs">
+              Argumenty uruchomienia (ta gra)
+            </label>
+            <div class="game-args-input-row">
+              <input
+                id="modalGameArgs"
+                type="text"
+                class="field-textinput"
+                placeholder="--fullscreen --fastboot"
+              />
+              <button type="button" id="modalGameArgsSave" class="btn-secondary" data-i18n="saveGameArgs">
+                Zapisz
+              </button>
+            </div>
+            <p class="settings-note" data-i18n="gameLaunchArgsNote">
+              Nadpisują argumenty platformy tylko dla tej gry.
+            </p>
+          </div>
+
+          <div class="game-args-row pc-game-settings" id="modalPcSettings" hidden>
+            <label class="field-label" data-i18n="pcGameRunner">Runner dla tej gry</label>
+            <select id="modalPcRunner" class="field-select">
+              <option value="" data-i18n="pcRunnerAuto">Automatycznie (wykryj)</option>
+              <option value="native" data-i18n="pcRunnerNative">Natywny (Linux / Windows)</option>
+              <option value="wine" data-i18n="pcRunnerWine">Wine (systemowy)</option>
+              <option value="wine-ge" data-i18n="pcRunnerWineGe">Wine-GE</option>
+              <option value="proton-ge" data-i18n="pcRunnerProtonGe">Proton-GE</option>
+            </select>
+
+            <label class="field-label" for="modalPcPrefix" data-i18n="pcGamePrefix">Prefiks dla tej gry</label>
+            <input id="modalPcPrefix" type="text" class="field-textinput" data-i18n-placeholder="pcPrefixPlaceholder" placeholder="Domyślnie ~/Games/retro-launcher" />
+
+            <label class="field-label" for="modalPcEnv" data-i18n="pcGameEnv">Zmienne dla tej gry</label>
+            <textarea id="modalPcEnv" class="field-textinput pc-env-input" rows="2" data-i18n-placeholder="pcEnvPlaceholder" placeholder="KEY=WARTOŚĆ (jedna na linię)"></textarea>
+
+            <p class="settings-note" data-i18n="pcGameOverrideHint">Puste pola oznaczają użycie ustawień platformy.</p>
+            <div class="settings-actions-row">
+              <button type="button" id="modalPcSave" class="btn-primary" data-i18n="pcSaveOverride">Zapisz ustawienia gry</button>
+              <button type="button" id="modalPcReset" class="btn-secondary" data-i18n="pcResetOverride">Wyczyść nadpisania</button>
+            </div>
+          </div>
+
+          <button class="modal-play-btn" id="modalPlayBtn">
+            <svg class="icon" aria-hidden="true"><use href="#i-play"/></svg>
+            <span data-i18n="playGame">Uruchom grę</span>
           </button>
-          <button class="modal-secondary-btn" style="display:block;width:100%" id="modalCoverBtn" data-i18n="setCover">
-            🖼 Ustaw okładkę
+          <button class="modal-secondary-btn" id="modalCoverBtn">
+            <svg class="icon" aria-hidden="true"><use href="#i-image"/></svg>
+            <span data-i18n="setCover">Ustaw okładkę</span>
+          </button>
+          <button class="modal-secondary-btn" id="modalOpenFolderBtn">
+            <svg class="icon" aria-hidden="true"><use href="#i-folder"/></svg>
+            <span data-i18n="openGameFolder">Otwórz folder gry</span>
           </button>
         </div>
       </div>
@@ -128,24 +382,49 @@
     <div class="toast" id="toast">Zapisano ✓</div>
 
     <div class="view-mode-switch view-mode-floating" id="viewModeSwitch">
-      <button class="vm-btn active" data-mode="flat" title="Widok płaski">▭</button>
-      <button class="vm-btn" data-mode="arc" title="Widok łuku (coverflow)">◔</button>
-      <button class="vm-btn" data-mode="stack" title="Widok Big Picture">▤</button>
-      <button class="vm-btn" data-mode="cascade" title="Widok animowany">◫</button>
-      <button class="vm-btn" data-mode="grid" title="Widok grid">▦</button>
+      <button class="vm-btn active" data-mode="flat" title="Widok płaski">
+        <svg class="icon"><use href="#i-view-flat"/></svg>
+      </button>
+      <button class="vm-btn" data-mode="arc" title="Widok łuku (coverflow)">
+        <svg class="icon"><use href="#i-view-arc"/></svg>
+      </button>
+      <button class="vm-btn" data-mode="stack" title="Widok Big Picture">
+        <svg class="icon"><use href="#i-view-stack"/></svg>
+      </button>
+      <button class="vm-btn" data-mode="cascade" title="Widok animowany">
+        <svg class="icon"><use href="#i-view-cascade"/></svg>
+      </button>
+      <button class="vm-btn" data-mode="grid" title="Widok grid">
+        <svg class="icon"><use href="#i-view-grid"/></svg>
+      </button>
+      <button class="vm-btn" data-mode="detailed" data-i18n-title="viewModeDetailed" title="Lista z opisem (EmulationStation)">
+        <svg class="icon"><use href="#i-view-list"/></svg>
+      </button>
+      <button class="vm-btn" data-mode="hero" data-i18n-title="viewModeHero" title="Spotlight z opisem">
+        <svg class="icon"><use href="#i-view-hero"/></svg>
+      </button>
+      <button class="vm-btn" data-mode="bigbox" data-i18n-title="viewModeBigbox" title="Pełnoekranowe okładki">
+        <svg class="icon"><use href="#i-view-bigbox"/></svg>
+      </button>
+      <button class="vm-btn" data-mode="framed" data-i18n-title="viewModeFramed" title="Półka w ramce platformy">
+        <svg class="icon"><use href="#i-view-framed"/></svg>
+      </button>
     </div>
+
+    <button type="button" id="coversPill" class="covers-pill" hidden></button>
 
     <section id="settings-panel" class="settings-page" hidden>
       <div class="settings-shell">
         <div class="settings-head">
           <h2 data-i18n="settings">Ustawienia</h2>
           <button type="button" id="settings-close-btn" class="settings-close-btn" aria-label="Wróć do biblioteki" data-i18n-title="back">
-            ←
+            <svg class="icon"><use href="#i-arrow-left"/></svg>
           </button>
         </div>
 
         <div class="settings-subtabs" role="tablist" aria-label="Ustawienia aplikacji">
           <button class="settings-subtab active" data-subtab="general" role="tab" aria-selected="true" data-i18n="general">Ogólne</button>
+          <button class="settings-subtab" data-subtab="stats" role="tab" aria-selected="false" data-i18n="statsTitle">Statystyki</button>
           <button class="settings-subtab" data-subtab="artwork" role="tab" aria-selected="false" data-i18n="artwork">Okładki</button>
           <button class="settings-subtab" data-subtab="platforms" role="tab" aria-selected="false" data-i18n="platforms">Platformy</button>
           <button class="settings-subtab" data-subtab="games" role="tab" aria-selected="false" data-i18n="gamesManager">Menedżer gier</button>
@@ -214,6 +493,104 @@
                 <div class="settings-actions-row">
                   <button type="button" id="save-theme" class="btn-primary" data-i18n="saveTheme">
                     Zapisz motyw
+                  </button>
+                </div>
+              </div>
+
+              <div class="settings-card">
+                <h3 data-i18n="attractMode">Tryb atrakcji</h3>
+                <p class="settings-note" data-i18n="attractModeNote">
+                  Po bezczynności launcher sam przewija gry na półce, tworząc efekt wygaszacza.
+                  Każde naciśnięcie klawisza lub sygnał z pada przywraca normalne sterowanie.
+                </p>
+
+                <div class="auto-fetch-row">
+                  <label class="auto-fetch-toggle">
+                    <input type="checkbox" id="attract-mode-toggle" />
+                    <span data-i18n="attractMode">Tryb atrakcji</span>
+                  </label>
+                  <div class="settings-actions-row">
+                    <button type="button" id="save-attract-mode" class="btn-secondary" data-i18n="saveAttract">
+                      Zapisz tryb atrakcji
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="settings-card">
+                <h3 data-i18n="backupTitle">Kopia zapasowa</h3>
+                <p class="settings-note" data-i18n="backupNote">
+                  Zapisz konfigurację, platformy, okładki, metadane i statystyki czasu gry do pliku JSON.
+                  Import przywraca wszystko i przeładowuje aplikację.
+                </p>
+
+                <div class="settings-actions-row">
+                  <button type="button" id="export-backup" class="btn-primary">
+                    <svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>
+                    <span data-i18n="exportBackup">Eksportuj kopię</span>
+                  </button>
+                  <button type="button" id="import-backup" class="btn-secondary">
+                    <svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg>
+                    <span data-i18n="importBackup">Importuj kopię</span>
+                  </button>
+                </div>
+
+                <input type="file" id="import-backup-file" accept="application/json,.json" hidden />
+              </div>
+
+              <div class="settings-card">
+                <h3 data-i18n="portableTitle">Tryb przenośny (pendrive)</h3>
+                <p class="settings-note" data-i18n="portableNote">
+                  Trzymaj konfigurację, statystyki i okładki razem z launcher em na pendrive.
+                  Po włączeniu dane trafiają do folderu LauncherData obok aplikacji, a ścieżki
+                  ROM-ów są zapisywane względem katalogu launchera — dzięki temu biblioteka
+                  działa po zmianie komputera lub litery dysku. Wymaga ponownego uruchomienia.
+                </p>
+
+                <div class="portable-status" id="portable-status">…</div>
+
+                <div class="settings-actions-row">
+                  <button type="button" id="portable-enable" class="btn-primary" data-i18n="portableEnable">
+                    Włącz tryb przenośny
+                  </button>
+                  <button type="button" id="portable-disable" class="btn-secondary" data-i18n="portableDisable">
+                    Wyłącz tryb przenośny
+                  </button>
+                </div>
+              </div>
+
+              <div class="settings-card settings-card-wide">
+                <h3 data-i18n="libraryHealthTitle">Stan biblioteki</h3>
+                <p class="settings-note" data-i18n="libraryHealthNote">
+                  Sprawdź, czy foldery ROM-ów istnieją, czy nie ma pustych plików
+                  i czy te same gry nie są zdublowane na różnych platformach.
+                </p>
+
+                <div class="library-health" id="library-health">…</div>
+
+                <div class="settings-actions-row">
+                  <button type="button" id="check-library-health" class="btn-secondary" data-i18n="checkLibrary">
+                    Sprawdź bibliotekę
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="settings-subpanel" data-subpanel="stats">
+            <div class="settings-card-grid">
+              <div class="settings-card settings-card-wide">
+                <h3 data-i18n="statsTitle">Statystyki</h3>
+                <p class="settings-note" data-i18n="statsNote">
+                  Zbiorcze podsumowanie czasu gry, liczby uruchomień i ulubionych.
+                  Dane pochodzą z pliku playtime i odświeżają się po powrocie z gry.
+                </p>
+
+                <div id="stats-summary" class="stats-summary">…</div>
+
+                <div class="settings-actions-row">
+                  <button type="button" id="refresh-stats" class="btn-secondary" data-i18n="refreshStats">
+                    Odśwież statystyki
                   </button>
                 </div>
               </div>
@@ -314,9 +691,34 @@
                       />
                     </label>
 
+                    <label class="field-row field-row-stack">
+                      <span class="field-label" data-i18n="screenscraperDevId">Dev ID aplikacji (API)</span>
+                      <input
+                        id="screenscraper-devid-input"
+                        type="text"
+                        class="field-textinput"
+                        placeholder="np. identyfikator z formularza API"
+                        data-i18n-placeholder="devIdPlaceholder"
+                      />
+                    </label>
+
+                    <label class="field-row field-row-stack">
+                      <span class="field-label" data-i18n="screenscraperDevPass">Hasło aplikacji (API)</span>
+                      <input
+                        id="screenscraper-devpass-input"
+                        type="password"
+                        class="field-textinput"
+                        placeholder="Hasło aplikacji"
+                        data-i18n-placeholder="passwordPlaceholder"
+                      />
+                    </label>
+
                     <div class="settings-actions-row">
                       <button type="button" id="save-screenscraper-credentials" class="btn-primary" data-i18n="saveKey">
                         Zapisz dane logowania
+                      </button>
+                      <button type="button" id="test-screenscraper-credentials" class="btn-secondary" data-i18n="testScreenscraper">
+                        Test połączenia
                       </button>
                     </div>
                   </div>
@@ -361,12 +763,29 @@
                 </div>
 
                 <div class="settings-actions-row">
-                  <button type="button" id="bulk-fetch-platform-meta" class="btn-secondary" data-i18n="fetchCovers">
-                    Pobierz okładki i opisy
+                  <button type="button" id="bulk-fetch-platform-meta" class="btn-secondary">
+                    <svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>
+                    <span data-i18n="fetchCovers">Pobierz okładki i opisy</span>
                   </button>
-                  <button type="button" id="force-fetch-platform-meta" class="btn-primary" data-i18n="forceRefresh">
-                    Wymuś odświeżenie
+                  <button type="button" id="force-fetch-platform-meta" class="btn-primary">
+                    <svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg>
+                    <span data-i18n="forceRefresh">Wymuś odświeżenie</span>
                   </button>
+                </div>
+
+                <div class="auto-fetch-row">
+                  <label class="auto-fetch-toggle">
+                    <input type="checkbox" id="auto-fetch-on-start" />
+                    <span data-i18n="autoFetchOnStart">Auto-uzupełnianie po starcie</span>
+                  </label>
+                  <p class="settings-note" data-i18n="autoFetchOnStartNote">
+                    Po starcie launcher cicho uzupełni brakujące okładki i opisy w tle. Wymaga skonfigurowanych kluczy API.
+                  </p>
+                  <div class="settings-actions-row">
+                    <button type="button" id="save-auto-fetch" class="btn-secondary" data-i18n="saveAutoFetch">
+                      Zapisz opcję
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -398,9 +817,18 @@
                 </div>
 
                 <div class="settings-actions-row">
-                  <button type="button" id="save-manual-cover-url" class="btn-primary" data-i18n="saveUrl">Zapisz URL</button>
-                  <button type="button" id="pick-manual-cover-file" class="btn-secondary" data-i18n="chooseFile">Wybierz plik z dysku</button>
-                  <button type="button" id="clear-manual-cover" class="btn-secondary" data-i18n="removeCover">Usuń ręczną okładkę</button>
+                  <button type="button" id="save-manual-cover-url" class="btn-primary">
+                    <svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>
+                    <span data-i18n="saveUrl">Zapisz URL</span>
+                  </button>
+                  <button type="button" id="pick-manual-cover-file" class="btn-secondary">
+                    <svg class="icon" aria-hidden="true"><use href="#i-folder"/></svg>
+                    <span data-i18n="chooseFile">Wybierz plik z dysku</span>
+                  </button>
+                  <button type="button" id="clear-manual-cover" class="btn-secondary">
+                    <svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg>
+                    <span data-i18n="removeCover">Usuń ręczną okładkę</span>
+                  </button>
                 </div>
 
                 <div id="manual-cover-preview" class="manual-cover-preview"></div>
@@ -411,6 +839,37 @@
                   </div>
                   <div id="bulk-progress-text" class="bulk-progress-text">0 / 0</div>
                 </div>
+              </div>
+
+              <div class="settings-card settings-card-wide">
+                <h3 data-i18n="gamelistTitle">Import z EmulationStation</h3>
+                <p class="settings-note" data-i18n="gamelistNote">
+                  Zaimportuj plik gamelist.xml: tytuły, opisy, gatunki, rok, developera,
+                  ocenę i okładki. Dopasowanie odbywa się po nazwie pliku ROM lub tytule.
+                  Względne ścieżki obrazków działają w wersji Electron.
+                </p>
+
+                <label class="field-row field-row-stack">
+                  <span class="field-label" data-i18n="gamelistPlatform">Platforma docelowa</span>
+                  <select id="gamelist-platform" class="field-select"></select>
+                </label>
+
+                <div class="auto-fetch-row">
+                  <label class="auto-fetch-toggle">
+                    <input type="checkbox" id="gamelist-no-overwrite" checked />
+                    <span data-i18n="gamelistNoOverwrite">Nie nadpisuj istniejących metadanych</span>
+                  </label>
+                </div>
+
+                <div class="settings-actions-row">
+                  <button type="button" id="import-gamelist" class="btn-primary">
+                    <svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg>
+                    <span data-i18n="importGamelist">Wybierz gamelist.xml</span>
+                  </button>
+                </div>
+
+                <input type="file" id="gamelist-file-input" accept=".xml,text/xml,application/xml" hidden />
+                <div id="gamelist-result" class="library-health" hidden></div>
               </div>
             </div>
           </section>
@@ -424,18 +883,34 @@
                 </p>
 
                 <form class="add-platform-form" id="addPlatformForm">
-                  <input type="text" name="platformName" id="newPlatformName" placeholder="Nazwa platformy, np. Dreamcast" data-i18n-placeholder="platformNamePlaceholder" required />
+                  <input type="text" name="platformName" id="newPlatformName" list="platformPresets" placeholder="Nazwa platformy, np. Dreamcast" data-i18n-placeholder="platformNamePlaceholder" autocomplete="off" required />
+                  <datalist id="platformPresets"></datalist>
                   <input type="text" name="platformExts" id="newPlatformExts" placeholder="Rozszerzenia, np. .gdi, .cdi" data-i18n-placeholder="platformExtsPlaceholder" />
                   <input type="color" id="newPlatformColor" value="#38e0ff" />
+                  <select id="newPlatformKind" class="field-select">
+                    <option value="console" data-i18n="platformKindConsole">Konsola / emulator</option>
+                    <option value="pc" data-i18n="platformKindPc">PC (pliki .exe / Linux)</option>
+                  </select>
                   <select id="newPlatformAspect" class="field-select">
                     <option value="standard">Standard</option>
+                    <option value="portrait">Portret (Steam 2:3)</option>
+                    <option value="steam">Steam Grid (2:3)</option>
                     <option value="psp">PSP / wąska</option>
+                    <option value="gba">Game Boy Advance</option>
+                    <option value="nds">Nintendo DS / szeroka</option>
                     <option value="square">Kwadrat</option>
                     <option value="wide">Szeroka</option>
+                    <option value="banner">Banner 16:9</option>
                     <option value="bigpic">Steam Big Picture</option>
+                    <option value="marquee">Marquee arcade (3:1)</option>
+                    <option value="custom">Własne proporcje…</option>
                   </select>
                   <button type="submit" class="btn-primary" data-i18n="addPlatformBtn">Dodaj platformę</button>
                 </form>
+
+                <p class="settings-note platform-preset-hint" data-i18n="platformPresetHint">
+                  Zacznij pisać nazwę — podpowiemy popularne platformy i uzupełnimy ustawienia.
+                </p>
 
                 <div class="settings-help-box" data-i18n="platformHelp">
                   <strong>Szybka wskazówka:</strong>
@@ -488,10 +963,22 @@
                     <input type="checkbox" id="games-manager-select-all" />
                     <span data-i18n="selectAll">Zaznacz wszystkie</span>
                   </label>
-                  <button type="button" class="btn-secondary" id="games-manager-hide-selected" data-i18n="hideSelected">Ukryj zaznaczone</button>
-                  <button type="button" class="btn-secondary" id="games-manager-unhide-selected" data-i18n="unhideSelected">Odkryj zaznaczone</button>
-                  <button type="button" class="btn-secondary" id="games-manager-hide-all" data-i18n="hideAllGames">Ukryj wszystkie</button>
-                  <button type="button" class="btn-secondary" id="games-manager-unhide-all" data-i18n="unhideAllGames">Odkryj wszystkie</button>
+                  <button type="button" class="btn-secondary" id="games-manager-hide-selected">
+                    <svg class="icon" aria-hidden="true"><use href="#i-eye-off"/></svg>
+                    <span data-i18n="hideSelected">Ukryj zaznaczone</span>
+                  </button>
+                  <button type="button" class="btn-secondary" id="games-manager-unhide-selected">
+                    <svg class="icon" aria-hidden="true"><use href="#i-eye"/></svg>
+                    <span data-i18n="unhideSelected">Odkryj zaznaczone</span>
+                  </button>
+                  <button type="button" class="btn-secondary" id="games-manager-hide-all">
+                    <svg class="icon" aria-hidden="true"><use href="#i-eye-off"/></svg>
+                    <span data-i18n="hideAllGames">Ukryj wszystkie</span>
+                  </button>
+                  <button type="button" class="btn-secondary" id="games-manager-unhide-all">
+                    <svg class="icon" aria-hidden="true"><use href="#i-eye"/></svg>
+                    <span data-i18n="unhideAllGames">Odkryj wszystkie</span>
+                  </button>
                 </div>
 
                 <div class="games-manager-list" id="games-manager-list"></div>

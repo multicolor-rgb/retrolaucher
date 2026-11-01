@@ -328,12 +328,14 @@ html[data-theme="xbox"] .field-input{
 html[data-theme="xbox"] .field-input.empty{ color:rgba(255,255,255,0.35); }
 html[data-theme="xbox"] .field-textinput,
 html[data-theme="xbox"] .field-select{
+  color-scheme:dark;
   background:rgba(255,255,255,0.06);
   border:1px solid rgba(93,194,30,0.2);
   color:#eef5ee;
 }
 html[data-theme="xbox"] .field-textinput::placeholder{ color:rgba(255,255,255,0.4); }
-html[data-theme="xbox"] .field-select option{ color:#111; }
+html[data-theme="xbox"] .field-select option{ color:#eef5ee; background-color:#0a1408; }
+html[data-theme="xbox"] .field-select option:checked{ background-color:#1d4514; }
 html[data-theme="xbox"] .btn-primary{
   background:linear-gradient(180deg,#2fa32f,#107c10);
   color:#ffffff;
