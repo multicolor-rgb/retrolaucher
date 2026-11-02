@@ -638,7 +638,7 @@ h2 { margin: 0 0 13px; font-size: clamp(30px, 3.2vw, 43px); font-weight: 800; li
 .support-rail {
   position: fixed;
   top: 50%;
-  right: 0;
+  left: 0;
   z-index: 22;
   display: flex;
   flex-direction: column;
@@ -647,11 +647,11 @@ h2 { margin: 0 0 13px; font-size: clamp(30px, 3.2vw, 43px); font-weight: 800; li
   width: 54px;
   padding: 15px 0 13px;
   border: 1px solid var(--line-strong);
-  border-right: 0;
-  border-radius: 14px 0 0 14px;
+  border-left: 0;
+  border-radius: 0 14px 14px 0;
   background: rgba(13, 19, 30, 0.96);
   backdrop-filter: blur(14px);
-  box-shadow: -12px 18px 42px rgba(0, 0, 0, 0.32);
+  box-shadow: 12px 18px 42px rgba(0, 0, 0, 0.32);
   color: var(--text);
   text-decoration: none;
   transform: translateY(-50%);
@@ -661,7 +661,7 @@ h2 { margin: 0 0 13px; font-size: clamp(30px, 3.2vw, 43px); font-weight: 800; li
 .support-rail:hover {
   border-color: rgba(56, 224, 255, 0.5);
   background: var(--panel-hover);
-  transform: translate(-5px, -50%);
+  transform: translate(5px, -50%);
 }
 .support-rail__icon { display: grid; place-items: center; width: 22px; height: 22px; color: var(--cyan); }
 .support-rail__icon svg { width: 21px; height: 21px; }
@@ -676,7 +676,7 @@ h2 { margin: 0 0 13px; font-size: clamp(30px, 3.2vw, 43px); font-weight: 800; li
   white-space: nowrap;
 }
 .support-rail__arrow { color: var(--faint); font-size: 13px; }
-@keyframes rail-in { from { opacity: 0; transform: translate(28px, -50%); } to { opacity: 1; transform: translate(0, -50%); } }
+@keyframes rail-in { from { opacity: 0; transform: translate(-28px, -50%); } to { opacity: 1; transform: translate(0, -50%); } }
 
 /* Cookie notice */
 .cookie-bar[hidden] { display: none; }
@@ -699,7 +699,7 @@ h2 { margin: 0 0 13px; font-size: clamp(30px, 3.2vw, 43px); font-weight: 800; li
   transition: opacity 0.3s, transform 0.3s var(--ease);
 }
 .cookie-bar.is-visible { opacity: 1; transform: translate(-50%, 0); }
-.cookie-bar__text { display: grid; gap: 2px; min-width: 0; }
+.cookie-bar__text { display: grid; flex: 1; gap: 2px; min-width: 0; }
 .cookie-bar__text strong { font-size: 13px; font-weight: 800; }
 .cookie-bar__text span { color: var(--muted); font-size: 11.5px; line-height: 1.55; }
 .cookie-bar__text a { width: max-content; margin-top: 3px; font-size: 11px; font-weight: 700; }
