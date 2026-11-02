@@ -3,26 +3,36 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Retro Launcher 2.1 — Your retro library, one beautiful home</title>
-  <meta name="description" content="Retro Launcher gathers your ROMs, emulators and covers into a pad-first interface built for the couch. Rebuilt on Tauri 2 — smaller, faster and lighter. Free for Linux and Windows." />
-  <meta name="theme-color" content="#05070d" />
+  <title>Retro Launcher 2.1 — One shelf. Every ROM.</title>
+  <meta name="description" content="A couch launcher for the emulators you already have. Covers, playtime and a pad-first shelf. Rebuilt on Tauri 2 — about 10–15 MB instead of 90, and your old library stays." />
+  <meta name="theme-color" content="#05060a" />
   <link rel="canonical" href="https://retrolaucher.multidev.ovh/" />
   <link rel="icon" type="image/png" href="site/img/logo.png" />
   <link rel="apple-touch-icon" href="site/img/logo.png" />
 
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Retro Launcher" />
-  <meta property="og:title" content="Retro Launcher 2.1 — Your retro library, one beautiful home" />
-  <meta property="og:description" content="Pad-first retro game launcher with themes, covers from SteamGridDB, and multi-platform emulator support. Now on Tauri 2." />
+  <meta property="og:title" content="Retro Launcher 2.1 — One shelf. Every ROM." />
+  <meta property="og:description" content="Pad-first retro launcher. Nine shelf modes, covers from four sources, Windows and Linux. Now on Tauri 2." />
   <meta property="og:url" content="https://retrolaucher.multidev.ovh/" />
   <meta property="og:image" content="https://retrolaucher.multidev.ovh/site/img/screens/HOezHH0WQAAJZzK.jpg" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Retro Launcher 2.1 — Your retro library, one beautiful home" />
-  <meta name="twitter:description" content="Pad-first retro game launcher with themes and multi-platform emulator support. Now on Tauri 2." />
+  <meta name="twitter:title" content="Retro Launcher 2.1 — One shelf. Every ROM." />
+  <meta name="twitter:description" content="Pad-first retro launcher with covers, themes and a Tauri 2 core. Free for Windows and Linux." />
   <meta name="twitter:image" content="https://retrolaucher.multidev.ovh/site/img/screens/HOezHH0WQAAJZzK.jpg" />
 
   <link rel="preload" as="image" href="site/img/screens/HOezHH0WQAAJZzK.jpg" fetchpriority="high" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="site/style.css" />
+
+  <noscript>
+    <style>
+      .reveal { opacity: 1 !important; }
+      .mobile-nav { display: none; }
+    </style>
+  </noscript>
 
   <script type="application/ld+json">
     {
@@ -32,7 +42,7 @@
       "applicationCategory": "GameApplication",
       "operatingSystem": "Windows 10, Windows 11, Linux",
       "softwareVersion": "2.1.0",
-      "description": "A pad-first retro game launcher with themes, covers from SteamGridDB and multi-platform emulator support.",
+      "description": "A pad-first retro game launcher. One shelf for many emulators, covers, playtime and a Tauri 2 core.",
       "url": "https://retrolaucher.multidev.ovh/",
       "downloadUrl": "https://github.com/multicolor-rgb/retrolaucher/releases/tag/rel%2F2.1",
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
@@ -44,520 +54,392 @@
 <body>
   <a class="skip-link" href="#main" data-i18n="a11y.skip">Skip to content</a>
 
-  <header class="site-header" id="siteHeader">
-    <div class="container header-inner">
-      <a class="brand" href="#top" aria-label="Retro Launcher — home">
-        <img src="site/img/logo.png" alt="" width="38" height="38" />
-        <span>Retro Launcher</span>
-      </a>
+  <div id="page">
+    <header class="site-header" id="siteHeader">
+      <div class="container header-inner">
+        <a class="brand" href="#top" aria-label="Retro Launcher — home">
+          <img src="site/img/logo.png" alt="" width="28" height="28" />
+          <span class="brand-word">RETROLAUNCHER</span>
+        </a>
 
-      <nav class="main-nav" aria-label="Main">
+        <nav class="main-nav" aria-label="Main">
+          <ul>
+            <li><a href="#whats-new" data-i18n="nav.new">What's new</a></li>
+            <li><a href="#screens" data-i18n="nav.screens">Screenshots</a></li>
+            <li><a href="#library" data-i18n="nav.library">Library</a></li>
+            <li><a href="#faq" data-i18n="nav.faq">FAQ</a></li>
+          </ul>
+        </nav>
+
+        <div class="header-actions">
+          <div class="lang-switch" role="group" aria-label="Language">
+            <button type="button" data-lang="en" aria-pressed="true">EN</button>
+            <button type="button" data-lang="pl" aria-pressed="false">PL</button>
+          </div>
+          <a class="btn btn--solid header-cta" href="#download" data-i18n="cta.download">Download</a>
+          <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mobileNav" data-i18n-aria="nav.menu" aria-label="Menu">
+            <span data-i18n="nav.menu">Menu</span>
+          </button>
+        </div>
+      </div>
+
+      <nav class="mobile-nav" id="mobileNav" aria-label="Mobile">
         <ul>
           <li><a href="#whats-new" data-i18n="nav.new">What's new</a></li>
-          <li><a href="#themes" data-i18n="nav.themes">Themes</a></li>
-          <li><a href="#gallery" data-i18n="nav.gallery">Screenshots</a></li>
-          <li><a href="#features" data-i18n="nav.features">Features</a></li>
+          <li><a href="#screens" data-i18n="nav.screens">Screenshots</a></li>
+          <li><a href="#library" data-i18n="nav.library">Library</a></li>
+          <li><a href="#faq" data-i18n="nav.faq">FAQ</a></li>
           <li><a href="#download" data-i18n="nav.download">Download</a></li>
+          <li><a href="https://github.com/multicolor-rgb/retrolaucher" target="_blank" rel="noopener">GitHub</a></li>
+          <li class="mobile-lang">
+            <button type="button" data-lang="en" aria-pressed="true">EN</button>
+            <button type="button" data-lang="pl" aria-pressed="false">PL</button>
+          </li>
         </ul>
       </nav>
+    </header>
 
-      <div class="header-actions">
-        <div class="lang-switch" role="group" aria-label="Language">
-          <button type="button" data-lang="en" aria-pressed="true">EN</button>
-          <button type="button" data-lang="pl" aria-pressed="false">PL</button>
-        </div>
-        <a class="btn btn--ghost header-cta" href="#download" data-i18n="cta.download">Download</a>
-        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mobileNav" aria-label="Menu">
-          <span></span>
-        </button>
-      </div>
-    </div>
-
-    <nav class="mobile-nav" id="mobileNav" aria-label="Mobile">
-      <ul>
-        <li><a href="#whats-new" data-i18n="nav.new">What's new</a></li>
-        <li><a href="#themes" data-i18n="nav.themes">Themes</a></li>
-        <li><a href="#gallery" data-i18n="nav.gallery">Screenshots</a></li>
-        <li><a href="#features" data-i18n="nav.features">Features</a></li>
-        <li><a href="#download" data-i18n="nav.download">Download</a></li>
-        <li><a href="https://github.com/multicolor-rgb/retrolaucher" target="_blank" rel="noopener">GitHub</a></li>
-      </ul>
-    </nav>
-  </header>
-
-  <main id="main">
-    <!-- Hero -->
-    <section class="hero" id="top">
-      <div class="container hero-grid">
-        <div class="hero-copy">
-          <p class="badge">
-            <span class="badge__dot">NEW</span>
-            <span data-i18n="hero.badge">v2.1.0 · rebuilt on Tauri 2</span>
-          </p>
-          <h1>
-            <span data-i18n="hero.title1">Your retro library.</span><br />
-            <span class="grad" data-i18n="hero.title2">One beautiful home.</span>
-          </h1>
-          <p class="hero-lead" data-i18n="hero.text">
-            Retro Launcher brings your ROMs, emulators and cover art together in a pad-first interface made for the
-            couch. Rebuilt on Tauri 2 — smaller, faster and lighter than ever.
-          </p>
-
-          <div class="hero-actions">
-            <a class="btn btn--primary" href="#download">
-              <svg class="btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
-              <span data-i18n="hero.cta">Download free</span>
-            </a>
-            <a class="btn btn--ghost" href="https://github.com/multicolor-rgb/retrolaucher" target="_blank" rel="noopener">
-              <svg class="btn__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.3-1.7-1.3-1.7-1.05-.72.08-.7.08-.7 1.17.08 1.78 1.2 1.78 1.2 1.04 1.79 2.73 1.27 3.4.97.1-.76.4-1.27.73-1.56-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.84 1.18 3.1 0 4.43-2.69 5.4-5.25 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12A11.5 11.5 0 0 0 12 .5Z"/></svg>
-              <span data-i18n="hero.github">View on GitHub</span>
-            </a>
+    <main id="main">
+      <section class="hero" id="top">
+        <div class="container hero-grid">
+          <div class="hero-copy">
+            <p class="version">v2.1.0 · Tauri 2</p>
+            <h1>
+              <span data-i18n="hero.title1">One shelf.</span>
+              <span class="hero-title-accent" data-i18n="hero.title2">Every ROM.</span>
+              <span class="hero-title-last" data-i18n="hero.title3">Controller in hand.</span>
+            </h1>
+            <p class="lead" data-i18n="hero.text">
+              A couch launcher for the emulators you already have. Covers, playtime and one Play button. Rebuilt on Tauri 2 — the same library, a fraction of the old app.
+            </p>
+            <div class="hero-actions">
+              <a class="btn btn--solid" href="#download" data-i18n="hero.cta">Download free</a>
+              <a class="btn btn--line" href="https://github.com/multicolor-rgb/retrolaucher" target="_blank" rel="noopener" data-i18n="hero.github">GitHub</a>
+            </div>
           </div>
 
-          <ul class="hero-meta">
-            <li class="chip">
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z"/></svg>
-              Windows 10 / 11
+          <div class="stage" id="stage">
+            <button class="stage__frame" type="button" id="stageOpen" data-i18n-aria="hero.open" aria-label="Open screenshot">
+              <img class="is-active" src="site/img/screens/HOezHH0WQAAJZzK.jpg" alt="Cover shelf with Jak and Daxter selected" width="1280" height="793" fetchpriority="high" />
+              <img src="site/img/screens/HOezHH2X0AApPr6.jpg" alt="Cover shelf with a game ready to launch" width="1920" height="1080" />
+              <img src="site/img/screens/HOezHICWgAAenEx.jpg" alt="Library filtered to PlayStation 2" width="680" height="420" />
+              <img src="site/img/screens/HOezHIKWgAAUm6p.jpg" alt="Settings screen for downloading covers" width="1920" height="1080" />
+            </button>
+            <div class="stage__dots" role="tablist" aria-label="Screenshots">
+              <button type="button" data-slide="0" aria-selected="true" data-i18n-aria="hero.s1" aria-label="Shelf"></button>
+              <button type="button" data-slide="1" aria-selected="false" data-i18n-aria="hero.s2" aria-label="Play"></button>
+              <button type="button" data-slide="2" aria-selected="false" data-i18n-aria="hero.s3" aria-label="Platform"></button>
+              <button type="button" data-slide="3" aria-selected="false" data-i18n-aria="hero.s4" aria-label="Covers"></button>
+            </div>
+            <p class="stage-caption"><span><i aria-hidden="true"></i><span data-i18n="hero.capture">A real screen from the app</span></span><span>RETRO LAUNCHER · 2.1</span></p>
+          </div>
+        </div>
+      </section>
+
+      <ul class="facts" aria-label="Facts">
+        <li>
+          <strong>~10–15 MB</strong>
+          <span data-i18n="facts.size">package, was ~90 MB</span>
+        </li>
+        <li>
+          <strong>~50–100 MB</strong>
+          <span data-i18n="facts.ram">RAM at launch, was ~300 MB</span>
+        </li>
+        <li>
+          <strong>9</strong>
+          <span data-i18n="facts.shelves">shelf modes</span>
+        </li>
+        <li>
+          <strong data-i18n="facts.pad.value">Pad first</strong>
+          <span data-i18n="facts.pad">keyboard works too</span>
+        </li>
+        <li>
+          <strong>Win · Linux</strong>
+          <span>MIT</span>
+        </li>
+      </ul>
+
+      <section class="section" id="whats-new">
+        <div class="container">
+          <div class="section-head reveal">
+            <h2 data-i18n="new.title">Smaller. Your library stays.</h2>
+            <p data-i18n="new.text">
+              2.1 is the Tauri port. The screen is the one you already know. The backend is Rust, and the data path did not move.
+            </p>
+          </div>
+
+          <div class="cmp-wrap reveal">
+            <table class="cmp">
+              <caption class="sr-only" data-i18n="new.caption">Electron 1.x compared with Tauri 2.1</caption>
+              <thead>
+                <tr>
+                  <th scope="col"></th>
+                  <th scope="col">Electron 1.x</th>
+                  <th scope="col">Tauri 2.1</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row" data-i18n="new.row.size">Package</th>
+                  <td>~90 MB</td>
+                  <td>~10–15 MB</td>
+                </tr>
+                <tr>
+                  <th scope="row" data-i18n="new.row.ram">RAM at launch</th>
+                  <td>~300 MB</td>
+                  <td>~50–100 MB</td>
+                </tr>
+                <tr>
+                  <th scope="row" data-i18n="new.row.stop">Quit from the pad</th>
+                  <td data-i18n="new.stop.old">Hidden helper window</td>
+                  <td data-i18n="new.stop.new">Rust watchdog</td>
+                </tr>
+                <tr>
+                  <th scope="row" data-i18n="new.row.data">Your library</th>
+                  <td><code>~/.config/retro-launcher</code></td>
+                  <td data-i18n="new.data.new">Same path</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <ul class="notes reveal">
+            <li>
+              <strong data-i18n="new.themes.title">Five themes</strong>
+              <span data-i18n="new.themes.text">Default, PS3, Wii, Xbox, Switch. Colours, shapes and the accent follow the one you pick in Settings.</span>
             </li>
-            <li class="chip">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10"/><path d="M2 17h20v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/><path d="m7 10 2 2-2 2"/><path d="M12 14h4"/></svg>
-              Debian / Ubuntu
+            <li>
+              <strong data-i18n="new.manager.title">Games manager</strong>
+              <span data-i18n="new.manager.text">Search, multi-select, rename, move or remove entries without leaving the launcher.</span>
             </li>
-            <li class="chip">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 4 4-4 4"/><path d="M8 6h8"/><path d="M4 12v8h16v-8"/><path d="M12 10v6"/></svg>
-              AppImage
-            </li>
-            <li class="chip">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3"/><rect x="4" y="11" width="16" height="10" rx="3"/><path d="M8 16h.01M16 16h.01"/></svg>
-              <span data-i18n="hero.chip.pad">Gamepad ready</span>
+            <li>
+              <strong data-i18n="new.watchdog.title">Stop combo</strong>
+              <span data-i18n="new.watchdog.text">L3 + R3 + LB + RB closes the game at once, including fullscreen. The watcher lives in Rust, not in a hidden window.</span>
             </li>
           </ul>
         </div>
+      </section>
 
-        <div class="hero-visual">
-          <div class="window">
-            <div class="window-bar">
-              <span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-              <span class="window-title">Retro Launcher — <span data-i18n="hero.window">Library</span></span>
-              <span class="window-pill">v2.1.0</span>
-            </div>
-            <img src="site/img/screens/HOezHH0WQAAJZzK.jpg" alt="Retro Launcher library view with cover flow" width="1280" height="793" fetchpriority="high" />
+      <section class="section" id="screens">
+        <div class="container">
+          <div class="section-head reveal">
+            <h2 data-i18n="screens.title">What you actually see</h2>
+            <p data-i18n="screens.text">Four screens from the app. Click any of them to enlarge.</p>
           </div>
 
-          <div class="float-card float-card--covers">
-            <span class="float-card__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-4.5-4.5L7 20"/></svg>
-            </span>
-            <span>
-              <small data-i18n="hero.covers">Covers</small>
-              SteamGridDB
-            </span>
+          <div class="walk">
+            <article class="walk__row reveal">
+              <button class="shot" type="button" data-full="site/img/screens/HOezHH0WQAAJZzK.jpg" data-caption-en="The shelf" data-caption-pl="Półka">
+                <img src="site/img/screens/HOezHH0WQAAJZzK.jpg" alt="Cover shelf with Jak and Daxter in the centre" width="1280" height="793" />
+              </button>
+              <div class="walk__copy">
+                <span class="walk__n">01</span>
+                <h3 data-i18n="screens.s1.title">The shelf</h3>
+                <p data-i18n="screens.s1.text">Left and right on the pad. The cover sits in the middle, the name under it, Play underneath. The background takes its colour from the artwork.</p>
+              </div>
+            </article>
+
+            <article class="walk__row reveal">
+              <button class="shot" type="button" data-full="site/img/screens/HOezHH2X0AApPr6.jpg" data-caption-en="Play" data-caption-pl="Uruchom">
+                <img src="site/img/screens/HOezHH2X0AApPr6.jpg" alt="A selected game with Play and Details buttons" width="1920" height="1080" />
+              </button>
+              <div class="walk__copy">
+                <span class="walk__n">02</span>
+                <h3 data-i18n="screens.s2.title">Play</h3>
+                <p data-i18n="screens.s2.text">A starts the emulator you configured for that platform. Y opens details: description, rating, playtime, a trailer if one exists.</p>
+              </div>
+            </article>
+
+            <article class="walk__row reveal">
+              <button class="shot" type="button" data-full="site/img/screens/HOezHICWgAAenEx.jpg" data-caption-en="One platform" data-caption-pl="Jedna platforma">
+                <img src="site/img/screens/HOezHICWgAAenEx.jpg" alt="Shelf filtered to PlayStation 2" width="680" height="420" />
+              </button>
+              <div class="walk__copy">
+                <span class="walk__n">03</span>
+                <h3 data-i18n="screens.s3.title">One platform, or all of them</h3>
+                <p data-i18n="screens.s3.text">LB and RB jump between systems. Or leave the filter on All and keep PS2, SNES and Game Boy on the same shelf.</p>
+              </div>
+            </article>
+
+            <article class="walk__row reveal">
+              <button class="shot" type="button" data-full="site/img/screens/HOezHIKWgAAUm6p.jpg" data-caption-en="Covers" data-caption-pl="Okładki">
+                <img src="site/img/screens/HOezHIKWgAAUm6p.jpg" alt="Cover download settings for a PlayStation 2 library" width="1920" height="1080" />
+              </button>
+              <div class="walk__copy">
+                <span class="walk__n">04</span>
+                <h3 data-i18n="screens.s4.title">Covers, once</h3>
+                <p data-i18n="screens.s4.text">Pull artwork for one platform or the whole library. SteamGridDB, RAWG, ScreenScraper, TheGamesDB — or point at your own file. It is cached locally.</p>
+              </div>
+            </article>
           </div>
-
-          <div class="float-card float-card--pad">
-            <span class="float-card__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 12h4M8 10v4"/><circle cx="16" cy="11" r="1"/><circle cx="18" cy="13" r="1"/><rect x="2" y="6" width="20" height="12" rx="5"/></svg>
-            </span>
-            <span>
-              <small data-i18n="hero.combo">Stop combo</small>
-              L3 + R3 + LB + RB
-            </span>
-          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Platform marquee -->
-    <div class="platform-strip" aria-hidden="true">
-      <div class="platform-track">
-        <ul>
-          <li>PlayStation 2</li><li>GameCube</li><li>Super Nintendo</li><li>Nintendo 64</li>
-          <li>Dreamcast</li><li>Game Boy Advance</li><li>PlayStation 1</li><li>Mega Drive</li>
-          <li>PSP</li><li>Sega Saturn</li><li>NES</li><li>Nintendo DS</li>
-        </ul>
-        <ul>
-          <li>PlayStation 2</li><li>GameCube</li><li>Super Nintendo</li><li>Nintendo 64</li>
-          <li>Dreamcast</li><li>Game Boy Advance</li><li>PlayStation 1</li><li>Mega Drive</li>
-          <li>PSP</li><li>Sega Saturn</li><li>NES</li><li>Nintendo DS</li>
-        </ul>
-      </div>
-    </div>
-
-    <!-- What's new -->
-    <section class="section" id="whats-new">
-      <div class="container">
-        <div class="section-head reveal">
-          <span class="eyebrow" data-i18n="new.eyebrow">What's new in 2.x</span>
-          <h2 data-i18n="new.title">A lighter launcher with a whole new wardrobe</h2>
-          <p class="section-sub" data-i18n="new.text">
-            The move from Electron to Tauri 2 made the app dramatically smaller and faster. On top of that: four
-            console-inspired themes, a proper file manager and a native gamepad watchdog.
-          </p>
-        </div>
-
-        <div class="new-grid">
-          <article class="new-card reveal">
-            <span class="new-card__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v6H4z"/><path d="M4 14h7v6H4z"/><path d="M15 14h5v6h-5z"/></svg>
-            </span>
-            <h3 data-i18n="new.tauri.title">Native Tauri 2 core</h3>
-            <p data-i18n="new.tauri.text">Rust backend instead of a bundled browser engine. The same interface, a fraction of the footprint.</p>
-            <span class="new-card__stat" data-i18n="new.tauri.stat">~3× less RAM than Electron</span>
-          </article>
-
-          <article class="new-card reveal">
-            <span class="new-card__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg>
-            </span>
-            <h3 data-i18n="new.themes.title">Four console themes</h3>
-            <p data-i18n="new.themes.text">PS3, Wii, Xbox and Switch-inspired skins. Every screen, button and accent follows the selected theme.</p>
-            <span class="new-card__stat" data-i18n="new.themes.stat">PS3 · Wii · Xbox · Switch</span>
-          </article>
-
-          <article class="new-card reveal">
-            <span class="new-card__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M8 13h8"/></svg>
-            </span>
-            <h3 data-i18n="new.manager.title">Games manager</h3>
-            <p data-i18n="new.manager.text">Search, multi-select and bulk-edit your library. Rename, move or remove entries without leaving the launcher.</p>
-            <span class="new-card__stat" data-i18n="new.manager.stat">Bulk editing &amp; search</span>
-          </article>
-
-          <article class="new-card reveal">
-            <span class="new-card__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 12h4M8 10v4"/><circle cx="16" cy="11" r="1"/><circle cx="18" cy="13" r="1"/><rect x="2" y="6" width="20" height="12" rx="5"/></svg>
-            </span>
-            <h3 data-i18n="new.watchdog.title">Gamepad watchdog</h3>
-            <p data-i18n="new.watchdog.text">A native Rust watcher listens for the stop combo and closes the game instantly — even in fullscreen.</p>
-            <span class="new-card__stat">L3 + R3 + LB + RB</span>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- Themes -->
-    <section class="section" id="themes">
-      <div class="container">
-        <div class="section-head section-head--center reveal">
-          <span class="eyebrow" data-i18n="themes.eyebrow">Make it yours</span>
-          <h2 data-i18n="themes.title">Dress it like your console</h2>
-          <p class="section-sub" data-i18n="themes.text">
-            Pick a theme in Settings and the entire interface follows — colours, shapes and accent glow. Try them
-            below.
-          </p>
-        </div>
-
-        <div class="themes-wrap reveal">
-          <div class="theme-tabs" role="tablist" aria-label="Theme preview">
-            <button class="theme-tab" type="button" role="tab" id="tab-ps3" aria-controls="themeMock" aria-selected="true" data-theme="ps3" style="--swatch:#4f9cff">
-              <i aria-hidden="true"></i> PS3
-            </button>
-            <button class="theme-tab" type="button" role="tab" id="tab-wii" aria-controls="themeMock" aria-selected="false" data-theme="wii" style="--swatch:#7ad4f5">
-              <i aria-hidden="true"></i> Wii
-            </button>
-            <button class="theme-tab" type="button" role="tab" id="tab-xbox" aria-controls="themeMock" aria-selected="false" data-theme="xbox" style="--swatch:#52b043">
-              <i aria-hidden="true"></i> Xbox
-            </button>
-            <button class="theme-tab" type="button" role="tab" id="tab-switch" aria-controls="themeMock" aria-selected="false" data-theme="switch" style="--swatch:#e60012">
-              <i aria-hidden="true"></i> Switch
-            </button>
-          </div>
-
-          <div class="theme-stage">
-            <div class="mock" id="themeMock" data-theme="ps3" role="tabpanel" aria-labelledby="tab-ps3">
-              <div class="mock-frame">
-                <div class="mock-top">
-                  <span class="mock-logo">Retro Launcher</span>
-                  <span class="mock-pill">All games</span>
-                  <div class="mock-top-right" aria-hidden="true">
-                    <span class="mock-dot"></span>
-                    <span class="mock-dot"></span>
-                    <span class="mock-search"></span>
-                  </div>
+      <section class="section section--tight" id="library">
+        <div class="container">
+          <div class="split">
+            <div class="reveal">
+              <h2 data-i18n="couch.title">For the couch</h2>
+              <p class="split__lead" data-i18n="couch.lead">Set each platform up once. After that the pad is enough.</p>
+              <dl class="spec">
+                <div>
+                  <dt data-i18n="couch.pad.title">Controller</dt>
+                  <dd data-i18n="couch.pad.text">Left and right move the shelf. Up opens platforms. LB / RB switch system, LT / RT change the shelf mode. A plays, Y opens details, B goes back, Start opens settings.</dd>
                 </div>
-                <div class="mock-body">
-                  <div class="mock-covers" aria-hidden="true">
-                    <span class="mock-cover"></span>
-                    <span class="mock-cover"></span>
-                    <span class="mock-cover mock-cover--active"></span>
-                    <span class="mock-cover"></span>
-                    <span class="mock-cover"></span>
-                  </div>
-                  <div class="mock-details">
-                    <span class="mock-tag">PlayStation 2</span>
-                    <span class="mock-title">The Simpsons Game</span>
-                    <div class="mock-actions" aria-hidden="true">
-                      <span class="mock-btn mock-btn--primary" data-i18n="themes.play">Play</span>
-                      <span class="mock-btn" data-i18n="themes.details">Details</span>
-                    </div>
-                  </div>
+                <div>
+                  <dt data-i18n="couch.keys.title">Keyboard</dt>
+                  <dd data-i18n="couch.keys.text">Arrows and Enter. A letter jumps to that title. R picks a random game, F toggles a favourite, F11 toggles fullscreen.</dd>
+                </div>
+                <div>
+                  <dt data-i18n="couch.attract.title">Attract mode</dt>
+                  <dd data-i18n="couch.attract.text">After two minutes idle the shelf keeps moving. Any key, click or pad input stops it. Turn it off in Settings.</dd>
+                </div>
+                <div>
+                  <dt data-i18n="couch.shelves.title">Nine shelves</dt>
+                  <dd data-i18n="couch.shelves.text">Flat, arc, Big Picture, cascade, grid, list with description, spotlight, fullscreen covers, platform frame. Eleven cover ratios, or your own.</dd>
+                </div>
+              </dl>
+            </div>
+
+            <div class="reveal">
+              <h2 data-i18n="lib.title">For the library</h2>
+              <p class="split__lead" data-i18n="lib.lead">The part you do at the desk, so the couch stays simple.</p>
+              <dl class="spec">
+                <div>
+                  <dt data-i18n="lib.platforms.title">Platforms</dt>
+                  <dd data-i18n="lib.platforms.text">Thirty presets fill extensions, colour, cover ratio and scraper ids. Each system has its own ROM folder, emulator and arguments. Rename later — the id stays, so covers and stats stay.</dd>
+                </div>
+                <div>
+                  <dt data-i18n="lib.art.title">Artwork</dt>
+                  <dd data-i18n="lib.art.text">SteamGridDB, RAWG, ScreenScraper.fr and TheGamesDB, in Polish and English when the source has both. A file or a URL overrides them. Missing art gets an offline placeholder.</dd>
+                </div>
+                <div>
+                  <dt data-i18n="lib.stats.title">Playtime</dt>
+                  <dd data-i18n="lib.stats.text">Hours, launch count, last played, favourites, sort, and a library check for missing folders, empty files and duplicates.</dd>
+                </div>
+                <div>
+                  <dt data-i18n="lib.portable.title">USB stick</dt>
+                  <dd data-i18n="lib.portable.text">Portable mode copies config, stats and covers into LauncherData beside the app. ROM paths are stored relative to the stick and expand to whatever letter it gets.</dd>
+                </div>
+                <div>
+                  <dt data-i18n="lib.pc.title">PC games</dt>
+                  <dd data-i18n="lib.pc.text">.exe, .AppImage and .sh. On Linux: Wine, Wine-GE or Proton-GE, with a one-click download of the runner. Prefix and environment can be set per game.</dd>
+                </div>
+                <div>
+                  <dt data-i18n="lib.import.title">Import</dt>
+                  <dd data-i18n="lib.import.text">EmulationStation gamelist.xml, plus a JSON backup of config and stats. Test the emulator command from Settings before you sit down.</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+
+          <div class="themes reveal" id="themes">
+            <h2 data-i18n="themes.title">Five themes. No fake preview.</h2>
+            <ul class="swatches">
+              <li><i style="background:#38e0ff"></i> <span data-i18n="themes.default">Default</span></li>
+              <li><i style="background:#529bff"></i> PS3</li>
+              <li><i style="background:#7ad4f5"></i> Wii</li>
+              <li><i style="background:#61c247"></i> Xbox</li>
+              <li><i style="background:#e60012"></i> Switch</li>
+            </ul>
+            <p data-i18n="themes.text">Pick one in Settings and the whole interface follows. The screenshots above are the default theme — there is no drawn mock of the others here.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="download">
+        <div class="container">
+          <div class="section-head reveal">
+            <h2 data-i18n="download.title">Download 2.1</h2>
+            <p data-i18n="download.text">Free, MIT. Pick a package. Upgrading from 1.x keeps your platforms, covers and playtime.</p>
+          </div>
+
+          <div class="pkgs">
+            <article class="pkg reveal" data-os="windows">
+              <div class="pkg__body">
+                <p class="pkg__os">Windows <span class="yours" data-i18n="download.yours">Your system</span></p>
+                <h3 data-i18n="download.win.title">Installer</h3>
+                <p data-i18n="download.win.text">NSIS for Windows 10 and 11. WebView2 installs itself if it is missing.</p>
+                <p class="pkg__meta">x64 · NSIS · 2.9 MB</p>
+              </div>
+              <a class="btn btn--solid" href="https://github.com/multicolor-rgb/retrolaucher/releases/download/rel%2F2.1/retro-launcher_2.1.0_x64-setup.exe" data-i18n="download.win.cta">Download for Windows</a>
+            </article>
+
+            <article class="pkg reveal" data-os="linux">
+              <div class="pkg__body">
+                <p class="pkg__os">Linux · deb <span class="yours" data-i18n="download.yours">Your system</span></p>
+                <h3 data-i18n="download.deb.title">Package</h3>
+                <p data-i18n="download.deb.text">Desktop entry and dependencies handled by apt. The file is small; installed, the app sits around 10–15 MB.</p>
+                <p class="pkg__meta">amd64 · webkit2gtk · 3.4 MB file</p>
+                <div class="code-row">
+                  <code>sudo apt install ./retro-launcher_2.1.0_amd64.deb</code>
+                  <button class="copy-btn" type="button" data-copy="sudo apt install ./retro-launcher_2.1.0_amd64.deb" data-i18n="a11y.copy">Copy</button>
                 </div>
               </div>
-            </div>
-            <p class="mock-hint" data-i18n="themes.hint">
-              Theme preview is drawn in CSS. The real app uses the same palettes across every view.
-            </p>
+              <a class="btn btn--solid" href="https://github.com/multicolor-rgb/retrolaucher/releases/download/rel%2F2.1/retro-launcher_2.1.0_amd64.deb" data-i18n="download.deb.cta">Download .deb</a>
+            </article>
+
+            <article class="pkg reveal" data-os="appimage">
+              <div class="pkg__body">
+                <p class="pkg__os">Linux · AppImage</p>
+                <h3 data-i18n="download.appimage.title">Portable</h3>
+                <p data-i18n="download.appimage.text">One file, no install. Larger, because it carries its own runtime. Useful for a USB stick or a quick try.</p>
+                <p class="pkg__meta">amd64 · 82 MB</p>
+                <div class="code-row">
+                  <code>chmod +x retro-launcher_2.1.0_amd64.AppImage</code>
+                  <button class="copy-btn" type="button" data-copy="chmod +x retro-launcher_2.1.0_amd64.AppImage" data-i18n="a11y.copy">Copy</button>
+                </div>
+              </div>
+              <a class="btn btn--line" href="https://github.com/multicolor-rgb/retrolaucher/releases/download/rel%2F2.1/retro-launcher_2.1.0_amd64.AppImage" data-i18n="download.appimage.cta">Download AppImage</a>
+            </article>
           </div>
-        </div>
-      </div>
-    </section>
 
-    <!-- Gallery -->
-    <section class="section" id="gallery">
-      <div class="container">
-        <div class="section-head reveal">
-          <span class="eyebrow" data-i18n="gallery.eyebrow">Screenshots</span>
-          <h2 data-i18n="gallery.title">A look inside</h2>
-          <p class="section-sub" data-i18n="gallery.text">Cover flow, platform browsing, game details and settings — click any shot to enlarge.</p>
-        </div>
-
-        <div class="gallery">
-          <button class="shot reveal" type="button" data-full="site/img/screens/HOezHH2X0AApPr6.jpg" data-caption-en="Library view" data-caption-pl="Widok biblioteki">
-            <img src="site/img/screens/HOezHH2X0AApPr6.jpg" alt="Library view with a highlighted game cover" loading="lazy" width="1920" height="1080" />
-            <span class="shot__caption">
-              <strong data-i18n="gallery.shot1">Library</strong>
-              <span data-i18n="gallery.shot1.text">Cover flow made for the couch.</span>
-            </span>
-          </button>
-
-          <button class="shot reveal" type="button" data-full="site/img/screens/HOezHH0WQAAJZzK.jpg" data-caption-en="Game details" data-caption-pl="Szczegóły gry">
-            <img src="site/img/screens/HOezHH0WQAAJZzK.jpg" alt="Library with game covers and details" loading="lazy" width="1280" height="793" />
-            <span class="shot__caption">
-              <strong data-i18n="gallery.shot2">Game details</strong>
-              <span data-i18n="gallery.shot2.text">Artwork, platform and rating.</span>
-            </span>
-          </button>
-
-          <button class="shot reveal" type="button" data-full="site/img/screens/HOezHICWgAAenEx.jpg" data-caption-en="Platform filter" data-caption-pl="Filtr platform">
-            <img src="site/img/screens/HOezHICWgAAenEx.jpg" alt="Library filtered to a single platform" loading="lazy" width="680" height="420" />
-            <span class="shot__caption">
-              <strong data-i18n="gallery.shot3">Platforms</strong>
-              <span data-i18n="gallery.shot3.text">One library, many systems.</span>
-            </span>
-          </button>
-
-          <button class="shot reveal" type="button" data-full="site/img/screens/HOezHIKWgAAUm6p.jpg" data-caption-en="Settings and covers" data-caption-pl="Ustawienia i okładki">
-            <img src="site/img/screens/HOezHIKWgAAUm6p.jpg" alt="Settings screen with cover download options" loading="lazy" width="1920" height="1080" />
-            <span class="shot__caption">
-              <strong data-i18n="gallery.shot4">Settings</strong>
-              <span data-i18n="gallery.shot4.text">Themes, covers and emulator setup.</span>
-            </span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Features -->
-    <section class="section" id="features">
-      <div class="container">
-        <div class="section-head reveal">
-          <span class="eyebrow" data-i18n="features.eyebrow">Features</span>
-          <h2 data-i18n="features.title">Everything for a couch session</h2>
-          <p class="section-sub" data-i18n="features.text">
-            Set up each platform once, then browse and launch with a gamepad. No terminal, no scattered config files.
+          <p class="note reveal">
+            <span data-i18n-html="download.note">Config and playtime live in <code>~/.config/retro-launcher</code> (or the Windows equivalent) and survive the upgrade from 1.x. Other builds and checksums are on the <a href="https://github.com/multicolor-rgb/retrolaucher/releases" target="_blank" rel="noopener">releases page</a> and in <a href="https://github.com/multicolor-rgb/retrolaucher/releases/download/rel%2F2.1/SHA256SUMS.txt" target="_blank" rel="noopener">SHA256SUMS.txt</a>.</span>
           </p>
         </div>
+      </section>
 
-        <div class="bento">
-          <article class="feature feature--wide reveal">
-            <span class="feature__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18"/><path d="M9 4v5"/></svg>
-            </span>
-            <h3 data-i18n="features.library.title">Library &amp; cover flow</h3>
-            <p data-i18n="features.library.text">Browse your collection with a smooth cover flow, search, filters and instant game details.</p>
-          </article>
-
-          <article class="feature feature--wide reveal">
-            <span class="feature__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 3 7.5 12 12l9-4.5z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 16.5 9 4.5 9-4.5"/></svg>
-            </span>
-            <h3 data-i18n="features.platforms.title">Multi-platform by design</h3>
-            <p data-i18n="features.platforms.text">Each platform gets its own ROM folder, emulator binary and launch arguments. Add as many as you like.</p>
-          </article>
-
-          <article class="feature reveal">
-            <span class="feature__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-4.5-4.5L7 20"/></svg>
-            </span>
-            <h3 data-i18n="features.covers.title">Covers &amp; metadata</h3>
-            <p data-i18n="features.covers.text">Fetch artwork from SteamGridDB automatically or point to your own file or URL.</p>
-          </article>
-
-          <article class="feature reveal">
-            <span class="feature__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>
-            </span>
-            <h3 data-i18n="features.stats.title">Favourites &amp; stats</h3>
-            <p data-i18n="features.stats.text">Favourites, recently played games and playtime counters kept locally.</p>
-          </article>
-
-          <article class="feature reveal">
-            <span class="feature__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 12h4M8 10v4"/><circle cx="16" cy="11" r="1"/><circle cx="18" cy="13" r="1"/><rect x="2" y="6" width="20" height="12" rx="5"/></svg>
-            </span>
-            <h3 data-i18n="features.pad.title">Gamepad first</h3>
-            <p data-i18n="features.pad.text">Navigate, launch and quit with a controller. Keyboard shortcuts work everywhere too.</p>
-            <div class="feature__kbd" aria-hidden="true"><kbd>D-Pad</kbd><kbd>Enter</kbd><kbd>Esc</kbd><kbd>F11</kbd></div>
-          </article>
-
-          <article class="feature feature--wide reveal">
-            <span class="feature__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 22h8M12 18v4"/></svg>
-            </span>
-            <h3 data-i18n="features.fullscreen.title">Fullscreen big picture</h3>
-            <p data-i18n="features.fullscreen.text">Start straight into fullscreen and keep it that way while you play. One launcher, zero desktop clutter.</p>
-          </article>
-
-          <article class="feature feature--wide reveal">
-            <span class="feature__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3.5-7.1"/><path d="M21 3v6h-6"/></svg>
-            </span>
-            <h3 data-i18n="features.import.title">Import &amp; portable mode</h3>
-            <p data-i18n="features.import.text">Bring libraries over from EmulationStation, test emulator commands, and run everything from a USB stick.</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- Download -->
-    <section class="section" id="download">
-      <div class="container">
-        <div class="downloads-head reveal">
-          <div class="section-head" style="margin-bottom: 0">
-            <span class="eyebrow" data-i18n="download.eyebrow">Download</span>
-            <h2 data-i18n="download.title">Get Retro Launcher 2.1</h2>
-            <p class="section-sub" data-i18n="download.text">Free and open source. Pick the package for your system — your existing configuration stays intact.</p>
+      <section class="section" id="faq">
+        <div class="container container--narrow">
+          <h2 class="reveal" data-i18n="faq.title">Before you install</h2>
+          <div class="faq reveal">
+            <details>
+              <summary data-i18n="faq.q1">Will I lose my configuration when upgrading from 1.x?</summary>
+              <p data-i18n="faq.a1">No. The data path is unchanged, so platforms, covers and playtime carry over.</p>
+            </details>
+            <details>
+              <summary data-i18n="faq.q2">What are the system requirements?</summary>
+              <p data-i18n="faq.a2">Windows 10 or 11 with WebView2 — the installer fetches it if needed. On Linux, a GTK3 desktop and webkit2gtk 4.1. The .deb pulls those in.</p>
+            </details>
+            <details>
+              <summary data-i18n="faq.q3">Do I need a gamepad?</summary>
+              <p data-i18n="faq.a3">No. Keyboard and mouse cover everything. The pad layout is there for the couch.</p>
+            </details>
+            <details>
+              <summary data-i18n="faq.q4">Where do the covers come from?</summary>
+              <p data-i18n="faq.a4">SteamGridDB, RAWG, ScreenScraper.fr and TheGamesDB, if you add the keys. You can also set a local file or an image URL per game.</p>
+            </details>
+            <details>
+              <summary data-i18n="faq.q5">Is it really free?</summary>
+              <p data-i18n="faq.a5">Yes. MIT licensed. There is a Ko-fi link in the footer if you want to support the work.</p>
+            </details>
+            <details>
+              <summary data-i18n="faq.q6">Can I run it from a USB stick?</summary>
+              <p data-i18n="faq.a6">Yes. AppImage plus portable mode keeps config, stats and covers next to the executable. Emulators stay installed on the machine.</p>
+            </details>
           </div>
-          <span class="version-pill">v2.1.0 · <span data-i18n="download.latest">latest release</span></span>
         </div>
+      </section>
+    </main>
 
-        <div class="download-grid">
-          <article class="download-card" data-os="windows">
-            <span class="recommended-flag" data-i18n="download.yourSystem">Your system</span>
-            <div class="download-card__top">
-              <span class="download-card__icon">
-                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z"/></svg>
-              </span>
-              <span class="download-card__os">Windows</span>
-            </div>
-            <h3 data-i18n="download.win.title">Installer (.exe)</h3>
-            <p data-i18n="download.win.text">NSIS installer for Windows 10 and 11. WebView2 is installed automatically if your system needs it.</p>
-            <div class="download-card__meta">
-              <span class="tag">x64</span>
-              <span class="tag">2.9 MB</span>
-              <span class="tag">NSIS</span>
-            </div>
-            <div class="download-card__actions">
-              <a class="btn btn--primary" href="https://github.com/multicolor-rgb/retrolaucher/releases/download/rel%2F2.1/retro-launcher_2.1.0_x64-setup.exe" data-i18n="download.win.cta">Download for Windows</a>
-            </div>
-          </article>
-
-          <article class="download-card" data-os="linux">
-            <span class="recommended-flag" data-i18n="download.yourSystem">Your system</span>
-            <div class="download-card__top">
-              <span class="download-card__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8"/><path d="M2 8h20V5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/><path d="M10 12h4"/></svg>
-              </span>
-              <span class="download-card__os">Debian / Ubuntu / Mint</span>
-            </div>
-            <h3 data-i18n="download.deb.title">Package (.deb)</h3>
-            <p data-i18n="download.deb.text">Native package with system integration, desktop entry and dependencies handled by apt.</p>
-            <div class="download-card__meta">
-              <span class="tag">amd64</span>
-              <span class="tag">3.4 MB</span>
-              <span class="tag">webkit2gtk</span>
-            </div>
-            <div class="download-card__actions">
-              <a class="btn btn--primary" href="https://github.com/multicolor-rgb/retrolaucher/releases/download/rel%2F2.1/retro-launcher_2.1.0_amd64.deb" data-i18n="download.deb.cta">Download .deb</a>
-              <div class="code-row">
-                <code>sudo apt install ./retro-launcher_2.1.0_amd64.deb</code>
-                <button class="copy-btn" type="button" data-copy="sudo apt install ./retro-launcher_2.1.0_amd64.deb" aria-label="Copy command">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
-                </button>
-              </div>
-            </div>
-          </article>
-
-          <article class="download-card" data-os="linux">
-            <span class="recommended-flag" data-i18n="download.yourSystem">Your system</span>
-            <div class="download-card__top">
-              <span class="download-card__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 4 4-4 4"/><path d="M8 6h8"/><path d="M4 12v8h16v-8"/><path d="M12 10v6"/></svg>
-              </span>
-              <span class="download-card__os">Linux</span>
-            </div>
-            <h3 data-i18n="download.appimage.title">Portable (.AppImage)</h3>
-            <p data-i18n="download.appimage.text">One file, no installation. Ideal for testing or keeping the launcher on a USB drive.</p>
-            <div class="download-card__meta">
-              <span class="tag">amd64</span>
-              <span class="tag">82 MB</span>
-              <span class="tag" data-i18n="download.appimage.tag">portable</span>
-            </div>
-            <div class="download-card__actions">
-              <a class="btn btn--ghost" href="https://github.com/multicolor-rgb/retrolaucher/releases/download/rel%2F2.1/retro-launcher_2.1.0_amd64.AppImage" data-i18n="download.appimage.cta">Download AppImage</a>
-              <div class="code-row">
-                <code>chmod +x retro-launcher_2.1.0_amd64.AppImage</code>
-                <button class="copy-btn" type="button" data-copy="chmod +x retro-launcher_2.1.0_amd64.AppImage" aria-label="Copy command">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
-                </button>
-              </div>
-            </div>
-          </article>
-        </div>
-
-        <p class="download-note reveal">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
-          <span data-i18n-html="download.note">Your configuration and playtime are stored in <code>~/.config/retro-launcher</code> (or the Windows equivalent) and are preserved when upgrading from 1.x. Need another build? Check the <a href="https://github.com/multicolor-rgb/retrolaucher/releases" target="_blank" rel="noopener">releases page</a>.</span>
-        </p>
-      </div>
-    </section>
-
-    <!-- FAQ -->
-    <section class="section" id="faq">
-      <div class="container">
-        <div class="section-head section-head--center reveal">
-          <span class="eyebrow" data-i18n="faq.eyebrow">FAQ</span>
-          <h2 data-i18n="faq.title">Good to know</h2>
-        </div>
-
-        <div class="faq reveal">
-          <details>
-            <summary data-i18n="faq.q1">Will I lose my configuration when upgrading from 1.x?</summary>
-            <p data-i18n="faq.a1">No. The data path is unchanged, so platforms, covers and playtime carry over automatically.</p>
-          </details>
-          <details>
-            <summary data-i18n="faq.q2">What are the system requirements?</summary>
-            <p data-i18n="faq.a2">Windows 10 or 11 with WebView2 (the installer handles it). On Linux you need a GTK3 desktop and webkit2gtk 4.1 — the .deb package pulls those in for you.</p>
-          </details>
-          <details>
-            <summary data-i18n="faq.q3">Do I need a gamepad to use it?</summary>
-            <p data-i18n="faq.a3">Not at all. Everything works with a keyboard and mouse; the controller layout is there for couch play.</p>
-          </details>
-          <details>
-            <summary data-i18n="faq.q4">Where do the covers come from?</summary>
-            <p data-i18n="faq.a4">SteamGridDB provides automatic artwork. You can also set a custom local file or image URL for any game.</p>
-          </details>
-          <details>
-            <summary data-i18n="faq.q5">Is it really free?</summary>
-            <p data-i18n="faq.a5">Yes — MIT licensed and free to use. If you want to support development, there is a Ko-fi link in the footer.</p>
-          </details>
-          <details>
-            <summary data-i18n="faq.q6">Can I run it from a USB stick?</summary>
-            <p data-i18n="faq.a6">Yes. Use the AppImage together with portable mode and the launcher keeps its config next to the executable.</p>
-          </details>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-grid">
+    <footer class="site-footer">
+      <div class="container footer-grid">
         <div class="footer-brand">
-          <img src="site/img/logo.png" alt="" width="44" height="44" loading="lazy" />
+          <img src="site/img/logo.png" alt="" width="32" height="32" />
           <div>
             <strong>Retro Launcher</strong>
-            <span data-i18n="footer.tagline">Pad-first retro gaming, built with Tauri 2.</span>
+            <span data-i18n="footer.tagline">A couch launcher for the emulators you already run.</span>
           </div>
         </div>
         <nav class="footer-links" aria-label="Footer">
@@ -567,30 +449,26 @@
           <a href="https://github.com/multicolor-rgb/retrolaucher/issues" target="_blank" rel="noopener" data-i18n="footer.issues">Report an issue</a>
         </nav>
       </div>
-      <div class="footer-bottom">
+      <div class="container footer-bottom">
         <span>© <span id="year">2026</span> Gramodrana · <span data-i18n="footer.license">MIT License</span></span>
-        <a class="coffee" href="https://ko-fi.com/multicolorplugins" target="_blank" rel="noopener">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16"><path d="M3 8h13v6a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5z"/><path d="M16 9h2a3 3 0 0 1 0 6h-2"/><path d="M6 2v2M10 2v2M14 2v2"/></svg>
-          <span data-i18n="footer.coffee">Buy me a coffee</span>
-        </a>
+        <a class="coffee" href="https://ko-fi.com/multicolorplugins" target="_blank" rel="noopener" data-i18n="footer.coffee">Buy me a coffee</a>
       </div>
-    </div>
-  </footer>
+    </footer>
+  </div>
 
-  <!-- Lightbox -->
+  <div class="toast" id="konamiToast" role="status" aria-live="polite" hidden>
+    <span data-i18n="konami.toast">+30 lives</span>
+  </div>
+
   <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-labelledby="lightboxTitle" aria-hidden="true">
     <div class="lightbox-inner">
-      <button class="lightbox-close" type="button" id="lightboxClose" aria-label="Close">×</button>
-      <button class="lightbox-nav lightbox-nav--prev" type="button" id="lightboxPrev" aria-label="Previous screenshot">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
-      </button>
-      <button class="lightbox-nav lightbox-nav--next" type="button" id="lightboxNext" aria-label="Next screenshot">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
-      </button>
+      <button class="lightbox-close" type="button" id="lightboxClose" data-i18n-aria="a11y.close" aria-label="Close">×</button>
+      <button class="lightbox-nav lightbox-nav--prev" type="button" id="lightboxPrev" data-i18n-aria="hero.prev" aria-label="Previous screenshot">‹</button>
+      <button class="lightbox-nav lightbox-nav--next" type="button" id="lightboxNext" data-i18n-aria="hero.next" aria-label="Next screenshot">›</button>
       <img id="lightboxImg" src="" alt="" />
       <div class="lightbox-bar">
         <span class="lightbox-title" id="lightboxTitle"></span>
-        <span class="lightbox-counter" id="lightboxCounter"></span>
+        <span id="lightboxCounter"></span>
       </div>
     </div>
   </div>

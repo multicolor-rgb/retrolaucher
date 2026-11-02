@@ -1,234 +1,270 @@
-/* Retro Launcher — site behaviour & i18n */
+/* Retro Launcher site — language, screenshots, download helpers. */
 (function () {
   'use strict';
 
   var i18n = {
     en: {
       'a11y.skip': 'Skip to content',
+      'a11y.copy': 'Copy',
+      'a11y.copied': 'Copied',
+      'a11y.close': 'Close',
       'nav.new': "What's new",
-      'nav.themes': 'Themes',
-      'nav.gallery': 'Screenshots',
-      'nav.features': 'Features',
+      'nav.screens': 'Screenshots',
+      'nav.library': 'Library',
+      'nav.faq': 'FAQ',
       'nav.download': 'Download',
+      'nav.menu': 'Menu',
       'cta.download': 'Download',
 
-      'hero.badge': 'v2.1.0 · rebuilt on Tauri 2',
-      'hero.title1': 'Your retro library.',
-      'hero.title2': 'One beautiful home.',
-      'hero.text': 'Retro Launcher brings your ROMs, emulators and cover art together in a pad-first interface made for the couch. Rebuilt on Tauri 2 — smaller, faster and lighter than ever.',
+      'hero.title1': 'One shelf.',
+      'hero.title2': 'Every ROM.',
+      'hero.title3': 'Controller in hand.',
+      'hero.text': 'A couch launcher for the emulators you already have. Covers, playtime and one Play button. Rebuilt on Tauri 2 — the same library, a fraction of the old app.',
       'hero.cta': 'Download free',
-      'hero.github': 'View on GitHub',
-      'hero.chip.pad': 'Gamepad ready',
-      'hero.window': 'Library',
-      'hero.covers': 'Covers',
-      'hero.combo': 'Stop combo',
+      'hero.github': 'GitHub',
+      'hero.open': 'Open screenshot',
+      'hero.capture': 'A real screen from the app',
+      'hero.prev': 'Previous screenshot',
+      'hero.next': 'Next screenshot',
+      'hero.s1': 'Shelf',
+      'hero.s2': 'Play',
+      'hero.s3': 'Platform',
+      'hero.s4': 'Covers',
 
-      'new.eyebrow': "What's new in 2.x",
-      'new.title': 'A lighter launcher with a whole new wardrobe',
-      'new.text': 'The move from Electron to Tauri 2 made the app dramatically smaller and faster. On top of that: four console-inspired themes, a proper file manager and a native gamepad watchdog.',
-      'new.tauri.title': 'Native Tauri 2 core',
-      'new.tauri.text': 'Rust backend instead of a bundled browser engine. The same interface, a fraction of the footprint.',
-      'new.tauri.stat': '3.4 MB .deb · ~3× less RAM',
-      'new.themes.title': 'Four console themes',
-      'new.themes.text': 'PS3, Wii, Xbox and Switch-inspired skins. Every screen, button and accent follows the selected theme.',
-      'new.themes.stat': 'PS3 · Wii · Xbox · Switch',
+      'facts.size': 'package, was ~90 MB',
+      'facts.ram': 'RAM at launch, was ~300 MB',
+      'facts.shelves': 'shelf modes',
+      'facts.pad.value': 'Pad first',
+      'facts.pad': 'keyboard works too',
+
+      'new.title': 'Smaller. Your library stays.',
+      'new.text': '2.1 is the Tauri port. The screen is the one you already know. The backend is Rust, and the data path did not move.',
+      'new.caption': 'Electron 1.x compared with Tauri 2.1',
+      'new.row.size': 'Package',
+      'new.row.ram': 'RAM at launch',
+      'new.row.stop': 'Quit from the pad',
+      'new.row.data': 'Your library',
+      'new.stop.old': 'Hidden helper window',
+      'new.stop.new': 'Rust watchdog',
+      'new.data.new': 'Same path',
+      'new.themes.title': 'Five themes',
+      'new.themes.text': 'Default, PS3, Wii, Xbox, Switch. Colours, shapes and the accent follow the one you pick in Settings.',
       'new.manager.title': 'Games manager',
-      'new.manager.text': 'Search, multi-select and bulk-edit your library. Rename, move or remove entries without leaving the launcher.',
-      'new.manager.stat': 'Bulk editing & search',
-      'new.watchdog.title': 'Gamepad watchdog',
-      'new.watchdog.text': 'A native Rust watcher listens for the stop combo and closes the game instantly — even in fullscreen.',
+      'new.manager.text': 'Search, multi-select, rename, move or remove entries without leaving the launcher.',
+      'new.watchdog.title': 'Stop combo',
+      'new.watchdog.text': 'L3 + R3 + LB + RB closes the game at once, including fullscreen. The watcher lives in Rust, not in a hidden window.',
 
-      'themes.eyebrow': 'Make it yours',
-      'themes.title': 'Dress it like your console',
-      'themes.text': 'Pick a theme in Settings and the entire interface follows — colours, shapes and accent glow. Try them below.',
-      'themes.play': 'Play',
-      'themes.details': 'Details',
-      'themes.hint': 'Theme preview is drawn in CSS. The real app uses the same palettes across every view.',
+      'screens.title': 'What you actually see',
+      'screens.text': 'Four screens from the app. Click any of them to enlarge.',
+      'screens.s1.title': 'The shelf',
+      'screens.s1.text': 'Left and right on the pad. The cover sits in the middle, the name under it, Play underneath. The background takes its colour from the artwork.',
+      'screens.s2.title': 'Play',
+      'screens.s2.text': 'A starts the emulator you configured for that platform. Y opens details: description, rating, playtime, a trailer if one exists.',
+      'screens.s3.title': 'One platform, or all of them',
+      'screens.s3.text': 'LB and RB jump between systems. Or leave the filter on All and keep PS2, SNES and Game Boy on the same shelf.',
+      'screens.s4.title': 'Covers, once',
+      'screens.s4.text': 'Pull artwork for one platform or the whole library. SteamGridDB, RAWG, ScreenScraper, TheGamesDB — or point at your own file. It is cached locally.',
 
-      'gallery.eyebrow': 'Screenshots',
-      'gallery.title': 'A look inside',
-      'gallery.text': 'Cover flow, platform browsing, game details and settings — click any shot to enlarge.',
-      'gallery.shot1': 'Library',
-      'gallery.shot1.text': 'Cover flow made for the couch.',
-      'gallery.shot2': 'Game details',
-      'gallery.shot2.text': 'Artwork, platform and rating.',
-      'gallery.shot3': 'Platforms',
-      'gallery.shot3.text': 'One library, many systems.',
-      'gallery.shot4': 'Settings',
-      'gallery.shot4.text': 'Themes, covers and emulator setup.',
+      'couch.title': 'For the couch',
+      'couch.lead': 'Set each platform up once. After that the pad is enough.',
+      'couch.pad.title': 'Controller',
+      'couch.pad.text': 'Left and right move the shelf. Up opens platforms. LB / RB switch system, LT / RT change the shelf mode. A plays, Y opens details, B goes back, Start opens settings.',
+      'couch.keys.title': 'Keyboard',
+      'couch.keys.text': 'Arrows and Enter. A letter jumps to that title. R picks a random game, F toggles a favourite, F11 toggles fullscreen.',
+      'couch.attract.title': 'Attract mode',
+      'couch.attract.text': 'After two minutes idle the shelf keeps moving. Any key, click or pad input stops it. Turn it off in Settings.',
+      'couch.shelves.title': 'Nine shelves',
+      'couch.shelves.text': 'Flat, arc, Big Picture, cascade, grid, list with description, spotlight, fullscreen covers, platform frame. Eleven cover ratios, or your own.',
 
-      'features.eyebrow': 'Features',
-      'features.title': 'Everything for a couch session',
-      'features.text': 'Set up each platform once, then browse and launch with a gamepad. No terminal, no scattered config files.',
-      'features.library.title': 'Library & cover flow',
-      'features.library.text': 'Browse your collection with a smooth cover flow, search, filters and instant game details.',
-      'features.platforms.title': 'Multi-platform by design',
-      'features.platforms.text': 'Each platform gets its own ROM folder, emulator binary and launch arguments. Add as many as you like.',
-      'features.covers.title': 'Covers & metadata',
-      'features.covers.text': 'Fetch artwork from SteamGridDB automatically or point to your own file or URL.',
-      'features.stats.title': 'Favourites & stats',
-      'features.stats.text': 'Favourites, recently played games and playtime counters kept locally.',
-      'features.pad.title': 'Gamepad first',
-      'features.pad.text': 'Navigate, launch and quit with a controller. Keyboard shortcuts work everywhere too.',
-      'features.fullscreen.title': 'Fullscreen big picture',
-      'features.fullscreen.text': 'Start straight into fullscreen and keep it that way while you play. One launcher, zero desktop clutter.',
-      'features.import.title': 'Import & portable mode',
-      'features.import.text': 'Bring libraries over from EmulationStation, test emulator commands, and run everything from a USB stick.',
+      'lib.title': 'For the library',
+      'lib.lead': 'The part you do at the desk, so the couch stays simple.',
+      'lib.platforms.title': 'Platforms',
+      'lib.platforms.text': 'Thirty presets fill extensions, colour, cover ratio and scraper ids. Each system has its own ROM folder, emulator and arguments. Rename later — the id stays, so covers and stats stay.',
+      'lib.art.title': 'Artwork',
+      'lib.art.text': 'SteamGridDB, RAWG, ScreenScraper.fr and TheGamesDB, in Polish and English when the source has both. A file or a URL overrides them. Missing art gets an offline placeholder.',
+      'lib.stats.title': 'Playtime',
+      'lib.stats.text': 'Hours, launch count, last played, favourites, sort, and a library check for missing folders, empty files and duplicates.',
+      'lib.portable.title': 'USB stick',
+      'lib.portable.text': 'Portable mode copies config, stats and covers into LauncherData beside the app. ROM paths are stored relative to the stick and expand to whatever letter it gets.',
+      'lib.pc.title': 'PC games',
+      'lib.pc.text': '.exe, .AppImage and .sh. On Linux: Wine, Wine-GE or Proton-GE, with a one-click download of the runner. Prefix and environment can be set per game.',
+      'lib.import.title': 'Import',
+      'lib.import.text': 'EmulationStation gamelist.xml, plus a JSON backup of config and stats. Test the emulator command from Settings before you sit down.',
 
-      'download.eyebrow': 'Download',
-      'download.title': 'Get Retro Launcher 2.1',
-      'download.text': 'Free and open source. Pick the package for your system — your existing configuration stays intact.',
-      'download.latest': 'latest release',
-      'download.yourSystem': 'Your system',
-      'download.win.title': 'Installer (.exe)',
-      'download.win.text': 'NSIS installer for Windows 10 and 11. WebView2 is installed automatically if your system needs it.',
+      'themes.title': 'Five themes. No fake preview.',
+      'themes.default': 'Default',
+      'themes.text': 'Pick one in Settings and the whole interface follows. The screenshots above are the default theme — there is no drawn mock of the others here.',
+
+      'download.title': 'Download 2.1',
+      'download.text': 'Free, MIT. Pick a package. Upgrading from 1.x keeps your platforms, covers and playtime.',
+      'download.yours': 'Your system',
+      'download.win.title': 'Installer',
+      'download.win.text': 'NSIS for Windows 10 and 11. WebView2 installs itself if it is missing.',
       'download.win.cta': 'Download for Windows',
-      'download.deb.title': 'Package (.deb)',
-      'download.deb.text': 'Native package with system integration, desktop entry and dependencies handled by apt.',
+      'download.deb.title': 'Package',
+      'download.deb.text': 'Desktop entry and dependencies handled by apt. The file is small; installed, the app sits around 10–15 MB.',
       'download.deb.cta': 'Download .deb',
-      'download.appimage.title': 'Portable (.AppImage)',
-      'download.appimage.text': 'One file, no installation. Ideal for testing or keeping the launcher on a USB drive.',
-      'download.appimage.tag': 'portable',
+      'download.appimage.title': 'Portable',
+      'download.appimage.text': 'One file, no install. Larger, because it carries its own runtime. Useful for a USB stick or a quick try.',
       'download.appimage.cta': 'Download AppImage',
-      'download.note': 'Your configuration and playtime are stored in <code>~/.config/retro-launcher</code> (or the Windows equivalent) and are preserved when upgrading from 1.x. Need another build? Check the <a href="https://github.com/multicolor-rgb/retrolaucher/releases" target="_blank" rel="noopener">releases page</a> — or verify the <a href="https://github.com/multicolor-rgb/retrolaucher/releases/download/rel%2F2.1/SHA256SUMS.txt" target="_blank" rel="noopener">SHA256 checksums</a>.',
+      'download.note': 'Config and playtime live in <code>~/.config/retro-launcher</code> (or the Windows equivalent) and survive the upgrade from 1.x. Other builds and checksums are on the <a href="https://github.com/multicolor-rgb/retrolaucher/releases" target="_blank" rel="noopener">releases page</a> and in <a href="https://github.com/multicolor-rgb/retrolaucher/releases/download/rel%2F2.1/SHA256SUMS.txt" target="_blank" rel="noopener">SHA256SUMS.txt</a>.',
 
-      'faq.eyebrow': 'FAQ',
-      'faq.title': 'Good to know',
+      'faq.title': 'Before you install',
       'faq.q1': 'Will I lose my configuration when upgrading from 1.x?',
-      'faq.a1': 'No. The data path is unchanged, so platforms, covers and playtime carry over automatically.',
+      'faq.a1': 'No. The data path is unchanged, so platforms, covers and playtime carry over.',
       'faq.q2': 'What are the system requirements?',
-      'faq.a2': 'Windows 10 or 11 with WebView2 (the installer handles it). On Linux you need a GTK3 desktop and webkit2gtk 4.1 — the .deb package pulls those in for you.',
-      'faq.q3': 'Do I need a gamepad to use it?',
-      'faq.a3': 'Not at all. Everything works with a keyboard and mouse; the controller layout is there for couch play.',
+      'faq.a2': 'Windows 10 or 11 with WebView2 — the installer fetches it if needed. On Linux, a GTK3 desktop and webkit2gtk 4.1. The .deb pulls those in.',
+      'faq.q3': 'Do I need a gamepad?',
+      'faq.a3': 'No. Keyboard and mouse cover everything. The pad layout is there for the couch.',
       'faq.q4': 'Where do the covers come from?',
-      'faq.a4': 'SteamGridDB provides automatic artwork. You can also set a custom local file or image URL for any game.',
+      'faq.a4': 'SteamGridDB, RAWG, ScreenScraper.fr and TheGamesDB, if you add the keys. You can also set a local file or an image URL per game.',
       'faq.q5': 'Is it really free?',
-      'faq.a5': 'Yes — MIT licensed and free to use. If you want to support development, there is a Ko-fi link in the footer.',
+      'faq.a5': 'Yes. MIT licensed. There is a Ko-fi link in the footer if you want to support the work.',
       'faq.q6': 'Can I run it from a USB stick?',
-      'faq.a6': 'Yes. Use the AppImage together with portable mode and the launcher keeps its config next to the executable.',
+      'faq.a6': 'Yes. AppImage plus portable mode keeps config, stats and covers next to the executable. Emulators stay installed on the machine.',
 
-      'footer.tagline': 'Pad-first retro gaming, built with Tauri 2.',
+      'footer.tagline': 'A couch launcher for the emulators you already run.',
       'footer.releases': 'Releases',
       'footer.issues': 'Report an issue',
       'footer.license': 'MIT License',
-      'footer.coffee': 'Buy me a coffee'
+      'footer.coffee': 'Buy me a coffee',
+      'konami.toast': '+30 lives'
     },
 
     pl: {
       'a11y.skip': 'Przejdź do treści',
+      'a11y.copy': 'Kopiuj',
+      'a11y.copied': 'Skopiowano',
+      'a11y.close': 'Zamknij',
       'nav.new': 'Co nowego',
-      'nav.themes': 'Motywy',
-      'nav.gallery': 'Screenshoty',
-      'nav.features': 'Funkcje',
+      'nav.screens': 'Screenshoty',
+      'nav.library': 'Biblioteka',
+      'nav.faq': 'FAQ',
       'nav.download': 'Pobierz',
+      'nav.menu': 'Menu',
       'cta.download': 'Pobierz',
 
-      'hero.badge': 'v2.1.0 · nowy silnik Tauri 2',
-      'hero.title1': 'Twoja biblioteka retro.',
-      'hero.title2': 'Jedno piękne miejsce.',
-      'hero.text': 'Retro Launcher łączy ROM-y, emulatory i okładki w interfejsie stworzonym pod pada i kanapę. Przepisany na Tauri 2 — mniejszy, szybszy i lżejszy niż kiedykolwiek.',
+      'hero.title1': 'Jedna półka.',
+      'hero.title2': 'Wszystkie ROM-y.',
+      'hero.title3': 'Pad w ręku.',
+      'hero.text': 'Launcher na kanapę do emulatorów, które już masz. Okładki, czas gry i jeden przycisk Uruchom. Przepisany na Tauri 2 — ta sama biblioteka, ułamek starej aplikacji.',
       'hero.cta': 'Pobierz za darmo',
-      'hero.github': 'Zobacz na GitHubie',
-      'hero.chip.pad': 'Gotowy na pada',
-      'hero.window': 'Biblioteka',
-      'hero.covers': 'Okładki',
-      'hero.combo': 'Kombinacja stop',
+      'hero.github': 'GitHub',
+      'hero.open': 'Otwórz screenshot',
+      'hero.capture': 'Prawdziwy ekran aplikacji',
+      'hero.prev': 'Poprzedni screenshot',
+      'hero.next': 'Następny screenshot',
+      'hero.s1': 'Półka',
+      'hero.s2': 'Uruchom',
+      'hero.s3': 'Platforma',
+      'hero.s4': 'Okładki',
 
-      'new.eyebrow': 'Co nowego w 2.x',
-      'new.title': 'Lżejszy launcher w zupełnie nowej szacie',
-      'new.text': 'Przejście z Electrona na Tauri 2 sprawiło, że aplikacja jest znacznie mniejsza i szybsza. Do tego cztery motywy inspirowane konsolami, porządny manager plików i natywny watchdog pada.',
-      'new.tauri.title': 'Natywny rdzeń Tauri 2',
-      'new.tauri.text': 'Backend w Rust zamiast wbudowanej przeglądarki. Ten sam interfejs przy ułamku rozmiaru.',
-      'new.tauri.stat': '3.4 MB .deb · ~3× mniej RAM',
-      'new.themes.title': 'Cztery motywy konsol',
-      'new.themes.text': 'Skórki inspirowane PS3, Wii, Xbox i Switch. Każdy ekran, przycisk i akcent podąża za wybranym motywem.',
-      'new.themes.stat': 'PS3 · Wii · Xbox · Switch',
-      'new.manager.title': 'Manager plików',
-      'new.manager.text': 'Szukaj, zaznaczaj wiele pozycji i edytuj bibliotekę hurtowo. Zmieniaj nazwy, przenoś i usuwaj bez wychodzenia z launchera.',
-      'new.manager.stat': 'Masowa edycja i wyszukiwanie',
-      'new.watchdog.title': 'Watchdog pada',
-      'new.watchdog.text': 'Natywny mechanizm w Rust nasłuchuje kombinacji stop i natychmiast zamyka grę — także w pełnym ekranie.',
+      'facts.size': 'pakiet, było ~90 MB',
+      'facts.ram': 'RAM przy starcie, było ~300 MB',
+      'facts.shelves': 'trybów półki',
+      'facts.pad.value': 'Najpierw pad',
+      'facts.pad': 'klawiatura też działa',
 
-      'themes.eyebrow': 'Dopasuj do siebie',
-      'themes.title': 'Ubierz go jak swoją konsolę',
-      'themes.text': 'Wybierz motyw w Ustawieniach, a cały interfejs pójdzie za nim — kolory, kształty i poświata akcentu. Przetestuj poniżej.',
-      'themes.play': 'Uruchom',
-      'themes.details': 'Szczegóły',
-      'themes.hint': 'Podgląd motywu jest rysowany w CSS. Prawdziwa aplikacja używa tych samych palet w każdym widoku.',
+      'new.title': 'Mniejszy. Biblioteka zostaje.',
+      'new.text': '2.1 to port na Tauri. Ekran jest ten, który już znasz. Backend jest w Ruście, a ścieżka danych się nie ruszyła.',
+      'new.caption': 'Electron 1.x wobec Tauri 2.1',
+      'new.row.size': 'Pakiet',
+      'new.row.ram': 'RAM przy starcie',
+      'new.row.stop': 'Wyjście z pada',
+      'new.row.data': 'Twoja biblioteka',
+      'new.stop.old': 'Ukryte okno pomocnicze',
+      'new.stop.new': 'Watchdog w Ruście',
+      'new.data.new': 'Ta sama ścieżka',
+      'new.themes.title': 'Pięć motywów',
+      'new.themes.text': 'Domyślny, PS3, Wii, Xbox, Switch. Kolory, kształty i akcent idą za tym, który wybierzesz w Ustawieniach.',
+      'new.manager.title': 'Manager gier',
+      'new.manager.text': 'Szukaj, zaznaczaj wiele pozycji, zmieniaj nazwy, przenoś i usuwaj bez wychodzenia z launchera.',
+      'new.watchdog.title': 'Kombinacja stop',
+      'new.watchdog.text': 'L3 + R3 + LB + RB zamyka grę od razu, także w pełnym ekranie. Nasłuch jest w Ruście, nie w ukrytym oknie.',
 
-      'gallery.eyebrow': 'Screenshoty',
-      'gallery.title': 'Zajrzyj do środka',
-      'gallery.text': 'Cover flow, przeglądanie platform, szczegóły gry i ustawienia — kliknij zdjęcie, aby powiększyć.',
-      'gallery.shot1': 'Biblioteka',
-      'gallery.shot1.text': 'Cover flow stworzony pod kanapę.',
-      'gallery.shot2': 'Szczegóły gry',
-      'gallery.shot2.text': 'Okładka, platforma i ocena.',
-      'gallery.shot3': 'Platformy',
-      'gallery.shot3.text': 'Jedna biblioteka, wiele systemów.',
-      'gallery.shot4': 'Ustawienia',
-      'gallery.shot4.text': 'Motywy, okładki i konfiguracja emulatorów.',
+      'screens.title': 'To, co naprawdę widzisz',
+      'screens.text': 'Cztery ekrany z aplikacji. Kliknij, żeby powiększyć.',
+      'screens.s1.title': 'Półka',
+      'screens.s1.text': 'Lewo i prawo na padzie. Okładka na środku, tytuł pod nią, Uruchom poniżej. Tło bierze kolor z grafiki.',
+      'screens.s2.title': 'Uruchom',
+      'screens.s2.text': 'A odpala emulator ustawiony dla tej platformy. Y otwiera szczegóły: opis, ocenę, czas gry, zwiastun jeśli jest.',
+      'screens.s3.title': 'Jedna platforma albo wszystkie',
+      'screens.s3.text': 'LB i RB przeskakują między systemami. Albo zostaw filtr na Wszystkie i trzymaj PS2, SNES i Game Boya na jednej półce.',
+      'screens.s4.title': 'Okładki, raz',
+      'screens.s4.text': 'Pobierz grafiki dla jednej platformy albo całej biblioteki. SteamGridDB, RAWG, ScreenScraper, TheGamesDB — albo wskaż własny plik. Cache jest lokalny.',
 
-      'features.eyebrow': 'Funkcje',
-      'features.title': 'Wszystko na sesję z kanapy',
-      'features.text': 'Skonfiguruj każdą platformę raz, a potem przeglądaj i uruchamiaj gry padem. Bez terminala i porozrzucanych plików konfiguracji.',
-      'features.library.title': 'Biblioteka i cover flow',
-      'features.library.text': 'Przeglądaj kolekcję w płynnym cover flow, z wyszukiwaniem, filtrami i natychmiastowymi szczegółami gry.',
-      'features.platforms.title': 'Wiele platform w standardzie',
-      'features.platforms.text': 'Każda platforma ma własny folder ROM-ów, binarkę emulatora i argumenty startowe. Dodawaj ich dowolną liczbę.',
-      'features.covers.title': 'Okładki i metadane',
-      'features.covers.text': 'Pobieraj grafiki automatycznie ze SteamGridDB albo wskaż własny plik lub URL.',
-      'features.stats.title': 'Ulubione i statystyki',
-      'features.stats.text': 'Ulubione, ostatnio grane gry i licznik czasu gry trzymane lokalnie.',
-      'features.pad.title': 'Najpierw pad',
-      'features.pad.text': 'Nawiguj, uruchamiaj i wychodź padem. Skróty klawiaturowe też działają wszędzie.',
-      'features.fullscreen.title': 'Pełny ekran jak big picture',
-      'features.fullscreen.text': 'Startuj prosto w pełny ekran i zostań w nim podczas gry. Jeden launcher, zero bałaganu na pulpicie.',
-      'features.import.title': 'Import i tryb przenośny',
-      'features.import.text': 'Przenieś biblioteki z EmulationStation, testuj polecenia emulatorów i uruchamiaj wszystko z pendrive’a.',
+      'couch.title': 'Na kanapę',
+      'couch.lead': 'Każdą platformę ustawiasz raz. Potem wystarczy pad.',
+      'couch.pad.title': 'Pad',
+      'couch.pad.text': 'Lewo i prawo przesuwają półkę. Góra otwiera platformy. LB / RB zmieniają system, LT / RT tryb półki. A uruchamia, Y otwiera szczegóły, B wraca, Start otwiera ustawienia.',
+      'couch.keys.title': 'Klawiatura',
+      'couch.keys.text': 'Strzałki i Enter. Litera skacze do tytułu na tę literę. R losuje grę, F przełącza ulubione, F11 pełny ekran.',
+      'couch.attract.title': 'Tryb atrakcji',
+      'couch.attract.text': 'Po dwóch minutach bezczynności półka sama się przesuwa. Klawisz, klik albo pad to zatrzymuje. Wyłączysz to w Ustawieniach.',
+      'couch.shelves.title': 'Dziewięć półek',
+      'couch.shelves.text': 'Płaska, łuk, Big Picture, kaskada, siatka, lista z opisem, spotlight, pełnoekranowe okładki, ramka platformy. Jedenaście proporcji okładek albo własne.',
 
-      'download.eyebrow': 'Pobieranie',
-      'download.title': 'Pobierz Retro Launcher 2.1',
-      'download.text': 'Darmowy i otwarty. Wybierz pakiet dla swojego systemu — obecna konfiguracja pozostanie nietknięta.',
-      'download.latest': 'najnowsze wydanie',
-      'download.yourSystem': 'Twój system',
-      'download.win.title': 'Instalator (.exe)',
-      'download.win.text': 'Instalator NSIS dla Windows 10 i 11. WebView2 doinstaluje się automatycznie, jeśli system go potrzebuje.',
+      'lib.title': 'Do składania biblioteki',
+      'lib.lead': 'To, co robisz przy biurku, żeby na kanapie było prosto.',
+      'lib.platforms.title': 'Platformy',
+      'lib.platforms.text': 'Trzydzieści podpowiedzi uzupełnia rozszerzenia, kolor, proporcję okładki i mapowanie scraperów. Każdy system ma własny folder ROM-ów, emulator i argumenty. Nazwę zmienisz później — identyfikator zostaje, więc okładki i statystyki też.',
+      'lib.art.title': 'Okładki',
+      'lib.art.text': 'SteamGridDB, RAWG, ScreenScraper.fr i TheGamesDB, po polsku i angielsku, gdy źródło ma obie wersje. Plik albo URL je nadpisuje. Brak grafiki dostaje lokalny placeholder.',
+      'lib.stats.title': 'Czas gry',
+      'lib.stats.text': 'Godziny, liczba uruchomień, ostatnia rozgrywka, ulubione, sortowanie i sprawdzenie biblioteki: brakujące foldery, puste pliki, duplikaty.',
+      'lib.portable.title': 'Pendrive',
+      'lib.portable.text': 'Tryb przenośny kopiuje konfigurację, statystyki i okładki do LauncherData obok aplikacji. Ścieżki ROM-ów są względne i rozwijają się do aktualnej litery dysku.',
+      'lib.pc.title': 'Gry PC',
+      'lib.pc.text': '.exe, .AppImage i .sh. Na Linuksie: Wine, Wine-GE albo Proton-GE, z pobraniem runnera jednym przyciskiem. Prefiks i zmienne można ustawić per gra.',
+      'lib.import.title': 'Import',
+      'lib.import.text': 'gamelist.xml z EmulationStation i kopia JSON konfiguracji ze statystykami. Polecenie emulatora przetestujesz w Ustawieniach, zanim usiądziesz.',
+
+      'themes.title': 'Pięć motywów. Bez fałszywego podglądu.',
+      'themes.default': 'Domyślny',
+      'themes.text': 'Wybierasz jeden w Ustawieniach i cały interfejs idzie za nim. Screenshoty wyżej są z motywu domyślnego — pozostałych tu nie udaję.',
+
+      'download.title': 'Pobierz 2.1',
+      'download.text': 'Darmowy, MIT. Wybierz pakiet. Aktualizacja z 1.x zostawia platformy, okładki i czas gry.',
+      'download.yours': 'Twój system',
+      'download.win.title': 'Instalator',
+      'download.win.text': 'NSIS dla Windows 10 i 11. WebView2 doinstaluje się sam, jeśli go brakuje.',
       'download.win.cta': 'Pobierz dla Windows',
-      'download.deb.title': 'Pakiet (.deb)',
-      'download.deb.text': 'Natywny pakiet z integracją systemową, wpisem w menu i zależnościami obsłużonymi przez apt.',
+      'download.deb.title': 'Pakiet',
+      'download.deb.text': 'Wpis w menu i zależności ogarnia apt. Plik jest mały; po instalacji aplikacja ma około 10–15 MB.',
       'download.deb.cta': 'Pobierz .deb',
-      'download.appimage.title': 'Przenośny (.AppImage)',
-      'download.appimage.text': 'Jeden plik, bez instalacji. Idealny do testów albo trzymania launchera na pendrive.',
-      'download.appimage.tag': 'przenośny',
+      'download.appimage.title': 'Przenośny',
+      'download.appimage.text': 'Jeden plik, bez instalacji. Większy, bo niesie własny runtime. Dobry na pendrive albo szybki test.',
       'download.appimage.cta': 'Pobierz AppImage',
-      'download.note': 'Konfiguracja i czas gry są zapisywane w <code>~/.config/retro-launcher</code> (lub odpowiedniku na Windows) i pozostają zachowane przy aktualizacji z 1.x. Potrzebujesz innego builda? Zajrzyj na <a href="https://github.com/multicolor-rgb/retrolaucher/releases" target="_blank" rel="noopener">stronę wydań</a> lub zweryfikuj <a href="https://github.com/multicolor-rgb/retrolaucher/releases/download/rel%2F2.1/SHA256SUMS.txt" target="_blank" rel="noopener">sumy SHA256</a>.',
+      'download.note': 'Konfiguracja i czas gry leżą w <code>~/.config/retro-launcher</code> (albo odpowiedniku na Windows) i przeżywają aktualizację z 1.x. Inne buildy i sumy są na <a href="https://github.com/multicolor-rgb/retrolaucher/releases" target="_blank" rel="noopener">stronie wydań</a> i w <a href="https://github.com/multicolor-rgb/retrolaucher/releases/download/rel%2F2.1/SHA256SUMS.txt" target="_blank" rel="noopener">SHA256SUMS.txt</a>.',
 
-      'faq.eyebrow': 'FAQ',
-      'faq.title': 'Warto wiedzieć',
+      'faq.title': 'Zanim zainstalujesz',
       'faq.q1': 'Czy stracę konfigurację przy aktualizacji z 1.x?',
-      'faq.a1': 'Nie. Ścieżka danych się nie zmieniła, więc platformy, okładki i czas gry przeniosą się automatycznie.',
-      'faq.q2': 'Jakie są wymagania systemowe?',
-      'faq.a2': 'Windows 10 lub 11 z WebView2 (instalator załatwia to sam). Na Linuksie potrzebny jest pulpit GTK3 i webkit2gtk 4.1 — pakiet .deb dociągnie je za Ciebie.',
+      'faq.a1': 'Nie. Ścieżka danych się nie zmieniła, więc platformy, okładki i czas gry zostają.',
+      'faq.q2': 'Jakie są wymagania?',
+      'faq.a2': 'Windows 10 lub 11 z WebView2 — instalator dociągnie je w razie potrzeby. Na Linuksie pulpit GTK3 i webkit2gtk 4.1. Pakiet .deb je dociąga.',
       'faq.q3': 'Czy potrzebuję pada?',
-      'faq.a3': 'Wcale nie. Wszystko działa z klawiaturą i myszą; układ pod pada jest dla grania z kanapy.',
-      'faq.q4': 'Skąd pochodzą okładki?',
-      'faq.a4': 'Grafiki pobiera automatycznie SteamGridDB. Możesz też ustawić własny plik lokalny lub URL obrazka dla dowolnej gry.',
+      'faq.a3': 'Nie. Klawiatura i mysz wystarczą. Układ pada jest na kanapę.',
+      'faq.q4': 'Skąd są okładki?',
+      'faq.a4': 'SteamGridDB, RAWG, ScreenScraper.fr i TheGamesDB, jeśli dodasz klucze. Możesz też wskazać plik albo URL obrazka dla konkretnej gry.',
       'faq.q5': 'Czy to naprawdę darmowe?',
-      'faq.a5': 'Tak — licencja MIT i darmowe użytkowanie. Jeśli chcesz wesprzeć rozwój, w stopce jest link do Ko-fi.',
-      'faq.q6': 'Czy uruchomię go z pendrive’a?',
-      'faq.a6': 'Tak. Użyj AppImage razem z trybem przenośnym, a launcher będzie trzymał konfigurację obok pliku wykonywalnego.',
+      'faq.a5': 'Tak. Licencja MIT. W stopce jest Ko-fi, jeśli chcesz wesprzeć pracę.',
+      'faq.q6': 'Czy ruszy z pendrive’a?',
+      'faq.a6': 'Tak. AppImage i tryb przenośny trzymają konfigurację, statystyki i okładki obok pliku. Emulatory zostają zainstalowane w systemie.',
 
-      'footer.tagline': 'Retro granie pod pada, zbudowane na Tauri 2.',
+      'footer.tagline': 'Launcher na kanapę do emulatorów, które już masz.',
       'footer.releases': 'Wydania',
       'footer.issues': 'Zgłoś problem',
       'footer.license': 'Licencja MIT',
-      'footer.coffee': 'Kup mi kawę'
+      'footer.coffee': 'Kup mi kawę',
+      'konami.toast': '+30 żyć'
     }
   };
 
   var root = document.documentElement;
   var storageKey = 'retro-launcher-lang';
   var currentLang = 'en';
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var lightbox = document.getElementById('lightbox');
 
   function applyLanguage(lang) {
     if (!i18n[lang]) lang = 'en';
@@ -240,33 +276,27 @@
       var value = i18n[lang][el.getAttribute('data-i18n')];
       if (typeof value === 'string') el.textContent = value;
     });
-
     document.querySelectorAll('[data-i18n-html]').forEach(function (el) {
       var value = i18n[lang][el.getAttribute('data-i18n-html')];
       if (typeof value === 'string') el.innerHTML = value;
     });
-
     document.querySelectorAll('[data-i18n-aria]').forEach(function (el) {
       var value = i18n[lang][el.getAttribute('data-i18n-aria')];
       if (typeof value === 'string') el.setAttribute('aria-label', value);
     });
-
     document.querySelectorAll('[data-lang]').forEach(function (btn) {
       btn.setAttribute('aria-pressed', String(btn.getAttribute('data-lang') === lang));
     });
 
-    if (lightbox && lightbox.classList.contains('is-open')) updateLightboxCaption();
-    updateDocumentTitle(lang);
-  }
-
-  function updateDocumentTitle(lang) {
     document.title = lang === 'pl'
-      ? 'Retro Launcher 2.1 — Twoja biblioteka retro w jednym miejscu'
-      : 'Retro Launcher 2.1 — Your retro library, one beautiful home';
+      ? 'Retro Launcher 2.1 — Jedna półka. Wszystkie ROM-y.'
+      : 'Retro Launcher 2.1 — One shelf. Every ROM.';
+
+    if (lightbox && lightbox.classList.contains('is-open')) updateLightboxCaption();
   }
 
   var savedLang = 'en';
-  try { savedLang = localStorage.getItem(storageKey) || (navigator.language || 'en').slice(0, 2); } catch (e) { /* ignore */ }
+  try { savedLang = localStorage.getItem(storageKey) || 'en'; } catch (e) { /* ignore */ }
   applyLanguage(savedLang === 'pl' ? 'pl' : 'en');
 
   document.querySelectorAll('[data-lang]').forEach(function (btn) {
@@ -274,15 +304,29 @@
   });
 
   /* ---------- Header ---------- */
-  var header = document.getElementById('siteHeader');
-  var onScroll = function () {
-    if (!header) return;
-    header.classList.toggle('is-scrolled', window.scrollY > 8);
-  };
-  window.addEventListener('scroll', onScroll, { passive: true });
-  onScroll();
 
-  /* ---------- Mobile nav ---------- */
+  var header = document.getElementById('siteHeader');
+  window.addEventListener('scroll', function () {
+    if (header) header.classList.toggle('is-scrolled', window.scrollY > 8);
+  }, { passive: true });
+
+  var navLinks = Array.prototype.slice.call(document.querySelectorAll('.main-nav a'));
+  if ('IntersectionObserver' in window && navLinks.length) {
+    var sectionSpy = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        var id = '#' + entry.target.id;
+        navLinks.forEach(function (link) {
+          link.classList.toggle('is-active', link.getAttribute('href') === id);
+        });
+      });
+    }, { rootMargin: '-40% 0px -50% 0px' });
+    navLinks.forEach(function (link) {
+      var target = document.querySelector(link.getAttribute('href'));
+      if (target) sectionSpy.observe(target);
+    });
+  }
+
   var navToggle = document.querySelector('.nav-toggle');
   var mobileNav = document.getElementById('mobileNav');
   if (navToggle && mobileNav) {
@@ -299,71 +343,77 @@
     });
   }
 
-  /* ---------- Theme tabs ---------- */
-  var tabs = Array.prototype.slice.call(document.querySelectorAll('.theme-tab'));
-  var mock = document.getElementById('themeMock');
-  var themeNames = { ps3: 'PS3', wii: 'Wii', xbox: 'Xbox', switch: 'Switch' };
+  /* ---------- Hero frame ---------- */
 
-  function selectTheme(theme, focusTab) {
-    if (!mock) return;
-    mock.setAttribute('data-theme', theme);
-    tabs.forEach(function (tab) {
-      var active = tab.getAttribute('data-theme') === theme;
-      tab.setAttribute('aria-selected', String(active));
-      tab.tabIndex = active ? 0 : -1;
-      if (active) {
-        mock.setAttribute('aria-labelledby', tab.id);
-        if (focusTab) tab.focus();
-      }
+  var stage = document.getElementById('stage');
+  var stageImgs = stage ? Array.prototype.slice.call(stage.querySelectorAll('.stage__frame img')) : [];
+  var stageDots = stage ? Array.prototype.slice.call(stage.querySelectorAll('.stage__dots button')) : [];
+  var stageIndex = 0;
+  var stageTimer = null;
+  var stagePaused = false;
+
+  function showStage(index) {
+    if (!stageImgs.length) return;
+    stageIndex = (index + stageImgs.length) % stageImgs.length;
+    stageImgs.forEach(function (img, i) {
+      img.classList.toggle('is-active', i === stageIndex);
+    });
+    stageDots.forEach(function (dot, i) {
+      dot.setAttribute('aria-selected', i === stageIndex ? 'true' : 'false');
     });
   }
 
-  tabs.forEach(function (tab, index) {
-    tab.addEventListener('click', function () { selectTheme(tab.getAttribute('data-theme'), false); });
-    tab.addEventListener('keydown', function (event) {
-      var next = null;
-      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') next = (index + 1) % tabs.length;
-      if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') next = (index - 1 + tabs.length) % tabs.length;
-      if (event.key === 'Home') next = 0;
-      if (event.key === 'End') next = tabs.length - 1;
-      if (next === null) return;
-      event.preventDefault();
-      selectTheme(tabs[next].getAttribute('data-theme'), true);
-      tabs[next].tabIndex = 0;
+  function startStage() {
+    if (reduceMotion || stageTimer || stageImgs.length < 2) return;
+    stageTimer = setInterval(function () {
+      if (stagePaused || document.hidden) return;
+      showStage(stageIndex + 1);
+    }, 6500);
+  }
+
+  if (stageImgs.length) {
+    showStage(0);
+    startStage();
+    stage.addEventListener('mouseenter', function () { stagePaused = true; });
+    stage.addEventListener('mouseleave', function () { stagePaused = false; });
+    stageDots.forEach(function (dot) {
+      dot.addEventListener('click', function () {
+        showStage(Number(dot.getAttribute('data-slide')) || 0);
+        if (stageTimer) {
+          clearInterval(stageTimer);
+          stageTimer = null;
+          startStage();
+        }
+      });
     });
-  });
+  }
 
-  selectTheme('ps3', false);
+  /* ---------- Lightbox ---------- */
 
-  /* ---------- Gallery lightbox ---------- */  var shots = Array.prototype.slice.call(document.querySelectorAll('.shot'));
-  var lightbox = document.getElementById('lightbox');
+  var shots = Array.prototype.slice.call(document.querySelectorAll('.shot'));
   var lightboxImg = document.getElementById('lightboxImg');
   var lightboxTitle = document.getElementById('lightboxTitle');
   var lightboxCounter = document.getElementById('lightboxCounter');
   var lightboxClose = document.getElementById('lightboxClose');
-  var lightboxPrev = document.getElementById('lightboxPrev');
-  var lightboxNext = document.getElementById('lightboxNext');
   var currentShot = 0;
   var lastFocused = null;
 
   function captionFor(shot) {
-    var key = currentLang === 'pl' ? 'data-caption-pl' : 'data-caption-en';
-    return shot.getAttribute(key) || '';
+    return shot.getAttribute(currentLang === 'pl' ? 'data-caption-pl' : 'data-caption-en') || '';
   }
 
   function updateLightboxCaption() {
-    if (!shots[currentShot]) return;
+    if (!shots[currentShot] || !lightboxTitle) return;
     lightboxTitle.textContent = captionFor(shots[currentShot]);
-    lightboxCounter.textContent = (currentShot + 1) + ' / ' + shots.length;
+    if (lightboxCounter) lightboxCounter.textContent = (currentShot + 1) + ' / ' + shots.length;
   }
 
   function showShot(index) {
-    if (!shots.length) return;
+    if (!shots.length || !lightboxImg) return;
     currentShot = (index + shots.length) % shots.length;
     var shot = shots[currentShot];
-    var full = shot.getAttribute('data-full');
     var img = shot.querySelector('img');
-    lightboxImg.src = full;
+    lightboxImg.src = shot.getAttribute('data-full') || (img ? img.src : '');
     lightboxImg.alt = img ? img.alt : '';
     updateLightboxCaption();
   }
@@ -383,97 +433,128 @@
     lightbox.classList.remove('is-open');
     lightbox.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
-    if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+    if (lastFocused && lastFocused.focus) lastFocused.focus();
   }
 
   shots.forEach(function (shot, index) {
     shot.addEventListener('click', function () { openLightbox(index); });
   });
 
+  var stageOpen = document.getElementById('stageOpen');
+  if (stageOpen) {
+    stageOpen.addEventListener('click', function () { openLightbox(stageIndex); });
+  }
+
   if (lightbox) {
     if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
-    if (lightboxPrev) lightboxPrev.addEventListener('click', function () { showShot(currentShot - 1); });
-    if (lightboxNext) lightboxNext.addEventListener('click', function () { showShot(currentShot + 1); });
+    var prev = document.getElementById('lightboxPrev');
+    var next = document.getElementById('lightboxNext');
+    if (prev) prev.addEventListener('click', function () { showShot(currentShot - 1); });
+    if (next) next.addEventListener('click', function () { showShot(currentShot + 1); });
     lightbox.addEventListener('click', function (event) {
       if (event.target === lightbox) closeLightbox();
     });
     document.addEventListener('keydown', function (event) {
       if (!lightbox.classList.contains('is-open')) return;
-      if (event.key === 'Escape') { closeLightbox(); return; }
-      if (event.key === 'ArrowLeft') { showShot(currentShot - 1); return; }
-      if (event.key === 'ArrowRight') { showShot(currentShot + 1); return; }
-      if (event.key === 'Tab') {
-        var focusable = lightbox.querySelectorAll('button');
-        if (!focusable.length) return;
-        var first = focusable[0];
-        var last = focusable[focusable.length - 1];
-        if (event.shiftKey && document.activeElement === first) {
-          event.preventDefault();
-          last.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-          event.preventDefault();
-          first.focus();
-        }
-      }
+      if (event.key === 'Escape') closeLightbox();
+      if (event.key === 'ArrowLeft') showShot(currentShot - 1);
+      if (event.key === 'ArrowRight') showShot(currentShot + 1);
     });
   }
 
-  /* ---------- Copy buttons ---------- */
+  /* ---------- Copy ---------- */
+
   document.querySelectorAll('.copy-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var text = btn.getAttribute('data-copy') || '';
       var done = function () {
         btn.classList.add('is-copied');
-        setTimeout(function () { btn.classList.remove('is-copied'); }, 1800);
+        btn.textContent = i18n[currentLang]['a11y.copied'];
+        setTimeout(function () {
+          btn.classList.remove('is-copied');
+          btn.textContent = i18n[currentLang]['a11y.copy'];
+        }, 1600);
       };
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(done).catch(function () { /* ignore */ });
-      } else {
-        var area = document.createElement('textarea');
-        area.value = text;
-        area.setAttribute('readonly', '');
-        area.style.position = 'fixed';
-        area.style.opacity = '0';
-        document.body.appendChild(area);
-        area.select();
-        try { document.execCommand('copy'); done(); } catch (e) { /* ignore */ }
-        document.body.removeChild(area);
       }
     });
   });
 
-  /* ---------- OS detection ---------- */
+  /* ---------- OS ---------- */
+
   var platform = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '';
   var ua = navigator.userAgent || '';
-  var isWindows = /Win/i.test(platform) || /Windows/i.test(ua);
-  var isLinux = /Linux|X11/i.test(platform) || (/Linux/i.test(ua) && !/Android/i.test(ua));
   var recommended = null;
-  if (isWindows) recommended = document.querySelector('.download-card[data-os="windows"]');
-  if (isLinux) recommended = document.querySelector('.download-card[data-os="linux"]');
-  if (recommended) recommended.classList.add('download-card--recommended');
+  if (/Win/i.test(platform) || /Windows/i.test(ua)) {
+    recommended = document.querySelector('.pkg[data-os="windows"]');
+  } else if (/Linux|X11/i.test(platform) || (/Linux/i.test(ua) && !/Android/i.test(ua))) {
+    recommended = document.querySelector('.pkg[data-os="linux"]');
+  }
+  if (recommended) recommended.classList.add('is-recommended');
 
-  /* ---------- Reveal on scroll ---------- */
+  /* ---------- Reveal ---------- */
+
   var revealItems = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
-  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
   if (reduceMotion || !('IntersectionObserver' in window)) {
     revealItems.forEach(function (el) { el.classList.add('is-visible'); });
   } else {
     var observer = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (!entry.isIntersecting) return;
-        var el = entry.target;
-        var siblings = el.parentElement ? Array.prototype.slice.call(el.parentElement.children) : [];
-        var index = siblings.indexOf(el);
-        el.style.transitionDelay = Math.min(index, 4) * 70 + 'ms';
-        el.classList.add('is-visible');
-        observer.unobserve(el);
+        entry.target.classList.add('is-visible');
+        observer.unobserve(entry.target);
       });
-    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+    }, { rootMargin: '0px 0px -6% 0px', threshold: 0.05 });
     revealItems.forEach(function (el) { observer.observe(el); });
+    window.addEventListener('load', function () {
+      setTimeout(function () {
+        revealItems.forEach(function (el) {
+          if (!el.classList.contains('is-visible') && el.getBoundingClientRect().top < 80) {
+            el.classList.add('is-visible');
+          }
+        });
+      }, 400);
+    });
   }
 
-  /* ---------- Footer year ---------- */
+  /* ---------- Konami, quiet ---------- */
+
+  var konami = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+  var konamiIndex = 0;
+  var konamiToast = document.getElementById('konamiToast');
+  var konamiTimer = null;
+
+  function blip(freq, startAt, duration) {
+    try {
+      var ctx = blip.ctx || (blip.ctx = new (window.AudioContext || window.webkitAudioContext)());
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      var t = ctx.currentTime + (startAt || 0);
+      osc.type = 'square';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.035, t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + duration);
+    } catch (e) { /* no audio */ }
+  }
+
+  document.addEventListener('keydown', function (event) {
+    if (lightbox && lightbox.classList.contains('is-open')) return;
+    var key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    konamiIndex = key === konami[konamiIndex] ? konamiIndex + 1 : (key === konami[0] ? 1 : 0);
+    if (konamiIndex !== konami.length) return;
+    konamiIndex = 0;
+    [523, 659, 784, 1047].forEach(function (f, i) { blip(f, i * 0.09, 0.14); });
+    if (!konamiToast) return;
+    konamiToast.hidden = false;
+    if (konamiTimer) clearTimeout(konamiTimer);
+    konamiTimer = setTimeout(function () { konamiToast.hidden = true; }, 2200);
+  });
+
   var yearEl = document.getElementById('year');
   if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 })();
