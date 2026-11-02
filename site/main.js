@@ -119,7 +119,7 @@
       'faq.q4': 'Where do the covers come from?',
       'faq.a4': 'SteamGridDB, RAWG, ScreenScraper.fr and TheGamesDB, if you add the keys. You can also set a local file or an image URL per game.',
       'faq.q5': 'Is it really free?',
-      'faq.a5': 'Yes. MIT licensed. There is a Ko-fi link in the footer if you want to support the work.',
+      'faq.a5': 'Yes. MIT licensed. There is a BuyCoffeeTo link in the footer if you want to support the work.',
       'faq.q6': 'Can I run it from a USB stick?',
       'faq.a6': 'Yes. AppImage plus portable mode keeps config, stats and covers next to the executable. Emulators stay installed on the machine.',
 
@@ -128,6 +128,14 @@
       'footer.issues': 'Report an issue',
       'footer.license': 'MIT License',
       'footer.coffee': 'Buy me a coffee',
+      'footer.privacy': 'Privacy & cookies',
+      'support.label': 'Buy me a coffee',
+      'support.aria': 'Support Retro Launcher on BuyCoffeeTo',
+      'cookie.aria': 'Privacy and cookies',
+      'cookie.title': 'No tracking cookies.',
+      'cookie.text': 'This site stores only your language choice and this notice in localStorage. No ads, no analytics.',
+      'cookie.more': 'Privacy & cookies',
+      'cookie.ok': 'Understood',
       'konami.toast': '+30 lives'
     },
 
@@ -247,7 +255,7 @@
       'faq.q4': 'Skąd są okładki?',
       'faq.a4': 'SteamGridDB, RAWG, ScreenScraper.fr i TheGamesDB, jeśli dodasz klucze. Możesz też wskazać plik albo URL obrazka dla konkretnej gry.',
       'faq.q5': 'Czy to naprawdę darmowe?',
-      'faq.a5': 'Tak. Licencja MIT. W stopce jest Ko-fi, jeśli chcesz wesprzeć pracę.',
+      'faq.a5': 'Tak. Licencja MIT. W stopce jest link BuyCoffeeTo, jeśli chcesz wesprzeć pracę.',
       'faq.q6': 'Czy ruszy z pendrive’a?',
       'faq.a6': 'Tak. AppImage i tryb przenośny trzymają konfigurację, statystyki i okładki obok pliku. Emulatory zostają zainstalowane w systemie.',
 
@@ -255,7 +263,15 @@
       'footer.releases': 'Wydania',
       'footer.issues': 'Zgłoś problem',
       'footer.license': 'Licencja MIT',
-      'footer.coffee': 'Kup mi kawę',
+      'footer.coffee': 'Postaw kawę',
+      'footer.privacy': 'Prywatność i cookies',
+      'support.label': 'Postaw kawę',
+      'support.aria': 'Wesprzyj Retro Launcher na BuyCoffeeTo',
+      'cookie.aria': 'Prywatność i cookies',
+      'cookie.title': 'Bez cookies śledzących.',
+      'cookie.text': 'Ta strona zapisuje w localStorage tylko wybór języka i tę informację. Bez reklam i analityki.',
+      'cookie.more': 'Prywatność i cookies',
+      'cookie.ok': 'Rozumiem',
       'konami.toast': '+30 żyć'
     }
   };
@@ -554,6 +570,29 @@
     if (konamiTimer) clearTimeout(konamiTimer);
     konamiTimer = setTimeout(function () { konamiToast.hidden = true; }, 2200);
   });
+
+  /* ---------- Cookie notice (informational; no tracking cookies) ---------- */
+
+  var cookieBar = document.getElementById('cookieBar');
+  var cookieOk = document.getElementById('cookieOk');
+  var cookieKey = 'retro-launcher-cookie-notice';
+  var cookieSeen = false;
+  try { cookieSeen = localStorage.getItem(cookieKey) === 'seen'; } catch (e) { /* ignore */ }
+
+  if (cookieBar && !cookieSeen) {
+    window.setTimeout(function () {
+      cookieBar.hidden = false;
+      requestAnimationFrame(function () { cookieBar.classList.add('is-visible'); });
+    }, 700);
+  }
+
+  if (cookieOk && cookieBar) {
+    cookieOk.addEventListener('click', function () {
+      cookieBar.classList.remove('is-visible');
+      cookieBar.hidden = true;
+      try { localStorage.setItem(cookieKey, 'seen'); } catch (e) { /* ignore */ }
+    });
+  }
 
   var yearEl = document.getElementById('year');
   if (yearEl) yearEl.textContent = String(new Date().getFullYear());

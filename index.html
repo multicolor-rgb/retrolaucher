@@ -22,9 +22,8 @@
   <meta name="twitter:image" content="https://retrolaucher.multidev.ovh/site/img/screens/HOezHH0WQAAJZzK.jpg" />
 
   <link rel="preload" as="image" href="site/img/screens/HOezHH0WQAAJZzK.jpg" fetchpriority="high" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet" />
+  <link rel="preload" href="site/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="site/fonts/manrope-latin-ext.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="site/style.css" />
 
   <noscript>
@@ -90,6 +89,8 @@
           <li><a href="#library" data-i18n="nav.library">Library</a></li>
           <li><a href="#faq" data-i18n="nav.faq">FAQ</a></li>
           <li><a href="#download" data-i18n="nav.download">Download</a></li>
+          <li><a href="privacy.html" data-i18n="footer.privacy">Privacy &amp; cookies</a></li>
+          <li><a href="https://buycoffee.to/iamgramodrana" target="_blank" rel="noopener" data-i18n="support.label">Buy me a coffee</a></li>
           <li><a href="https://github.com/multicolor-rgb/retrolaucher" target="_blank" rel="noopener">GitHub</a></li>
           <li class="mobile-lang">
             <button type="button" data-lang="en" aria-pressed="true">EN</button>
@@ -422,7 +423,7 @@
             </details>
             <details>
               <summary data-i18n="faq.q5">Is it really free?</summary>
-              <p data-i18n="faq.a5">Yes. MIT licensed. There is a Ko-fi link in the footer if you want to support the work.</p>
+              <p data-i18n="faq.a5">Yes. MIT licensed. There is a BuyCoffeeTo link in the footer if you want to support the work.</p>
             </details>
             <details>
               <summary data-i18n="faq.q6">Can I run it from a USB stick?</summary>
@@ -447,13 +448,49 @@
           <a href="https://www.youtube.com/watch?v=19LuN58H39o" target="_blank" rel="noopener">YouTube</a>
           <a href="https://github.com/multicolor-rgb/retrolaucher/releases" target="_blank" rel="noopener" data-i18n="footer.releases">Releases</a>
           <a href="https://github.com/multicolor-rgb/retrolaucher/issues" target="_blank" rel="noopener" data-i18n="footer.issues">Report an issue</a>
+          <a href="privacy.html" data-i18n="footer.privacy">Privacy &amp; cookies</a>
         </nav>
       </div>
       <div class="container footer-bottom">
         <span>© <span id="year">2026</span> Gramodrana · <span data-i18n="footer.license">MIT License</span></span>
-        <a class="coffee" href="https://ko-fi.com/multicolorplugins" target="_blank" rel="noopener" data-i18n="footer.coffee">Buy me a coffee</a>
+        <a class="coffee" href="https://buycoffee.to/iamgramodrana" target="_blank" rel="noopener" data-i18n="footer.coffee">Buy me a coffee</a>
       </div>
     </footer>
+  </div>
+
+  <a
+    class="support-rail"
+    href="https://buycoffee.to/iamgramodrana"
+    target="_blank"
+    rel="noopener"
+    data-i18n-aria="support.aria"
+    aria-label="Support Retro Launcher on BuyCoffeeTo"
+  >
+    <span class="support-rail__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 8h12v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/>
+        <path d="M16 9h2a3 3 0 0 1 0 6h-2"/>
+        <path d="M7 2v2M11 2v2M15 2v2"/>
+      </svg>
+    </span>
+    <span class="support-rail__label" data-i18n="support.label">Buy me a coffee</span>
+    <span class="support-rail__arrow" aria-hidden="true">↗</span>
+  </a>
+
+  <div
+    class="cookie-bar"
+    id="cookieBar"
+    role="region"
+    aria-label="Privacy and cookies"
+    data-i18n-aria="cookie.aria"
+    hidden
+  >
+    <div class="cookie-bar__text">
+      <strong data-i18n="cookie.title">No tracking cookies.</strong>
+      <span data-i18n="cookie.text">This site stores only your language choice and this notice in localStorage. No ads, no analytics.</span>
+      <a href="privacy.html#cookies" data-i18n="cookie.more">Privacy &amp; cookies</a>
+    </div>
+    <button class="cookie-ok" id="cookieOk" type="button" data-i18n="cookie.ok">Understood</button>
   </div>
 
   <div class="toast" id="konamiToast" role="status" aria-live="polite" hidden>
