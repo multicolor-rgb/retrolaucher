@@ -1,6 +1,6 @@
 {
   "name": "retro-launcher",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "A retro game launcher with gamepad support and emulator integration",
   "desktopName": "retro-launcher",
   "author": {
@@ -20,14 +20,14 @@
   "devDependencies": {
     "@tauri-apps/cli": "^2",
     "electron": "^43.2.0",
-    "electron-builder": "^26.15.3"
+    "electron-builder": "^20.23.1"
   },
   "license": "MIT",
   "allowScripts": {
     "electron@31.7.7": true,
     "@tauri-apps/cli": true
   },
-   "build": {
+  "build": {
     "appId": "com.retrolauncher.app",
     "productName": "Retro Launcher",
     "directories": {
@@ -36,7 +36,9 @@
     },
     "icon": "build/icon.png",
     "win": {
-      "target": ["nsis"],
+      "target": [
+        "nsis"
+      ],
       "icon": "build/icon.ico"
     },
     "nsis": {
@@ -48,7 +50,10 @@
       "icon": "build/icon.icns"
     },
     "linux": {
-      "target": ["AppImage", "deb"],
+      "target": [
+        "AppImage",
+        "deb"
+      ],
       "icon": "build/linux/icons",
       "category": "Game",
       "maintainer": "Gramodrana <gramodrana1@gmail.com>",
@@ -56,6 +61,4 @@
       "description": "A retro game launcher with gamepad support and emulator integration"
     }
   }
- 
 }
- 

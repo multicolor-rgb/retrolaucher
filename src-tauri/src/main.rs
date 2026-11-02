@@ -15,6 +15,8 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+#[cfg(target_family = "unix")]
+use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
 use sha1::{Digest, Sha1};
@@ -387,8 +389,10 @@ const COMBO: [u16; 4] = [
 
 #[cfg(target_family = "unix")]
 fn gamepad_watchdog(app: AppHandle) {
-    let watched: Mutex<HashSet<String>> = Mutex::new(HashSet::new());
+    let watched: Arc<Mutex<HashSet<String>>> = Arc::new(Mutex::new(HashSet::new()));
     loop {
+        // najpierw zbierz aktualnie istniejące węzły /dev/input/event*
+        let mut devices: Vec<(String, PathBuf)> = Vec::new();
         if let Ok(entries) = fs::read_dir("/dev/input") {
             for entry in entries.flatten() {
                 let name = entry.file_name().to_string_lossy().to_string();
@@ -396,56 +400,78 @@ fn gamepad_watchdog(app: AppHandle) {
                     continue;
                 }
                 let path = entry.path();
-                let path_str = path.to_string_lossy().to_string();
-                {
-                    let mut set = match watched.lock() {
-                        Ok(s) => s,
-                        Err(_) => continue,
-                    };
-                    if set.contains(&path_str) {
-                        continue;
-                    }
-                    set.insert(path_str.clone());
-                }
-                // nowy/istniejący pad → własny wątek kontrolujący stop-kombo
-                let app2 = app.clone();
-                std::thread::spawn(move || watch_pad_device(app2, &path, &COMBO));
+                devices.push((path.to_string_lossy().to_string(), path));
             }
+        }
+        // zapomnij ścieżki, których już nie ma (odłączony pad, zmiana numeru event*)
+        if let Ok(mut set) = watched.lock() {
+            set.retain(|watched_path| devices.iter().any(|(path_str, _)| path_str == watched_path));
+        }
+        for (path_str, path) in devices {
+            {
+                let mut set = match watched.lock() {
+                    Ok(s) => s,
+                    Err(_) => continue,
+                };
+                if set.contains(&path_str) {
+                    continue;
+                }
+                set.insert(path_str.clone());
+            }
+            // nowy/istniejący pad → własny wątek kontrolujący stop-kombo
+            let app2 = app.clone();
+            let watched2 = Arc::clone(&watched);
+            std::thread::spawn(move || {
+                // true = warto ponowić (pad odłączony albo brak dostępu do węzła)
+                if watch_pad_device(app2, &path, &COMBO) {
+                    if let Ok(mut set) = watched2.lock() {
+                        set.remove(&path_str);
+                    }
+                }
+            });
         }
         std::thread::sleep(Duration::from_secs(2));
     }
 }
 
 #[cfg(target_family = "unix")]
-fn watch_pad_device(app: AppHandle, path: &Path, combo: &[u16]) {
-    let Ok(mut device) = evdev::Device::open(path) else { return };
+fn watch_pad_device(app: AppHandle, path: &Path, combo: &[u16]) -> bool {
+    let Ok(mut device) = evdev::Device::open(path) else { return true };
     // tylko gamepady (klawisze BTN_A..BTN_THUMBR = 304..318)
     let is_pad = device
         .supported_keys()
         .map(|ks| ks.iter().any(|k| (k.code() >= 304) && (k.code() <= 318)))
         .unwrap_or(false);
     if !is_pad {
-        return;
+        return false;
     }
-    let Ok(events) = device.fetch_events() else { return };
     let mut pressed: HashSet<u16> = HashSet::new();
     let mut latched = false;
-    for ev in events {
-        if ev.event_type() == evdev::EventType::KEY {
+    // fetch_events() blokuje do pierwszej partii zdarzeń, więc musi być
+    // w pętli — inaczej wątek kończy pracę po pierwszym odczycie.
+    loop {
+        let Ok(events) = device.fetch_events() else { return true };
+        for ev in events {
+            if ev.event_type() != evdev::EventType::KEY {
+                continue;
+            }
             let (code, value) = (ev.code(), ev.value());
-            if combo.contains(&code) {
-                if value != 0 {
-                    pressed.insert(code);
-                } else {
-                    pressed.remove(&code);
-                }
-                if pressed.len() == combo.len() && !latched {
-                    latched = true;
-                    let state: State<LauncherState> = app.state();
+            if !combo.contains(&code) {
+                continue;
+            }
+            if value != 0 {
+                pressed.insert(code);
+            } else {
+                pressed.remove(&code);
+            }
+            if pressed.len() == combo.len() && !latched {
+                latched = true;
+                // try_state: brak stanu nie może zabić całej aplikacji
+                if let Some(state) = app.try_state::<LauncherState>() {
                     kill_last_pid(&state);
-                } else if pressed.is_empty() {
-                    latched = false;
                 }
+            } else if pressed.is_empty() {
+                latched = false;
             }
         }
     }
@@ -549,9 +575,13 @@ fn image_cache_remote(
     }
 }
 
+const APP_USER_AGENT: &str = "RetroLauncher/2.1 (+https://github.com/multicolor-rgb/retrolaucher)";
+
 fn download_to_buffer(url: &str) -> Result<Vec<u8>, String> {
     let resp = ureq::get(url)
         .timeout(Duration::from_secs(30))
+        .set("User-Agent", APP_USER_AGENT)
+        .set("Accept", "image/*,*/*")
         .call()
         .map_err(|e| format!("Nie udało się pobrać obrazka: {}", e))?;
     let mut buf = Vec::new();
@@ -562,7 +592,9 @@ fn download_to_buffer(url: &str) -> Result<Vec<u8>, String> {
     Ok(buf)
 }
 
-// Fallback HTTP (gdyby webview zablokował CORS w fetch).
+// Wspólne wyjście HTTP dla scraperów. Renderer nie używa już
+// przeglądarkowego fetch do zewnętrznych API (WebKit blokuje je przez CORS),
+// tylko tego polecenia — dzięki temu działa SteamGridDB, RAWG i TheGamesDB.
 #[derive(serde::Deserialize)]
 struct ProxyRequest {
     url: String,
@@ -570,6 +602,8 @@ struct ProxyRequest {
     method: String,
     #[serde(default)]
     headers: std::collections::HashMap<String, String>,
+    #[serde(default)]
+    body: Option<String>,
 }
 
 fn default_method() -> String {
@@ -579,20 +613,44 @@ fn default_method() -> String {
 #[tauri::command]
 fn http_proxy(req: ProxyRequest) -> Value {
     let url = req.url.trim().to_string();
-    let call = match req.method.to_uppercase().as_str() {
-        "GET" => Some(ureq::get(&url)),
-        "POST" => Some(ureq::post(&url)),
-        "PUT" => Some(ureq::put(&url)),
-        _ => None,
+    if url.is_empty() {
+        return json!({ "ok": false, "error": "Puste adres URL" });
+    }
+
+    let method = req.method.to_uppercase();
+    let mut call = match method.as_str() {
+        "GET" => ureq::get(&url),
+        "POST" => ureq::post(&url),
+        "PUT" => ureq::put(&url),
+        "DELETE" => ureq::delete(&url),
+        _ => return json!({ "ok": false, "error": "Unsupported method" }),
     };
-    let Some(call) = call else {
-        return json!({ "ok": false, "error": "Unsupported method" });
+
+    call = call.timeout(Duration::from_secs(30));
+
+    let has_header = |name: &str| {
+        req.headers
+            .keys()
+            .any(|key| key.eq_ignore_ascii_case(name))
     };
-    let mut call = call.timeout(Duration::from_secs(30));
+
+    if !has_header("user-agent") {
+        call = call.set("User-Agent", APP_USER_AGENT);
+    }
+    if !has_header("accept") {
+        call = call.set("Accept", "application/json, text/plain, */*");
+    }
+
     for (k, v) in req.headers.iter() {
         call = call.set(k, v);
     }
-    match call.call() {
+
+    let result = match req.body {
+        Some(body) if matches!(method.as_str(), "POST" | "PUT") => call.send_string(&body),
+        _ => call.call(),
+    };
+
+    match result {
         Ok(resp) => {
             let status = resp.status();
             let body = resp.into_string().unwrap_or_default();
@@ -600,9 +658,9 @@ fn http_proxy(req: ProxyRequest) -> Value {
         }
         Err(ureq::Error::Status(status, resp)) => {
             let body = resp.into_string().unwrap_or_default();
-            json!({ "ok": status < 400, "status": status, "body": body })
+            json!({ "ok": false, "status": status, "body": body })
         }
-        Err(e) => json!({ "ok": false, "error": e.to_string() }),
+        Err(e) => json!({ "ok": false, "status": 0, "error": e.to_string() }),
     }
 }
 
@@ -1552,6 +1610,10 @@ fn fs_path_exists(target_path: String) -> Value {
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        // Stan musi być zarejestrowany PRZED pierwszym app.state() — bez tego
+        // game_launch/pc_launch panikują (state() called before manage()),
+        // co zabija proces launchera i zostawia emulator bez opieki.
+        .manage(LauncherState::default())
         .setup(|app| {
             let handle = app.handle().clone();
             ensure_data_files(&handle);

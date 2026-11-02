@@ -240,7 +240,9 @@ function parseEnvLines(value) {
 }
 
 async function downloadImageToBuffer(url) {
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    headers: { 'User-Agent': 'RetroLauncher/2.1 (+https://github.com/multicolor-rgb/retrolaucher)' }
+  });
   if (!response.ok) throw new Error(`Nie udało się pobrać obrazka: ${response.status}`);
   return Buffer.from(await response.arrayBuffer());
 }
@@ -852,6 +854,33 @@ ipcMain.handle('window:setFullscreen', async (_event, value) => {
     return { ok: true, fullscreen: nextState };
   } catch (e) {
     return { ok: false, error: e.message };
+  }
+});
+
+ipcMain.handle('http:request', async (_event, payload) => {
+  try {
+    const { url, method = 'GET', headers = {}, body = null } = payload || {};
+    if (!url) return { ok: false, status: 0, error: 'Pusty adres URL.' };
+
+    const requestHeaders = {
+      'User-Agent': 'RetroLauncher/2.1 (+https://github.com/multicolor-rgb/retrolaucher)',
+      Accept: 'application/json, text/plain, */*',
+      ...headers
+    };
+
+    const response = await fetch(url, {
+      method,
+      headers: requestHeaders,
+      body: body == null ? undefined : body
+    });
+
+    return {
+      ok: response.ok,
+      status: response.status,
+      body: await response.text()
+    };
+  } catch (e) {
+    return { ok: false, status: 0, error: e.message };
   }
 });
 

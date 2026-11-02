@@ -1,8 +1,7 @@
-// Obsługa zapisu kluczy API dla scraperów metadanych (zakładka "Okładki").
-// Wzorzec identyczny do istniejącego handlera SteamGridDB — wszystkie
-// wartości trafiają do config.apiKeys, skąd czytają je funkcje
-// fetchSteamGridCoverByName / fetchRawgMetadataByName /
-// fetchScreenScraperMetadataByName / fetchTheGamesDbMetadataByName.
+// Obsługa zapisu i testowania kluczy API dla scraperów metadanych
+// (zakładka "Okładki"). Wartości trafiają do config.apiKeys, skąd czytają
+// je funkcje fetchSteamGridCoverByName / fetchRawgMetadataByName /
+// fetchTheGamesDbMetadataByName.
 
 function ensureApiKeysConfig() {
   if (!config.apiKeys || typeof config.apiKeys !== 'object') {
@@ -19,83 +18,57 @@ function fillApiKeyFields() {
   const rawgInput = document.getElementById('rawg-api-key-input');
   if (rawgInput) rawgInput.value = config.apiKeys.rawg || '';
 
-  const screenscraperUserInput = document.getElementById('screenscraper-user-input');
-  if (screenscraperUserInput) screenscraperUserInput.value = config.apiKeys.screenscraperUser || '';
-
-  const screenscraperPasswordInput = document.getElementById('screenscraper-password-input');
-  if (screenscraperPasswordInput) screenscraperPasswordInput.value = config.apiKeys.screenscraperPassword || '';
-
-  const screenscraperDevIdInput = document.getElementById('screenscraper-devid-input');
-  if (screenscraperDevIdInput) screenscraperDevIdInput.value = config.apiKeys.screenscraperDevId || '';
-
-  const screenscraperDevPassInput = document.getElementById('screenscraper-devpass-input');
-  if (screenscraperDevPassInput) screenscraperDevPassInput.value = config.apiKeys.screenscraperDevPass || '';
-
   const gamesDbInput = document.getElementById('thegamesdb-api-key-input');
   if (gamesDbInput) gamesDbInput.value = config.apiKeys.thegamesdb || '';
 }
 
-document.getElementById('save-steamgrid-api-key')?.addEventListener('click', async () => {
+async function saveApiKeyField(inputId, keyName, label) {
   ensureApiKeysConfig();
-  const input = document.getElementById('steamgrid-api-key-input');
-  config.apiKeys.steamgrid = input?.value.trim() || '';
+  const input = document.getElementById(inputId);
+  config.apiKeys[keyName] = input?.value.trim() || '';
   await saveStoredConfig();
-  showToast('Zapisano klucz SteamGridDB ✔');
-});
+  showToast(`Zapisano klucz ${label} ✔`);
+}
 
-document.getElementById('save-rawg-api-key')?.addEventListener('click', async () => {
-  ensureApiKeysConfig();
-  const input = document.getElementById('rawg-api-key-input');
-  config.apiKeys.rawg = input?.value.trim() || '';
-  await saveStoredConfig();
-  showToast('Zapisano klucz RAWG ✔');
-});
-
-document.getElementById('save-screenscraper-credentials')?.addEventListener('click', async () => {
-  ensureApiKeysConfig();
-  const userInput = document.getElementById('screenscraper-user-input');
-  const passwordInput = document.getElementById('screenscraper-password-input');
-  const devIdInput = document.getElementById('screenscraper-devid-input');
-  const devPassInput = document.getElementById('screenscraper-devpass-input');
-
-  config.apiKeys.screenscraperUser = userInput?.value.trim() || '';
-  config.apiKeys.screenscraperPassword = passwordInput?.value.trim() || '';
-  config.apiKeys.screenscraperDevId = devIdInput?.value.trim() || '';
-  config.apiKeys.screenscraperDevPass = devPassInput?.value.trim() || '';
-
-  await saveStoredConfig();
-  showToast('Zapisano dane logowania ScreenScraper ✔');
-});
-
-document.getElementById('test-screenscraper-credentials')?.addEventListener('click', async () => {
-  // Zapisz pola przed testem, żeby testowana była bieżąca zawartość inputów.
-  ensureApiKeysConfig();
-  const read = (id) => document.getElementById(id)?.value.trim() || '';
-  config.apiKeys.screenscraperUser = read('screenscraper-user-input');
-  config.apiKeys.screenscraperPassword = read('screenscraper-password-input');
-  config.apiKeys.screenscraperDevId = read('screenscraper-devid-input');
-  config.apiKeys.screenscraperDevPass = read('screenscraper-devpass-input');
-  await saveStoredConfig();
-
-  if (typeof testScreenScraperConnection !== 'function') {
-    showToast(t('screenscraperTestFail'), true);
+async function testApiKey(testFn, okFallback, failFallback) {
+  if (typeof testFn !== 'function') {
+    showToast(t(failFallback), true);
     return;
   }
 
-  const result = await testScreenScraperConnection();
+  const result = await testFn();
   if (result.ok) {
-    showToast((t('screenscraperTestOk') || 'ScreenScraper działa ✓') + (result.message ? ` — ${result.message}` : ''));
+    showToast((t(okFallback) || 'Połączenie działa ✓') + (result.message ? ` — ${result.message}` : ''));
   } else {
-    showToast((t('screenscraperTestFail') || 'Test nieudany') + ` — ${result.error || '?'}`, true);
+    showToast((t(failFallback) || 'Test nieudany') + ` — ${result.error || '?'}`, true);
   }
+}
+
+document.getElementById('save-steamgrid-api-key')?.addEventListener('click', () => {
+  saveApiKeyField('steamgrid-api-key-input', 'steamgrid', 'SteamGridDB');
 });
 
-document.getElementById('save-thegamesdb-api-key')?.addEventListener('click', async () => {
-  ensureApiKeysConfig();
-  const input = document.getElementById('thegamesdb-api-key-input');
-  config.apiKeys.thegamesdb = input?.value.trim() || '';
-  await saveStoredConfig();
-  showToast('Zapisano klucz TheGamesDB ✔');
+document.getElementById('test-steamgrid-api-key')?.addEventListener('click', async () => {
+  await saveApiKeyField('steamgrid-api-key-input', 'steamgrid', 'SteamGridDB');
+  await testApiKey(testSteamGridConnection, 'steamgridTestOk', 'steamgridTestFail');
+});
+
+document.getElementById('save-rawg-api-key')?.addEventListener('click', () => {
+  saveApiKeyField('rawg-api-key-input', 'rawg', 'RAWG');
+});
+
+document.getElementById('test-rawg-api-key')?.addEventListener('click', async () => {
+  await saveApiKeyField('rawg-api-key-input', 'rawg', 'RAWG');
+  await testApiKey(testRawgConnection, 'rawgTestOk', 'rawgTestFail');
+});
+
+document.getElementById('save-thegamesdb-api-key')?.addEventListener('click', () => {
+  saveApiKeyField('thegamesdb-api-key-input', 'thegamesdb', 'TheGamesDB');
+});
+
+document.getElementById('test-thegamesdb-api-key')?.addEventListener('click', async () => {
+  await saveApiKeyField('thegamesdb-api-key-input', 'thegamesdb', 'TheGamesDB');
+  await testApiKey(testTheGamesDbConnection, 'thegamesdbTestOk', 'thegamesdbTestFail');
 });
 
 // Wywołaj przy każdym otwarciu zakładki "Okładki" (albo w renderSettings()

@@ -18,9 +18,9 @@ Retro Launcher to desktopowy launcher gier retro inspirowany trybem Steam Big Pi
 - Obsługuje wiele platform jednocześnie, każdą z własnym folderem ROM-ów, emulatorem i argumentami startowymi.
 - Uruchamia gry przez skonfigurowane emulatory.
 - Pozwala testować polecenie uruchomieniowe emulatora z poziomu ustawień.
-- Pobiera okładki i opisy z wielu źródeł: SteamGridDB, RAWG, ScreenScraper.fr i TheGamesDB — z automatycznym cache'owaniem grafik.
+- Pobiera okładki i opisy z wielu źródeł: SteamGridDB, RAWG i TheGamesDB — z automatycznym cache'owaniem grafik.
 - Pozwala ręcznie ustawić okładkę gry przez URL albo plik lokalny.
-- Używa lokalnego placeholdera okładki („BRAK OKŁADKI / NO COVER”) dla gier bez grafiki oraz gdy zapisany obrazek nie wczyta się.
+- Używa lokalnego, płaskiego placeholdera okładki dla gier bez grafiki oraz gdy zapisany obrazek nie wczyta się.
 - Prowadzi statystyki: czas gry, liczbę uruchomień i datę ostatniej rozgrywki.
 - Dodaje ulubione gry (gwiazdka), sortowanie (domyślnie / ostatnio grane / ulubione / A–Z / czas gry) oraz losową grę.
 - Ma tryb atrakcji (wygaszacz) — po bezczynności sam przewija gry na półce.
@@ -30,7 +30,7 @@ Retro Launcher to desktopowy launcher gier retro inspirowany trybem Steam Big Pi
 - Pozwala ustawić **argumenty uruchomienia dla konkretnej gry** i otworzyć jej folder z poziomu szczegółów.
 - Importuje metadane i okładki z **gamelist.xml EmulationStation**.
 - Pokazuje **zbiorcze statystyki** oraz sprawdza **stan biblioteki** (brakujące foldery, puste pliki, duplikaty).
-- Odtwarza **trailery** i używa **fanartów ScreenScraper** jako tła.
+- Odtwarza **trailery**, gdy źródło zwróci bezpośredni URL do wideo.
 - Oferuje **11 proporcji miniatur** (m.in. portret Steam, PSP, GBA, NDS, kwadrat, banner 16:9, marquee arcade, Steam Big Picture) oraz **własne proporcje** szerokość + ratio dla każdej platformy. Wybór działa we wszystkich trybach półki.
 - Pozwala **zmienić nazwę platformy** po dodaniu oraz podpowiada **30 popularnych platform** (datalist), automatycznie uzupełniając rozszerzenia, kolor, proporcje i mapowanie scraperów.
 - Obsługuje **platformę PC**: dodawanie plików `.exe`, `.AppImage` i `.sh` (pojedynczo lub przez skan folderu), uruchamianie natywne na Windows/Linux oraz przez **Wine**, **Wine-GE** i **Proton-GE**.
@@ -83,7 +83,7 @@ Przy dodawaniu platformy pole nazwy podpowiada **30 popularnych systemów** (m.i
 - typowe rozszerzenia plików,
 - kolor platformy,
 - domyślną proporcję okładki,
-- mapowanie do ScreenScraper i TheGamesDB (metadane działają od razu).
+- mapowanie do TheGamesDB (metadane działają od razu).
 
 Nazwę można zmienić w każdej chwili przyciskiem **✎** przy platformie. Identyfikator (`key`) pozostaje bez zmian, więc foldery, okładki, statystyki i metadane nie giną.
 
@@ -122,8 +122,7 @@ Launcher korzysta z kilku źródeł metadanych (w zależności od skonfigurowany
 
 - **SteamGridDB** — okładki i grafiki (klucz API),
 - **RAWG** — opisy, gatunki i ocena Metacritic (klucz API),
-- **ScreenScraper.fr** — okładki, opisy, gatunki i rok dla gier retro (login, hasło oraz Dev ID i hasło aplikacji),
-- **TheGamesDB** — zapasowe okładki dla niszowych ROM-ów (klucz API).
+- **TheGamesDB** — zapasowe okładki i podstawowe metadane dla niszowych ROM-ów (klucz API).
 
 Można pobierać dane dla jednej platformy albo dla wszystkich naraz. Pobrane okładki są cache'owane lokalnie, a opisy zapisywane w wersji polskiej i angielskiej.
 
@@ -136,7 +135,7 @@ Dla każdej gry można ręcznie ustawić okładkę przez:
 
 Można też usunąć ręczną okładkę i wrócić do automatycznej.
 
-Gdy gra nie ma żadnej okładki — albo zapisany obrazek nie wczyta się — launcher pokazuje lokalny, typograficzny placeholder `BRAK OKŁADKI / NO COVER` (plik `assets/cover-placeholder.svg`). Działa on offline i w trybie przenośnym, bez odpytywania zewnętrznych CDN.
+Gdy gra nie ma żadnej okładki — albo zapisany obrazek nie wczyta się — launcher pokazuje lokalny, płaski placeholder w kolorze `#121724` (plik `assets/cover-placeholder.svg`). Działa on offline i w trybie przenośnym, bez odpytywania zewnętrznych CDN.
 
 ### Obsługa pada
 
@@ -374,9 +373,9 @@ Retro Launcher is a desktop launcher for retro games, inspired by Steam's Big Pi
 - Support multiple platforms simultaneously, each with its own ROM folder, emulator, and launch arguments.
 - Launch games through configured emulators.
 - Test the emulator launch command directly from the settings panel.
-- Fetch cover art and descriptions from multiple sources: SteamGridDB, RAWG, ScreenScraper.fr, and TheGamesDB — with automatic image caching.
+- Fetch cover art and descriptions from multiple sources: SteamGridDB, RAWG, and TheGamesDB — with automatic image caching.
 - Manually set a game's cover art via URL or a local file.
-- Use a local cover placeholder (“BRAK OKŁADKI / NO COVER”) for games without artwork and for images that fail to load.
+- Use a local flat-color cover placeholder for games without artwork and for images that fail to load.
 - Track playtime, launch count, and last played date for every game.
 - Add favorite games (star), sort the library (default / recently played / favorites / A–Z / playtime), and pick a random game.
 - Include an attract mode (screensaver) that cycles through games when idle.
@@ -386,7 +385,7 @@ Retro Launcher is a desktop launcher for retro games, inspired by Steam's Big Pi
 - Set **per-game launch arguments** and open the game folder from the details modal.
 - Import metadata and covers from an **EmulationStation `gamelist.xml`**.
 - Show **aggregate statistics** and run **library health checks** (missing folders, empty files, duplicates).
-- Play **video trailers** and use **ScreenScraper fanart** as the shelf background.
+- Play **video trailers** when a source returns a direct video URL.
 - Offer **11 thumbnail aspect ratios** (including Steam portrait, PSP, GBA, NDS, square, 16:9 banner, arcade marquee, Steam Big Picture) plus **custom ratios** (width + ratio) per platform; the choice applies to every shelf mode.
 - Let you **rename a platform** after adding it and suggest **30 popular platforms** (datalist), automatically filling extensions, color, aspect ratio, and scraper mappings.
 - Support a **PC platform**: add `.exe`, `.AppImage`, and `.sh` files (individually or by scanning a folder), launch natively on Windows/Linux, or through **Wine**, **Wine-GE**, and **Proton-GE**.
@@ -439,7 +438,7 @@ When adding a platform, the name field suggests **30 popular systems** (includin
 - typical file extensions,
 - the platform color,
 - the default cover aspect ratio,
-- ScreenScraper and TheGamesDB mappings (metadata works immediately).
+- TheGamesDB mapping (metadata works immediately).
 
 You can rename a platform at any time with the **✎** button. Its identifier (`key`) stays unchanged, so folders, covers, statistics, and metadata are preserved.
 
@@ -478,8 +477,7 @@ The launcher uses several metadata sources (depending on the configured keys):
 
 - **SteamGridDB** — covers and artwork (API key),
 - **RAWG** — descriptions, genres, and Metacritic score (API key),
-- **ScreenScraper.fr** — covers, descriptions, genres, and year for retro games (username, password, plus Dev ID and app password),
-- **TheGamesDB** — fallback covers for niche ROMs (API key).
+- **TheGamesDB** — fallback covers and basic metadata for niche ROMs (API key).
 
 You can fetch data for a single platform or for all platforms at once. Downloaded covers are cached locally, and descriptions are stored in both Polish and English.
 
@@ -492,7 +490,7 @@ For each game, you can manually set cover art via:
 
 You can also remove a manual cover and revert to the automatic one.
 
-When a game has no cover at all — or a stored image fails to load — the launcher shows a local, typographic `BRAK OKŁADKI / NO COVER` placeholder (`assets/cover-placeholder.svg`). It works offline and in portable mode without contacting external CDNs.
+When a game has no cover at all — or a stored image fails to load — the launcher shows a local, flat `#121724` placeholder (`assets/cover-placeholder.svg`). It works offline and in portable mode without contacting external CDNs.
 
 ### Gamepad support
 

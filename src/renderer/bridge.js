@@ -105,6 +105,11 @@
       return res;
     },
 
+    // Żądania HTTP do zewnętrznych API (SteamGridDB, RAWG, TheGamesDB).
+    // Idą przez backend, więc WebKit nie blokuje ich przez CORS.
+    // Tauri przekazuje argumenty po nazwie parametru komendy (`req`).
+    httpRequest: (payload) => invoke('http_proxy', { req: payload }),
+
     focusGame: () => invoke('game_focus'),
     getLastLaunchedPid: () => invoke('game_last_pid'),
 
@@ -174,7 +179,12 @@
       else Object.keys(h).forEach(k => (headers[k] = h[k]));
     }
     const res = await invoke('http_proxy', {
-      request: { url, method: (init && init.method) || 'GET', headers }
+      req: {
+        url,
+        method: (init && init.method) || 'GET',
+        headers,
+        body: typeof init?.body === 'string' ? init.body : null
+      }
     });
     if (res && res.error && !('status' in res)) throw new Error(res.error);
     return proxyResponse(res);

@@ -677,9 +677,11 @@ function isStopComboPressed(gp) {
   if (!gp) return false;
 
   const l3 = !!gp.buttons?.[10]?.pressed;
-  const x = !!gp.buttons?.[2]?.pressed;
+  const r3 = !!gp.buttons?.[11]?.pressed;
+  const lb = !!gp.buttons?.[4]?.pressed;
+  const rb = !!gp.buttons?.[5]?.pressed;
 
-  return l3 && x;
+  return l3 && r3 && lb && rb;
 }
 
 async function handleStopCombo(gp) {

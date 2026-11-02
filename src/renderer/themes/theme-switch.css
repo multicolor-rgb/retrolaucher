@@ -107,7 +107,6 @@ html[data-theme="switch"] .sh-item.focus{
   box-shadow:
     0 10px 20px rgba(0,0,0,0.45),
     0 32px 64px rgba(0,0,0,0.55),
-    0 0 0 3px rgba(230,0,18,0.95),
     0 0 38px rgba(230,0,18,0.45);
 }
 html[data-theme="switch"] .sh-tag{
@@ -137,7 +136,6 @@ html[data-theme="switch"] .shelf.mode-grid .sh-item.focus{
   box-shadow:
     0 14px 28px rgba(0,0,0,0.5),
     0 28px 60px rgba(0,0,0,0.6),
-    0 0 0 2px rgba(230,0,18,0.95),
     0 0 34px rgba(230,0,18,0.4);
 }
 html[data-theme="switch"] .shelf.mode-grid .bp-status-title{

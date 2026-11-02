@@ -90,17 +90,12 @@ let config = {
   // ale nadal są dostępne w menedżerze gier, żeby można je było odkryć.
   hiddenGames: {},
 
-  // Klucze/dane logowania do scraperów metadanych. steamgrid i rawg to
-  // jednolite klucze API. screenscraperUser/Password to login+hasło
-  // konta ScreenScraper (nie klucz API — ich autoryzacja działa inaczej).
-  // thegamesdb to klucz API TheGamesDB (fallback dla niszowych ROM-ów).
+  // Klucze API do scraperów metadanych. Każde źródło ma jeden klucz —
+  // SteamGridDB (okładki), RAWG (opisy/gatunki/rok) i opcjonalny
+  // TheGamesDB (retro fallback).
   apiKeys: {
     steamgrid: '',
     rawg: '',
-    screenscraperUser: '',
-    screenscraperPassword: '',
-    screenscraperDevId: '',
-    screenscraperDevPass: '',
     thegamesdb: ''
   },
 
@@ -130,19 +125,7 @@ const STEAMGRIDBASE =
 const STEAMGRIDATTRIBUTIONURL =
   'https://www.steamgriddb.com';
 
-const SteamGridDB_API_BASE =
-  'https://www.steamgriddb.com/api/v2';
-
-const SteamGridDB_ATTRIBUTION_URL =
-  'https://www.steamgriddb.com';
-
-// Bazowe URL-e dodatkowych scraperów retro (ScreenScraper, TheGamesDB).
-const SCREENSCRAPER_BASE =
-  'https://www.screenscraper.fr/api2';
-
-const SCREENSCRAPER_ATTRIBUTION_URL =
-  'https://www.screenscraper.fr';
-
+// Bazowy URL dodatkowego scrapera retro (TheGamesDB).
 const THEGAMESDB_BASE =
   'https://api.thegamesdb.net/v1';
 
@@ -156,8 +139,8 @@ const DEFAULT_PLATFORM_ICON = '🎮';
 
 // Gotowe definicje popularnych platform. Używane do podpowiedzi nazw
 // (datalist) oraz automatycznego wypełniania rozszerzeń, koloru,
-// proporcji okładki i mapowań scraperów. `scraperSystem` to ID systemu
-// ScreenScraper, `tgdb` — ID platformy TheGamesDB.
+// proporcji okładki i mapowań scraperów. `tgdb` — ID platformy TheGamesDB.
+// (Pole `scraperSystem` zostaje dla zgodności ze starymi configami.)
 const PLATFORM_PRESETS = [
   { id: 'nes', label: 'Nintendo Entertainment System', extensions: ['.nes'], color: '#ff6b6b', aspect: 'standard', scraperSystem: 3, tgdb: 7 },
   { id: 'snes', label: 'Super Nintendo', extensions: ['.sfc', '.smc'], color: '#ff8ca8', aspect: 'square', scraperSystem: 4, tgdb: 6 },
@@ -242,25 +225,19 @@ const I18N = {
     saveStartup: 'Zapisz ustawienia startu',
 
     metaSourcesTitle: 'Źródła metadanych i okładek',
-    metaSourcesNote: 'Skonfiguruj klucze API dla poszczególnych scraperów. SteamGridDB i RAWG działają najlepiej dla nowszych gier, ScreenScraper i TheGamesDB są zorientowane na retro (SNES, Genesis, arcade, handheldy). Możesz skonfigurować tylko te źródła, z których chcesz korzystać — pozostałe zostaną pominięte przy pobieraniu.',
+    metaSourcesNote: 'Skonfiguruj klucze API dla poszczególnych scraperów. SteamGridDB pobiera okładki, RAWG opisy, gatunki i rok, a TheGamesDB jest zapasowym źródłem dla niszowych ROM-ów. Możesz skonfigurować tylko te źródła, z których chcesz korzystać — pozostałe zostaną pominięte przy pobieraniu.',
 
-    steamgridNote: 'Wpisz własny klucz API, aby pobierać okładki i opisy automatycznie.',
+    steamgridNote: 'Wpisz własny klucz API, aby pobierać okładki automatycznie. Klucz generujesz na steamgriddb.com w ustawieniach konta.',
     apiKeyPlaceholder: 'Wpisz klucz API',
     saveKey: 'Zapisz klucz',
+    testConnection: 'Test połączenia',
+    steamgridTestOk: 'SteamGridDB działa ✓',
+    steamgridTestFail: 'Test SteamGridDB nieudany',
 
     rawgNote: 'Klucz API RAWG służy do pobierania opisów, gatunków i oceny Metacritic. Klucz generujesz bezpłatnie na rawg.io/apidocs.',
+    rawgTestOk: 'RAWG działa ✓',
+    rawgTestFail: 'Test RAWG nieudany',
 
-    screenscraperNote: 'Główne źródło metadanych dla retro (opisy, gatunki, liczba graczy, okładki). Wymaga konta na screenscraper.fr oraz identyfikatora aplikacji (Dev ID + hasło aplikacji) — obie pary wpisujesz poniżej.',
-    screenscraperUser: 'Login ScreenScraper',
-    screenscraperPassword: 'Hasło ScreenScraper',
-    screenscraperDevId: 'Dev ID aplikacji (API)',
-    screenscraperDevPass: 'Hasło aplikacji (API)',
-    devIdPlaceholder: 'np. identyfikator z formularza API',
-    usernamePlaceholder: 'Nazwa użytkownika',
-    passwordPlaceholder: 'Hasło',
-    testScreenscraper: 'Test połączenia',
-    screenscraperTestOk: 'ScreenScraper działa ✓',
-    screenscraperTestFail: 'Test ScreenScraper nieudany',
     autoFetchOnStart: 'Auto-uzupełnianie po starcie',
     autoFetchOnStartNote: 'Po starcie launcher cicho uzupełni brakujące okładki i opisy w tle. Wymaga skonfigurowanych kluczy API. Domyślnie wyłączone.',
     enabledShort: 'Włączone',
@@ -280,7 +257,9 @@ const I18N = {
     playtimeLabel: 'Czas gry',
     noDescription: 'Brak opisu — użyj „Pobierz okładki i opisy” w Ustawieniach.',
 
-    gamesdbNote: 'Zapasowe źródło okładek dla niszowych ROM-ów, gdy SteamGridDB i ScreenScraper nie znajdą trafienia. Wymaga darmowego klucza API z thegamesdb.net.',
+    gamesdbNote: 'Zapasowe źródło okładek i podstawowych metadanych dla niszowych ROM-ów, gdy SteamGridDB i RAWG nie znajdą trafienia. Wymaga darmowego klucza API z thegamesdb.net.',
+    thegamesdbTestOk: 'TheGamesDB działa ✓',
+    thegamesdbTestFail: 'Test TheGamesDB nieudany',
 
     language: 'Język',
     languageNote: 'Wybierz język interfejsu aplikacji.',
@@ -437,7 +416,6 @@ const I18N = {
     platformRemoved: 'Usunięto platformę',
     savedSteamgridKey: 'Zapisano klucz SteamGridDB API',
     savedRawgKey: 'Zapisano klucz RAWG API',
-    savedScreenscraperCredentials: 'Zapisano dane logowania ScreenScraper',
     savedGamesDbKey: 'Zapisano klucz TheGamesDB API',
     languageSavedEn: 'Language saved ✓',
     languageSavedPl: 'Zapisano język ✓',
@@ -563,7 +541,7 @@ const I18N = {
     gamelistNoMatch: 'bez dopasowania',
     gamelistUpdated: 'zaktualizowano',
 
-    artworkWarning: 'Okładki i opisy są pobierane z zewnętrznych baz (SteamGridDB, RAWG, ScreenScraper, TheGamesDB). Pobieranie możesz uruchomić dla jednej platformy albo dla wszystkich naraz. Dla każdej platformy ustawisz też własny typ proporcji okładki oraz ręcznie podmienisz cover wybranej gry.'
+    artworkWarning: 'Okładki i opisy są pobierane z zewnętrznych baz (SteamGridDB, RAWG, TheGamesDB). Pobieranie możesz uruchomić dla jednej platformy albo dla wszystkich naraz. Dla każdej platformy ustawisz też własny typ proporcji okładki oraz ręcznie podmienisz cover wybranej gry.'
   },
 
   en: {
@@ -597,23 +575,19 @@ const I18N = {
     saveStartup: 'Save startup settings',
 
     metaSourcesTitle: 'Metadata and cover sources',
-    metaSourcesNote: 'Configure API keys for each scraper. SteamGridDB and RAWG work best for newer games, ScreenScraper and TheGamesDB are focused on retro (SNES, Genesis, arcade, handhelds). You can configure only the sources you want to use — the rest will be skipped when fetching.',
+    metaSourcesNote: 'Configure API keys for each scraper. SteamGridDB fetches covers, RAWG descriptions, genres and release year, and TheGamesDB is a backup for niche ROMs. You can configure only the sources you want to use — the rest will be skipped when fetching.',
 
+    steamgridNote: 'Enter your API key to fetch covers automatically. Generate a key at steamgriddb.com in your account settings.',
+    apiKeyPlaceholder: 'Enter API key',
     saveKey: 'Save key',
+    testConnection: 'Test connection',
+    steamgridTestOk: 'SteamGridDB works ✓',
+    steamgridTestFail: 'SteamGridDB test failed',
 
     rawgNote: 'The RAWG API key is used to fetch descriptions, genres and Metacritic score. Generate a free key at rawg.io/apidocs.',
+    rawgTestOk: 'RAWG works ✓',
+    rawgTestFail: 'RAWG test failed',
 
-    screenscraperNote: 'Main metadata source for retro (descriptions, genres, player count, covers). Requires a screenscraper.fr account plus an application identifier (Dev ID + app password) — enter both pairs below.',
-    screenscraperUser: 'ScreenScraper login',
-    screenscraperPassword: 'ScreenScraper password',
-    screenscraperDevId: 'App Dev ID (API)',
-    screenscraperDevPass: 'App password (API)',
-    devIdPlaceholder: 'e.g. the id from the API request form',
-    usernamePlaceholder: 'Username',
-    passwordPlaceholder: 'Password',
-    testScreenscraper: 'Test connection',
-    screenscraperTestOk: 'ScreenScraper works ✓',
-    screenscraperTestFail: 'ScreenScraper test failed',
     autoFetchOnStart: 'Auto-fetch on startup',
     autoFetchOnStartNote: 'On startup the launcher silently fills missing covers and descriptions in the background. Requires configured API keys. Off by default.',
     enabledShort: 'On',
@@ -633,7 +607,9 @@ const I18N = {
     playtimeLabel: 'Playtime',
     noDescription: 'No description yet — use “Fetch covers and descriptions” in Settings.',
 
-    gamesdbNote: 'Backup cover source for niche ROMs when SteamGridDB and ScreenScraper find no match. Requires a free API key from thegamesdb.net.',
+    gamesdbNote: 'Backup cover and basic metadata source for niche ROMs when SteamGridDB and RAWG find no match. Requires a free API key from thegamesdb.net.',
+    thegamesdbTestOk: 'TheGamesDB works ✓',
+    thegamesdbTestFail: 'TheGamesDB test failed',
 
     language: 'Language',
     languageNote: 'Choose the application interface language.',
@@ -787,7 +763,6 @@ const I18N = {
     platformRemoved: 'Platform removed',
     savedSteamgridKey: 'Saved SteamGridDB API key',
     savedRawgKey: 'Saved RAWG API key',
-    savedScreenscraperCredentials: 'Saved ScreenScraper credentials',
     savedGamesDbKey: 'Saved TheGamesDB API key',
     languageSavedEn: 'Language saved ✓',
     languageSavedPl: 'Zapisano język ✓',
@@ -913,7 +888,7 @@ const I18N = {
     gamelistNoMatch: 'no match',
     gamelistUpdated: 'updated',
 
-    artworkWarning: 'Covers and descriptions are fetched from external databases (SteamGridDB, RAWG, ScreenScraper, TheGamesDB). You can fetch for a single platform or for all at once. Each platform can also have its own cover aspect ratio, and any game cover can be replaced manually.'
+    artworkWarning: 'Covers and descriptions are fetched from external databases (SteamGridDB, RAWG, TheGamesDB). You can fetch for a single platform or for all at once. Each platform can also have its own cover aspect ratio, and any game cover can be replaced manually.'
   }
 };
 
@@ -1042,23 +1017,13 @@ function ensureConfigDefaults() {
     config.apiKeys = {};
   }
 
-  // Każdy klucz scrapera ma własny, jawny domyślny string — ten sam
-  // wzorzec co istniejący config.apiKeys.steamgrid, rozszerzony o
-  // RAWG, ScreenScraper (login+hasło) i TheGamesDB.
+  // Każdy klucz scrapera ma własny, jawny domyślny string.
   if (typeof config.apiKeys.steamgrid !== 'string') {
     config.apiKeys.steamgrid = '';
   }
 
   if (typeof config.apiKeys.rawg !== 'string') {
     config.apiKeys.rawg = '';
-  }
-
-  if (typeof config.apiKeys.screenscraperUser !== 'string') {
-    config.apiKeys.screenscraperUser = '';
-  }
-
-  if (typeof config.apiKeys.screenscraperPassword !== 'string') {
-    config.apiKeys.screenscraperPassword = '';
   }
 
   if (typeof config.apiKeys.thegamesdb !== 'string') {

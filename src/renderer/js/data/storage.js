@@ -43,10 +43,16 @@ function ensurePresetEmulators() {
 
   // API keys
   if (!config.apiKeys || typeof config.apiKeys !== 'object') {
-    config.apiKeys = { steamgrid: '' };
+    config.apiKeys = { steamgrid: '', rawg: '', thegamesdb: '' };
   }
   if (typeof config.apiKeys.steamgrid !== 'string') {
     config.apiKeys.steamgrid = '';
+  }
+  if (typeof config.apiKeys.rawg !== 'string') {
+    config.apiKeys.rawg = '';
+  }
+  if (typeof config.apiKeys.thegamesdb !== 'string') {
+    config.apiKeys.thegamesdb = '';
   }
 
   // uiState

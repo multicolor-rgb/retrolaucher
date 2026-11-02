@@ -32,6 +32,9 @@ contextBridge.exposeInMainWorld('launcherAPI', {
 
   cacheRemoteImage: (payload) => ipcRenderer.invoke('image:cacheRemote', payload),
 
+  // Wspólne żądania HTTP do scraperów (bez CORS — idą przez proces main).
+  httpRequest: (payload) => ipcRenderer.invoke('http:request', payload),
+
   focusGame: () => ipcRenderer.invoke('game:focus'),
   getLastLaunchedPid: () => ipcRenderer.invoke('game:lastPid'),
 

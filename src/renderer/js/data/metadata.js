@@ -1,9 +1,7 @@
-// Integracja z SteamGridDB i wzbogacanie metadanych.
-// ROZSZERZENIE: dodano ScreenScraper.fr (główne źródło dla retro —
-// opisy, cover, genres, liczba graczy) i TheGamesDB (fallback bez
-// rejestracji, głównie cover + rok + genres) jako kolejne bezpłatne
-// scrapery dla platform retro, gdzie RAWG/SteamGridDB mają słabe
-// pokrycie (SNES, Genesis, PSX, arcade, handheldy itd.).
+// Integracja ze SteamGridDB, RAWG i TheGamesDB.
+// Wszystkie żądania idą przez backend (launcherAPI.httpRequest), więc
+// WebKit nie blokuje ich przez CORS. ScreenScraper nie jest już używany:
+// wymagał czterech pól logowania i miał agresywne limity.
 
 function getSteamGridDimensionsForAspect(aspect, custom) {
   const ratio = getAspectVars(aspect || 'standard', custom).ratioNumber;
@@ -25,57 +23,138 @@ function getSteamGridApiKey() {
   return config.apiKeys?.steamgrid?.trim() || '';
 }
 
-// ScreenScraper wymaga DWÓCH par danych:
-// 1) dev id/dev password — identyfikator aplikacji (prosi się o niego
-//    przez formularz na screenscraper.fr, sekcja "API");
-// 2) ssid/sspassword — login i hasło zwykłego konta użytkownika.
-// Bez pełnej czwórki API zwraca błąd autoryzacji — dlatego nie trzymamy
-// tu żadnych "fałszywych" wartości domyślnych i pomijamy źródło, aż
-// użytkownik wpisze dane w Ustawienia → Okładki.
-function getScreenScraperCredentials() {
-  return {
-    devId: config.apiKeys?.screenscraperDevId?.trim() || '',
-    devPassword: config.apiKeys?.screenscraperDevPass?.trim() || '',
-    user: config.apiKeys?.screenscraperUser?.trim() || '',
-    password: config.apiKeys?.screenscraperPassword?.trim() || ''
-  };
+// ============================================================
+// Wspólny transport HTTP dla scraperów.
+//
+// Wcześniej metadata.js wołało przeglądarkowy fetch. W Tauri/WebKit
+// żądania do SteamGridDB/RAWG/TheGamesDB są cross-origin i kończyły się
+// błędem CORS, a awaryjny http_proxy nie zawsze był wywoływany. Teraz
+// każde żądanie idzie przez backend (launcherAPI.httpRequest), więc CORS
+// w ogóle nie dotyczy scraperów. W Electronie robi to proces main.
+// ============================================================
+
+function truncateApiBody(text) {
+  const clean = String(text || '').replace(/\s+/g, ' ').trim();
+  return clean.length > 180 ? clean.slice(0, 180) + '…' : clean;
 }
 
-function screenScraperConfigured() {
-  const c = getScreenScraperCredentials();
-  return Boolean(c.devId && c.devPassword && c.user && c.password);
+function apiErrorText(error) {
+  if (!error) return 'nieznany błąd';
+  if (typeof error === 'string') return error;
+  return error.message || error.name || String(error) || 'nieznany błąd';
 }
 
-// Lekki test autoryzacji — ssuserInfos.php zwraca info o koncie.
-// Używany przez przycisk "Test" w panelu kluczy API.
-async function testScreenScraperConnection() {
-  const c = getScreenScraperCredentials();
-  if (!c.devId || !c.devPassword || !c.user || !c.password) {
-    return { ok: false, error: 'Uzupełnij wszystkie 4 pola ScreenScraper (Dev ID, Dev Hasło, Login, Hasło).' };
+async function apiFetchResponse(url, options = {}) {
+  const method = options.method || 'GET';
+  const headers = options.headers || {};
+  const body = options.body ?? null;
+
+  if (window.launcherAPI?.httpRequest) {
+    const res = await window.launcherAPI.httpRequest({ url, method, headers, body });
+    if (!res || res.error) {
+      throw new Error(res?.error || 'Błąd sieci');
+    }
+
+    return {
+      ok: res.ok !== false && (res.status == null || Number(res.status) < 400),
+      status: Number(res.status) || 0,
+      json: async () => JSON.parse(res.body || 'null'),
+      text: async () => res.body || ''
+    };
   }
 
-  const params = new URLSearchParams({
-    devid: c.devId,
-    devpassword: c.devPassword,
-    ssid: c.user,
-    sspassword: c.password,
-    output: 'json'
+  return fetch(url, {
+    method,
+    headers,
+    body: body == null ? undefined : body
   });
+}
+
+async function apiFetchJson(url, options = {}) {
+  const res = await apiFetchResponse(url, options);
+  const text = await res.text();
+
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status || '?'}${text ? `: ${truncateApiBody(text)}` : ''}`);
+  }
 
   try {
-    const res = await fetch(`https://www.screenscraper.fr/api2/ssuserInfos.php?${params.toString()}`);
-    if (!res.ok) {
-      return { ok: false, error: `Serwer zwrócił HTTP ${res.status}` };
+    return JSON.parse(text || 'null');
+  } catch (_) {
+    throw new Error('Nieprawidłowa odpowiedź JSON z API.');
+  }
+}
+
+function searchNameForApi(name) {
+  return normalizeGameName(name)
+    .replace(/([a-z])([0-9])/gi, '$1 $2')
+    .replace(/([0-9])([a-z])/gi, '$1 $2')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// ============================================================
+// Testy połączenia — używane przez przyciski „Test” w Ustawieniach.
+// ============================================================
+
+async function testSteamGridConnection() {
+  const apiKey = getSteamGridApiKey();
+  if (!apiKey) {
+    return { ok: false, error: 'Brak klucza SteamGridDB API w ustawieniach.' };
+  }
+
+  try {
+    const data = await apiFetchJson(`${STEAMGRIDBASE}/search/autocomplete/portal`, {
+      headers: { Authorization: `Bearer ${apiKey}` }
+    });
+
+    if (data?.success === false) {
+      return { ok: false, error: (data?.errors || []).join(', ') || 'API odrzuciło klucz.' };
     }
-    const data = await res.json();
-    const okFlag = data?.header?.success === 'true' || data?.response?.user;
-    if (!okFlag) {
-      return { ok: false, error: 'Serwer odrzucił dane logowania (header.success != true).' };
-    }
-    const user = data.response?.user || {};
-    return { ok: true, message: `OK — konto: ${user.id || c.user}, poziom: ${user.level ?? '?'}` };
+
+    const count = Array.isArray(data?.data) ? data.data.length : 0;
+    return { ok: true, message: `OK — ${count} wyników testowych` };
   } catch (e) {
-    return { ok: false, error: 'Błąd sieci: ' + (e?.message || e) };
+    return { ok: false, error: apiErrorText(e) };
+  }
+}
+
+async function testRawgConnection() {
+  const apiKey = getRawgApiKey();
+  if (!apiKey) {
+    return { ok: false, error: 'Brak klucza RAWG API w ustawieniach.' };
+  }
+
+  try {
+    const url = new URL('https://api.rawg.io/api/games');
+    url.searchParams.set('key', apiKey);
+    url.searchParams.set('search', 'portal');
+    url.searchParams.set('page_size', '1');
+
+    const data = await apiFetchJson(url.toString());
+    const count = Array.isArray(data?.results) ? data.results.length : 0;
+    return { ok: true, message: `OK — ${count} wyników testowych` };
+  } catch (e) {
+    return { ok: false, error: apiErrorText(e) };
+  }
+}
+
+async function testTheGamesDbConnection() {
+  const apiKey = getTheGamesDbApiKey();
+  if (!apiKey) {
+    return { ok: false, error: 'Brak klucza TheGamesDB API w ustawieniach.' };
+  }
+
+  try {
+    const url = new URL(`${THEGAMESDB_BASE}/Games/ByGameName`);
+    url.searchParams.set('apikey', apiKey);
+    url.searchParams.set('name', 'portal');
+
+    const data = await apiFetchJson(url.toString());
+    const count = theGamesDbList(data?.data?.games).length;
+    return { ok: true, message: `OK — ${count} wyników testowych` };
+  } catch (e) {
+    return { ok: false, error: apiErrorText(e) };
   }
 }
 
@@ -84,30 +163,6 @@ async function testScreenScraperConnection() {
 function getTheGamesDbApiKey() {
   return config.apiKeys?.thegamesdb?.trim() || '';
 }
-
-// Mapa platformKey (Twoje wewnętrzne klucze) -> ID systemu ScreenScraper.
-// Uzupełnij / dopasuj do własnych platform.key. Pełna lista systemeid
-// jest dostępna po zalogowaniu na https://www.screenscraper.fr/api2.php
-const SCREENSCRAPER_SYSTEM_IDS = {
-  nes: 3,
-  snes: 4,
-  n64: 14,
-  gb: 9,
-  gbc: 10,
-  gba: 12,
-  genesis: 1,
-  megadrive: 1,
-  psx: 57,
-  ps1: 57,
-  ps2: 58,
-  psp: 61,
-  arcade: 75,
-  neogeo: 142,
-  dreamcast: 23,
-  saturn: 22,
-  gamecube: 13,
-  wii: 16
-};
 
 // Mapa platformKey -> platform id TheGamesDB (patrz theGamesDb.net/api ->
 // endpoint /Platforms dla pełnej listy).
@@ -133,14 +188,7 @@ const THEGAMESDB_PLATFORM_IDS = {
 };
 
 // Mapy są fallbackiem dla starych configów; nowe platformy zapisują
-// własne `scraperSystem` / `tgdb` z presetu (działa też po zmianie nazwy).
-function getScraperSystemId(platformKey) {
-  const platform = getPlatform(platformKey);
-  const custom = Number(platform?.scraperSystem);
-  if (Number.isFinite(custom) && custom > 0) return custom;
-  return SCREENSCRAPER_SYSTEM_IDS[platformKey];
-}
-
+// własne `tgdb` z presetu (działa też po zmianie nazwy).
 function getTheGamesDbPlatformId(platformKey) {
   const platform = getPlatform(platformKey);
   const custom = Number(platform?.tgdb);
@@ -208,6 +256,17 @@ function scoreCandidateMatch(query, candidateName) {
   return score;
 }
 
+async function fetchSteamGridGrids(gameId, dimensions, apiKey) {
+  const params = dimensions
+    ? `?${new URLSearchParams({ dimensions }).toString()}`
+    : '';
+  const data = await apiFetchJson(
+    `${STEAMGRIDBASE}/grids/game/${encodeURIComponent(gameId)}${params}`,
+    { headers: { Authorization: `Bearer ${apiKey}` } }
+  );
+  return Array.isArray(data?.data) ? data.data.filter(grid => grid?.url) : [];
+}
+
 async function fetchSteamGridCoverByName(name, platformKey) {
   const apiKey = getSteamGridApiKey();
   if (!apiKey) {
@@ -215,23 +274,30 @@ async function fetchSteamGridCoverByName(name, platformKey) {
   }
 
   const rawName = String(name || '').trim();
-  const normalizedName = normalizeGameName(rawName);
+  const normalizedName = searchNameForApi(rawName) || normalizeGameName(rawName);
   const query = encodeURIComponent(normalizedName);
 
   const platform = getPlatform(platformKey);
   const aspect = platform?.aspect || 'standard';
   const dimensions = getSteamGridDimensionsForAspect(aspect, platform?.aspectCustom);
 
-  const searchRes = await fetch(`${STEAMGRIDBASE}/search/autocomplete/${query}`, {
-    headers: { Authorization: `Bearer ${apiKey}` }
-  });
-
-  if (!searchRes.ok) {
-    return { ok: false, error: 'Nie udało się wyszukać gry w SteamGridDB.' };
+  let searchData;
+  try {
+    searchData = await apiFetchJson(`${STEAMGRIDBASE}/search/autocomplete/${query}`, {
+      headers: { Authorization: `Bearer ${apiKey}` }
+    });
+  } catch (e) {
+    return { ok: false, error: `SteamGridDB: ${apiErrorText(e)}` };
   }
 
-  const searchData = await searchRes.json();
-  const candidates = (searchData?.data || []).slice(0, 12);
+  if (searchData?.success === false) {
+    return {
+      ok: false,
+      error: `SteamGridDB: ${(searchData?.errors || []).join(', ') || 'API odrzuciło klucz'}`
+    };
+  }
+
+  const candidates = Array.isArray(searchData?.data) ? searchData.data.slice(0, 12) : [];
 
   if (!candidates.length) {
     return { ok: false, error: 'Nie znaleziono gry w SteamGridDB.' };
@@ -245,25 +311,30 @@ async function fetchSteamGridCoverByName(name, platformKey) {
     .sort((a, b) => b.score - a.score);
 
   const best = ranked[0];
-  if (!best || best.score < 140 || !best.item) {
+  if (!best || best.score < 140 || !best.item?.id) {
     return { ok: false, error: 'Nie udało się dobrać trafnego wyniku w SteamGridDB.' };
   }
 
-  const params = new URLSearchParams({ dimensions });
-  const coverRes = await fetch(
-    `${STEAMGRIDBASE}/grids/game/${encodeURIComponent(best.item.id)}?${params.toString()}`,
-    { headers: { Authorization: `Bearer ${apiKey}` } }
-  );
-
-  let cover = null;
-  let remoteCover = null;
-
-  if (coverRes.ok) {
-    const coverData = await coverRes.json();
-    remoteCover = coverData?.data?.[0]?.url ?? null;
+  // Najpierw pytamy o preferowany wymiar. Jeśli dana platforma nie ma
+  // okładek w tym rozmiarze, bierzemy dowolną — lepsza okładka w innym
+  // kadrze niż brak okładki.
+  let grids = [];
+  try {
+    grids = await fetchSteamGridGrids(best.item.id, dimensions, apiKey);
+    if (!grids.length) {
+      grids = await fetchSteamGridGrids(best.item.id, null, apiKey);
+    }
+  } catch (e) {
+    return { ok: false, error: `SteamGridDB: ${apiErrorText(e)}` };
   }
 
-  if (remoteCover && window.launcherAPI?.cacheRemoteImage) {
+  const remoteCover = grids[0]?.url || null;
+  if (!remoteCover) {
+    return { ok: false, error: 'SteamGridDB: brak okładek dla tej gry.' };
+  }
+
+  let cover = remoteCover;
+  if (window.launcherAPI?.cacheRemoteImage) {
     const cached = await window.launcherAPI.cacheRemoteImage({
       url: remoteCover,
       platformKey,
@@ -273,11 +344,7 @@ async function fetchSteamGridCoverByName(name, platformKey) {
 
     if (cached?.ok && cached.localUrl) {
       cover = cached.localUrl;
-    } else {
-      cover = remoteCover;
     }
-  } else {
-    cover = remoteCover;
   }
 
   return {
@@ -285,7 +352,7 @@ async function fetchSteamGridCoverByName(name, platformKey) {
     data: {
       title: best.item.name || normalizedName,
       cover,
-      remoteCover: remoteCover || null,
+      remoteCover,
       source: 'SteamGridDB',
       sourceUrl: STEAMGRIDATTRIBUTIONURL,
       dimensions
@@ -300,19 +367,20 @@ async function fetchRawgMetadataByName(name) {
   }
 
   const rawName = String(name || '').trim();
-  const normalizedName = normalizeGameName(rawName);
+  const normalizedName = searchNameForApi(rawName) || normalizeGameName(rawName);
 
   const searchUrl = new URL('https://api.rawg.io/api/games');
   searchUrl.searchParams.set('key', apiKey);
   searchUrl.searchParams.set('search', normalizedName);
   searchUrl.searchParams.set('page_size', '10');
 
-  const searchRes = await fetch(searchUrl.toString());
-  if (!searchRes.ok) {
-    return { ok: false, error: 'Nie udało się wyszukać gry w RAWG.' };
+  let searchData;
+  try {
+    searchData = await apiFetchJson(searchUrl.toString());
+  } catch (e) {
+    return { ok: false, error: `RAWG: ${apiErrorText(e)}` };
   }
 
-  const searchData = await searchRes.json();
   const candidates = Array.isArray(searchData?.results) ? searchData.results : [];
 
   if (!candidates.length) {
@@ -334,12 +402,12 @@ async function fetchRawgMetadataByName(name) {
   const detailsUrl = new URL(`https://api.rawg.io/api/games/${encodeURIComponent(best.item.slug)}`);
   detailsUrl.searchParams.set('key', apiKey);
 
-  const detailsRes = await fetch(detailsUrl.toString());
-  if (!detailsRes.ok) {
-    return { ok: false, error: 'Nie udało się pobrać szczegółów gry z RAWG.' };
+  let details;
+  try {
+    details = await apiFetchJson(detailsUrl.toString());
+  } catch (e) {
+    return { ok: false, error: `RAWG: ${apiErrorText(e)}` };
   }
-
-  const details = await detailsRes.json();
 
   return {
     ok: true,
@@ -361,132 +429,34 @@ async function fetchRawgMetadataByName(name) {
 }
 
 // ============================================================
-// ScreenScraper.fr — główne źródło metadanych dla retro. Darmowe konto
-// wystarcza (bez limitów płatnego API). Dopasowanie po nazwie ROM-u +
-// ID systemu. Zwraca opis (PL jeśli dostępny, inaczej EN), gatunki,
-// liczbę graczy, ocenę społeczności i cover (box-2D).
-//
-// Endpoint: https://www.screenscraper.fr/api2/jeuInfos.php
-// Wymaga: devid/devpassword (per-aplikacja, można użyć wartości testowych
-// z dokumentacji dla użytku non-commercial) + ssid/sspassword użytkownika.
+// TheGamesDB — fallback z jednym kluczem API. Używany głównie do
+// okładki + roku, gdy SteamGridDB i RAWG nie mają trafienia
+// (rzadkie, niszowe ROMy).
 // ============================================================
 
- const SCREENSCRAPER_DEV_ID = 'twojDevId';
-const SCREENSCRAPER_DEV_PASSWORD = 'twojDevPassword';
-const SCREENSCRAPER_SOFTNAME = 'RetroLauncher';
+let theGamesDbGenresCache = null;
 
-async function fetchScreenScraperMetadataByName(name, platformKey) {
-  const { devId, devPassword, user, password } = getScreenScraperCredentials();
-  if (!devId || !devPassword || !user || !password) {
-    return { ok: false, error: 'Brak pełnych danych ScreenScraper (Dev ID/Hasło + Login/Hasło) w ustawieniach.' };
-  }
-
-  const systemeid = getScraperSystemId(platformKey);
-  if (!systemeid) {
-    return { ok: false, error: `Brak mapowania platformy "${platformKey}" na systemeid ScreenScraper.` };
-  }
-
-  const rawName = String(name || '').trim();
-  const normalizedName = normalizeGameName(rawName);
-
-  const params = new URLSearchParams({
-    devid: devId,
-    devpassword: devPassword,
-    softname: SCREENSCRAPER_SOFTNAME,
-    ssid: user,
-    sspassword: password,
-    output: 'json',
-    romnom: rawName,
-    recherche: normalizedName,
-    systemeid: String(systemeid)
-  });
-
-  const res = await fetch(`${SCREENSCRAPER_BASE}/jeuInfos.php?${params.toString()}`);
-  if (!res.ok) {
-    return { ok: false, error: 'Nie udało się połączyć z ScreenScraper.' };
-  }
-
-  const data = await res.json();
-  const jeu = data?.response?.jeu;
-
-  if (!jeu) {
-    return { ok: false, error: 'Nie znaleziono gry w ScreenScraper.' };
-  }
-
-  const score = scoreCandidateMatch(normalizedName, jeu?.noms?.[0]?.text || jeu?.nom || '');
-  if (score < 100) {
-    return { ok: false, error: 'Nie udało się dobrać trafnego wyniku w ScreenScraper.' };
-  }
-
-  // Dwujęzyczne opisy: PL preferowane, EN fallback; zapisujemy OBA w
-  // config.metadata, żeby przy zmianie języka UI nie trzeba było
-  // odświeżać danych z sieci.
-  const synopses = Array.isArray(jeu.synopsis) ? jeu.synopsis : [];
-  const descPl = (synopses.find(s => s.langue === 'pl') || {}).text || '';
-  const descEn = (synopses.find(s => s.langue === 'en') || synopses[0] || {}).text || '';
-  const synopsisEntry = descPl ? { text: descPl } : { text: descEn };
-
-  const genresList = Array.isArray(jeu.genres)
-    ? jeu.genres.map(g => {
-        const noms = g?.noms || [];
-        return (noms.find(n => n.langue === 'pl') || noms.find(n => n.langue === 'en') || noms[0])?.text;
-      }).filter(Boolean)
-    : [];
-
-  const boxArt = (jeu.medias || []).find(m => m.type === 'box-2D' && m.url);
-  const remoteCover = boxArt?.url || null;
-
-  // Dodatkowe media (przydatne w trybach hero/bigbox i w trailerze).
-  const fanart = (jeu.medias || []).find(m => m.type === 'fanart' && m.url)?.url || '';
-  const wheel = (jeu.medias || []).find(
-    m => (m.type === 'wheel' || m.type === 'wheel-hd') && m.url
-  )?.url || '';
-  const video = (jeu.medias || []).find(
-    m => (m.type === 'video' || m.type === 'video-normalized') && m.url
-  )?.url || '';
-
-  let cover = remoteCover;
-  if (remoteCover && window.launcherAPI?.cacheRemoteImage) {
-    const platform = getPlatform(platformKey);
-    const cached = await window.launcherAPI.cacheRemoteImage({
-      url: remoteCover,
-      platformKey,
-      gameTitle: jeu.nom || normalizedName,
-      aspect: platform?.aspect || 'standard'
-    });
-    if (cached?.ok && cached.localUrl) cover = cached.localUrl;
-  }
-
-  return {
-    ok: true,
-    data: {
-      title: jeu.nom || normalizedName,
-      description: synopsisEntry?.text || '',
-      desc_pl: descPl || '',
-      desc_en: descEn || '',
-      genres: genresList,
-      developer: jeu.developpeur?.text || '',
-      year: jeu?.dates?.[0]?.text ? Number(String(jeu.dates[0].text).slice(0, 4)) || '' : '',
-      players: jeu.joueurs?.text || '',
-      communityRating: jeu.note?.text ? Number(jeu.note.text) : null,
-      cover,
-      remoteCover,
-      fanart,
-      wheel,
-      video,
-      source: 'ScreenScraper',
-      sourceUrl: 'https://www.screenscraper.fr'
-    }
-  };
+function theGamesDbList(value) {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === 'object') return Object.values(value);
+  return [];
 }
 
-// ============================================================
-// TheGamesDB — fallback bez pełnej rejestracji dewelopera (darmowy klucz
-// wystarcza), głównie do coveru + roku + gatunków, gdy SteamGridDB i
-// ScreenScraper nie mają trafienia (rzadkie, niszowe ROMy).
-// ============================================================
+async function getTheGamesDbGenres(apiKey) {
+  if (theGamesDbGenresCache) return theGamesDbGenresCache;
 
- 
+  try {
+    const url = new URL(`${THEGAMESDB_BASE}/Genres`);
+    url.searchParams.set('apikey', apiKey);
+    const data = await apiFetchJson(url.toString());
+    theGamesDbGenresCache = data?.data?.genres || {};
+  } catch (_) {
+    theGamesDbGenresCache = {};
+  }
+
+  return theGamesDbGenresCache;
+}
+
 async function fetchTheGamesDbMetadataByName(name, platformKey) {
   const apiKey = getTheGamesDbApiKey();
   if (!apiKey) {
@@ -495,20 +465,21 @@ async function fetchTheGamesDbMetadataByName(name, platformKey) {
 
   const platformId = getTheGamesDbPlatformId(platformKey);
   const rawName = String(name || '').trim();
-  const normalizedName = normalizeGameName(rawName);
+  const normalizedName = searchNameForApi(rawName) || normalizeGameName(rawName);
 
   const searchUrl = new URL(`${THEGAMESDB_BASE}/Games/ByGameName`);
   searchUrl.searchParams.set('apikey', apiKey);
   searchUrl.searchParams.set('name', normalizedName);
   if (platformId) searchUrl.searchParams.set('filter[platform]', String(platformId));
 
-  const searchRes = await fetch(searchUrl.toString());
-  if (!searchRes.ok) {
-    return { ok: false, error: 'Nie udało się wyszukać gry w TheGamesDB.' };
+  let searchData;
+  try {
+    searchData = await apiFetchJson(searchUrl.toString());
+  } catch (e) {
+    return { ok: false, error: `TheGamesDB: ${apiErrorText(e)}` };
   }
 
-  const searchData = await searchRes.json();
-  const candidates = searchData?.data?.games || [];
+  const candidates = theGamesDbList(searchData?.data?.games);
 
   if (!candidates.length) {
     return { ok: false, error: 'Nie znaleziono gry w TheGamesDB.' };
@@ -526,23 +497,43 @@ async function fetchTheGamesDbMetadataByName(name, platformKey) {
     return { ok: false, error: 'Nie udało się dobrać trafnego wyniku w TheGamesDB.' };
   }
 
+  // Szczegóły (opis, gatunki, liczba graczy) — opcjonalne; jeśli endpoint
+  // zawiedzie, zostają dane z wyszukiwania.
+  let details = best.item;
+  try {
+    const detailsUrl = new URL(`${THEGAMESDB_BASE}/Games/ByGameID`);
+    detailsUrl.searchParams.set('apikey', apiKey);
+    detailsUrl.searchParams.set('id', String(best.item.id));
+    detailsUrl.searchParams.set(
+      'fields',
+      'players,publishers,genres,overview,last_updated,rating,platform,release_date'
+    );
+    const detailsData = await apiFetchJson(detailsUrl.toString());
+    details = theGamesDbList(detailsData?.data?.games)[0] || details;
+  } catch (_) {}
+
+  const genreMap = await getTheGamesDbGenres(apiKey);
+  const genres = Array.isArray(details?.genres)
+    ? details.genres
+        .map(id => genreMap[id] || genreMap[String(id)] || '')
+        .filter(Boolean)
+    : [];
+
   const imagesUrl = new URL(`${THEGAMESDB_BASE}/Games/Images`);
   imagesUrl.searchParams.set('apikey', apiKey);
   imagesUrl.searchParams.set('games_id', String(best.item.id));
   imagesUrl.searchParams.set('filter[type]', 'boxart');
 
-  const imagesRes = await fetch(imagesUrl.toString());
   let remoteCover = null;
-
-  if (imagesRes.ok) {
-    const imagesData = await imagesRes.json();
+  try {
+    const imagesData = await apiFetchJson(imagesUrl.toString());
     const baseUrl = imagesData?.data?.base_url?.original || '';
     const gameImages = imagesData?.data?.images?.[String(best.item.id)] || [];
     const front = gameImages.find(img => img.side === 'front') || gameImages[0];
     if (front?.filename && baseUrl) {
       remoteCover = baseUrl + front.filename;
     }
-  }
+  } catch (_) {}
 
   let cover = remoteCover;
   if (remoteCover && window.launcherAPI?.cacheRemoteImage) {
@@ -550,17 +541,27 @@ async function fetchTheGamesDbMetadataByName(name, platformKey) {
     const cached = await window.launcherAPI.cacheRemoteImage({
       url: remoteCover,
       platformKey,
-      gameTitle: best.item.game_title || normalizedName,
+      gameTitle: details.game_title || best.item.game_title || normalizedName,
       aspect: platform?.aspect || 'standard'
     });
     if (cached?.ok && cached.localUrl) cover = cached.localUrl;
   }
 
+  const releaseDate = details?.release_date || best.item.release_date;
+  const rating = Number(details?.rating ?? best.item.rating);
+  const overview = details?.overview || '';
+
   return {
     ok: true,
     data: {
-      title: best.item.game_title || normalizedName,
-      year: best.item.release_date ? Number(String(best.item.release_date).slice(0, 4)) || '' : '',
+      title: details?.game_title || best.item.game_title || normalizedName,
+      description: overview,
+      desc_en: overview,
+      desc_pl: '',
+      genres,
+      players: details?.players || '',
+      communityRating: Number.isFinite(rating) && rating > 0 ? rating : null,
+      year: releaseDate ? Number(String(releaseDate).slice(0, 4)) || '' : '',
       cover,
       remoteCover,
       source: 'TheGamesDB',
@@ -571,81 +572,95 @@ async function fetchTheGamesDbMetadataByName(name, platformKey) {
 
 // ============================================================
 // Scalenie wszystkich źródeł. Priorytet dla coveru: SteamGridDB ->
-// ScreenScraper -> TheGamesDB. Priorytet dla opisu/genres/rok: RAWG ->
-// ScreenScraper (RAWG lepszy dla nowszych/multi-platform, ScreenScraper
-// lepszy dla czysto retro, więc RAWG ma pierwszeństwo gdy się trafi,
-// inaczej ScreenScraper wypełnia braki).
+// TheGamesDB. Priorytet dla opisu/genres/rok: RAWG -> TheGamesDB.
+// ScreenScraper został usunięty — wymagał czterech pól logowania
+// i miał agresywne limity, a RAWG + TheGamesDB pokrywają to samo
+// bez dodatkowej konfiguracji aplikacji.
 // ============================================================
 
+function settledSource(result) {
+  if (result.status === 'fulfilled' && result.value?.ok) {
+    return { data: result.value.data || {}, error: '' };
+  }
+  if (result.status === 'fulfilled') {
+    return { data: {}, error: result.value?.error || 'Nieznany błąd źródła.' };
+  }
+  return { data: {}, error: result.reason?.message || 'Błąd sieci.' };
+}
+
 async function fetchCombinedGameMetadata(name, platformKey) {
-  const [coverResult, rawgResult, screenScraperResult, gamesDbResult] = await Promise.allSettled([
+  const [coverResult, rawgResult, gamesDbResult] = await Promise.allSettled([
     fetchSteamGridCoverByName(name, platformKey),
     fetchRawgMetadataByName(name),
-    fetchScreenScraperMetadataByName(name, platformKey),
     fetchTheGamesDbMetadataByName(name, platformKey)
   ]);
 
-  const coverData =
-    coverResult.status === 'fulfilled' && coverResult.value?.ok
-      ? coverResult.value.data
-      : {};
+  const coverSource = settledSource(coverResult);
+  const rawgSource = settledSource(rawgResult);
+  const gamesDbSource = settledSource(gamesDbResult);
 
-  const rawgData =
-    rawgResult.status === 'fulfilled' && rawgResult.value?.ok
-      ? rawgResult.value.data
-      : {};
+  const coverData = coverSource.data;
+  const rawgData = rawgSource.data;
+  const gdbData = gamesDbSource.data;
 
-  const ssData =
-    screenScraperResult.status === 'fulfilled' && screenScraperResult.value?.ok
-      ? screenScraperResult.value.data
-      : {};
+  const resolvedCover = coverData.cover || gdbData.cover || null;
+  const resolvedRemoteCover = coverData.remoteCover || gdbData.remoteCover || null;
+  const description = rawgData.description || gdbData.description || '';
+  const genres = (Array.isArray(rawgData.genres) && rawgData.genres.length)
+    ? rawgData.genres
+    : (Array.isArray(gdbData.genres) ? gdbData.genres : []);
+  const year = rawgData.year || gdbData.year || '';
 
-  const gdbData =
-    gamesDbResult.status === 'fulfilled' && gamesDbResult.value?.ok
-      ? gamesDbResult.value.data
-      : {};
+  // Sam tytuł z wyszukiwarki nie jest jeszcze przydatnym metadanym.
+  // Sukces liczymy tylko wtedy, gdy przyszła okładka, opis, gatunki,
+  // rok albo ocena.
+  const hasRealData = Boolean(
+    resolvedCover ||
+    description ||
+    genres.length ||
+    year ||
+    rawgData.metacritic != null ||
+    gdbData.communityRating != null
+  );
 
-  const resolvedCover = coverData.cover || ssData.cover || gdbData.cover || null;
-  const resolvedRemoteCover = coverData.remoteCover || ssData.remoteCover || gdbData.remoteCover || null;
+  const errors = [coverSource.error, rawgSource.error, gamesDbSource.error].filter(Boolean);
+
+  if (!hasRealData) {
+    return {
+      ok: false,
+      error: errors.join(' | ') || 'Nie udało się pobrać metadanych z żadnego źródła.',
+      errors
+    };
+  }
 
   const merged = {
-    title: rawgData.title || ssData.title || coverData.title || gdbData.title || normalizeGameName(name),
-    description:
-      rawgData.description ||
-      ssData.description ||
-      'Gra dopasowana automatycznie na podstawie zewnętrznych baz danych.',
-    desc_pl: ssData.desc_pl || '',
-    desc_en: ssData.desc_en || rawgData.desc_en || '',
+    title: rawgData.title || coverData.title || gdbData.title || normalizeGameName(name),
+    description,
+    desc_pl: gdbData.desc_pl || '',
+    desc_en: rawgData.desc_en || gdbData.desc_en || '',
     cover: resolvedCover,
     remoteCover: resolvedRemoteCover,
-    fanart: ssData.fanart || '',
-    wheel: ssData.wheel || '',
-    video: ssData.video || '',
-    genres: (Array.isArray(rawgData.genres) && rawgData.genres.length)
-      ? rawgData.genres
-      : (Array.isArray(ssData.genres) ? ssData.genres : []),
-    dev: rawgData.developer || ssData.developer || '',
-    year: rawgData.year || ssData.year || gdbData.year || '',
+    fanart: '',
+    wheel: '',
+    video: '',
+    genres,
+    dev: rawgData.developer || '',
+    year,
     metacritic: rawgData.metacritic ?? null,
-    communityRating: ssData.communityRating ?? null,
-    players: ssData.players || '',
+    communityRating: gdbData.communityRating ?? null,
+    players: gdbData.players || '',
     hltb: null,
     source: [
       coverData.source,
       rawgData.sourceMeta,
-      ssData.source,
       gdbData.source
     ].filter(Boolean).join(' + '),
-    sourceUrl: coverData.sourceUrl || ssData.sourceUrl || gdbData.sourceUrl || '',
+    sourceUrl: coverData.sourceUrl || gdbData.sourceUrl || '',
     sourceMetaUrl: rawgData.sourceMetaUrl || '',
     dimensions: coverData.dimensions || null
   };
 
-  if (!merged.cover && !merged.description && merged.metacritic == null && merged.communityRating == null) {
-    return { ok: false, error: 'Nie udało się pobrać metadanych z żadnego źródła.' };
-  }
-
-  return { ok: true, data: merged };
+  return { ok: true, data: merged, errors };
 }
 
 async function enrichPlatformMetadata(platformKey, force = false, opts = {}) {
@@ -673,6 +688,8 @@ async function enrichPlatformMetadata(platformKey, force = false, opts = {}) {
 
   let updated = 0;
   let processed = 0;
+  let failed = 0;
+  let lastError = '';
 
   if (progressEl) progressEl.hidden = false;
   if (progressBar) progressBar.style.width = '0%';
@@ -699,10 +716,8 @@ async function enrichPlatformMetadata(platformKey, force = false, opts = {}) {
       platformKey
     );
 
-    // ScreenScraper ma agresywny rate-limit dla darmowych kont (ok. 1
-    // req/s, kilka wątków max) — 350ms zostaje bezpieczne dla RAWG/
-    // SteamGridDB, ale przy wielu grach warto rozważyć zwiększenie do
-    // 600-800ms, jeśli zaczniesz widzieć błędy 429 z ScreenScraper.
+    // SteamGridDB i RAWG nie mają tak agresywnego limitu jak dawny
+    // ScreenScraper, ale 350 ms nadal chroni przed 429 przy dużej bibliotece.
     await delay(350);
 
     if (result.ok) {
@@ -715,6 +730,10 @@ async function enrichPlatformMetadata(platformKey, force = false, opts = {}) {
 
       updated += 1;
       await saveStoredConfig();
+    } else {
+      failed += 1;
+      lastError = result.error || lastError;
+      console.warn('metadata: nie udało się pobrać dla', game.title, result.error);
     }
 
     if (progressBar) progressBar.style.width = `${Math.round((processed / platformGames.length) * 100)}%`;
@@ -729,8 +748,17 @@ async function enrichPlatformMetadata(platformKey, force = false, opts = {}) {
   await refreshLibrary();
   renderShelf();
   if (!silent) {
-    showToast(updated ? `Pobrano metadane dla ${updated} gier` : 'Nie było nowych metadanych do pobrania');
+    if (updated) {
+      showToast(`Pobrano metadane dla ${updated} gier`);
+    } else if (failed) {
+      const detail = lastError ? `: ${truncateApiBody(lastError)}` : '';
+      showToast(`Nie udało się pobrać metadanych${detail}`, true);
+    } else {
+      showToast('Nie było nowych metadanych do pobrania');
+    }
   }
+
+  return { updated, failed, lastError };
 }
 
 // ============================================================
@@ -749,7 +777,7 @@ async function autoFetchMetadataInBackground() {
   if (config.uiState?.autoFetchOnStart !== true) return;
 
   // Bez żadnych kluczy nie ma czego robić w sieci — odpuść od razu.
-  if (!getSteamGridApiKey() && !getRawgApiKey() && !screenScraperConfigured() && !getTheGamesDbApiKey()) {
+  if (!getSteamGridApiKey() && !getRawgApiKey() && !getTheGamesDbApiKey()) {
     return;
   }
 

@@ -208,7 +208,9 @@
     <main class="view active" data-view="shelf">
       <div class="shelf-stage">
         <div class="bg-gradient" id="bgGradient"></div>
+        <div class="bg-gradient bg-gradient-next" id="bgGradientNext"></div>
         <div class="bg-blur" id="bgBlur"></div>
+        <div class="bg-blur bg-blur-next" id="bgBlurNext"></div>
 
         <div class="shelf-viewport" id="shelfViewport">
           <div class="shelf" id="shelf"></div>
@@ -603,9 +605,9 @@
               <div class="settings-card settings-card-wide">
                 <h3 data-i18n="metaSourcesTitle">Źródła metadanych i okładek</h3>
                 <p class="settings-note" data-i18n="metaSourcesNote">
-                  Skonfiguruj klucze API dla poszczególnych scraperów. SteamGridDB i RAWG działają najlepiej dla
-                  nowszych gier, ScreenScraper i TheGamesDB są zorientowane na retro (SNES, Genesis, arcade,
-                  handheldy). Możesz skonfigurować tylko te źródła, z których chcesz korzystać — pozostałe
+                  Skonfiguruj klucze API dla poszczególnych scraperów. SteamGridDB pobiera okładki, RAWG
+                  opisy, gatunki i rok, a TheGamesDB jest zapasowym źródłem dla niszowych ROM-ów.
+                  Możesz skonfigurować tylko te źródła, z których chcesz korzystać — pozostałe
                   zostaną pominięte przy pobieraniu.
                 </p>
 
@@ -633,6 +635,9 @@
                       <button type="button" id="save-steamgrid-api-key" class="btn-primary" data-i18n="saveKey">
                         Zapisz klucz
                       </button>
+                      <button type="button" id="test-steamgrid-api-key" class="btn-secondary" data-i18n="testConnection">
+                        Test połączenia
+                      </button>
                     </div>
                   </div>
 
@@ -658,66 +663,7 @@
                       <button type="button" id="save-rawg-api-key" class="btn-primary" data-i18n="saveKey">
                         Zapisz klucz
                       </button>
-                    </div>
-                  </div>
-
-                  <div class="settings-card">
-                    <h4>ScreenScraper.fr</h4>
-                    <p class="settings-note" data-i18n="screenscraperNote">
-                      Główne źródło metadanych dla retro (opisy, gatunki, liczba graczy, okładki). Wymaga
-                      darmowego konta zarejestrowanego na screenscraper.fr — podaj tu login i hasło konta
-                      (nie klucz API).
-                    </p>
-
-                    <label class="field-row field-row-stack">
-                      <span class="field-label" data-i18n="screenscraperUser">Login ScreenScraper</span>
-                      <input
-                        id="screenscraper-user-input"
-                        type="text"
-                        class="field-textinput"
-                        placeholder="Nazwa użytkownika"
-                        data-i18n-placeholder="usernamePlaceholder"
-                      />
-                    </label>
-
-                    <label class="field-row field-row-stack">
-                      <span class="field-label" data-i18n="screenscraperPassword">Hasło ScreenScraper</span>
-                      <input
-                        id="screenscraper-password-input"
-                        type="password"
-                        class="field-textinput"
-                        placeholder="Hasło"
-                        data-i18n-placeholder="passwordPlaceholder"
-                      />
-                    </label>
-
-                    <label class="field-row field-row-stack">
-                      <span class="field-label" data-i18n="screenscraperDevId">Dev ID aplikacji (API)</span>
-                      <input
-                        id="screenscraper-devid-input"
-                        type="text"
-                        class="field-textinput"
-                        placeholder="np. identyfikator z formularza API"
-                        data-i18n-placeholder="devIdPlaceholder"
-                      />
-                    </label>
-
-                    <label class="field-row field-row-stack">
-                      <span class="field-label" data-i18n="screenscraperDevPass">Hasło aplikacji (API)</span>
-                      <input
-                        id="screenscraper-devpass-input"
-                        type="password"
-                        class="field-textinput"
-                        placeholder="Hasło aplikacji"
-                        data-i18n-placeholder="passwordPlaceholder"
-                      />
-                    </label>
-
-                    <div class="settings-actions-row">
-                      <button type="button" id="save-screenscraper-credentials" class="btn-primary" data-i18n="saveKey">
-                        Zapisz dane logowania
-                      </button>
-                      <button type="button" id="test-screenscraper-credentials" class="btn-secondary" data-i18n="testScreenscraper">
+                      <button type="button" id="test-rawg-api-key" class="btn-secondary" data-i18n="testConnection">
                         Test połączenia
                       </button>
                     </div>
@@ -726,8 +672,8 @@
                   <div class="settings-card">
                     <h4>TheGamesDB</h4>
                     <p class="settings-note" data-i18n="gamesdbNote">
-                      Zapasowe źródło okładek dla niszowych ROM-ów, gdy SteamGridDB i ScreenScraper nie znajdą
-                      trafienia. Wymaga darmowego klucza API z thegamesdb.net.
+                      Zapasowe źródło okładek i podstawowych metadanych dla niszowych ROM-ów, gdy SteamGridDB
+                      i RAWG nie znajdą trafienia. Wymaga darmowego klucza API z thegamesdb.net.
                     </p>
 
                     <label class="field-row field-row-stack">
@@ -744,6 +690,9 @@
                     <div class="settings-actions-row">
                       <button type="button" id="save-thegamesdb-api-key" class="btn-primary" data-i18n="saveKey">
                         Zapisz klucz
+                      </button>
+                      <button type="button" id="test-thegamesdb-api-key" class="btn-secondary" data-i18n="testConnection">
+                        Test połączenia
                       </button>
                     </div>
                   </div>

@@ -96,8 +96,7 @@ html[data-theme="ps3"] .pd-item.pd-focus{
 /* ---------- Okładki / półka ---------- */
 html[data-theme="ps3"] .sh-item{
   box-shadow:
-    0 20px 46px rgba(0,0,0,0.66),
-    0 0 0 1px rgba(143,208,255,0.14);
+    0 20px 46px rgba(0,0,0,0.66);
   opacity:.52;
   filter:brightness(.7) saturate(.9);
 }
@@ -110,7 +109,6 @@ html[data-theme="ps3"] .sh-item.focus{
   box-shadow:
     0 10px 22px rgba(0,0,0,0.5),
     0 30px 66px rgba(0,0,0,0.6),
-    0 0 0 2px rgba(143,208,255,0.95),
     0 0 42px rgba(74,163,255,0.45);
 }
 html[data-theme="ps3"] .sh-tag{
@@ -140,7 +138,6 @@ html[data-theme="ps3"] .shelf.mode-grid .sh-item.focus{
   box-shadow:
     0 14px 28px rgba(0,0,0,0.5),
     0 28px 60px rgba(0,0,0,0.6),
-    0 0 0 2px rgba(143,208,255,0.95),
     0 0 36px rgba(74,163,255,0.42);
 }
 html[data-theme="ps3"] .shelf.mode-grid .bp-status-title{

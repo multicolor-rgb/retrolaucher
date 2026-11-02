@@ -4,6 +4,7 @@ const shelfViewport = document.getElementById('shelfViewport');
 const shelfInfo = document.getElementById('shelfInfo');
 const bgBlur = document.getElementById('bgBlur');
 const bgGradient = document.getElementById('bgGradient');
+const bgGradientNext = document.getElementById('bgGradientNext');
 const titleEl = document.getElementById('gameTitle');
 const platEl = document.getElementById('plat');
 const platTag = document.getElementById('plat');
@@ -27,8 +28,10 @@ document.addEventListener('error', (event) => {
   if (el.dataset.coverFallback === '1') return;
 
   el.dataset.coverFallback = '1';
+  const failedSrc = String(el.getAttribute('src') || el.src || '');
   el.classList.add('is-placeholder');
   el.src = COVER_PLACEHOLDER;
+  if (failedSrc) console.warn('Nie udało się wczytać obrazka:', failedSrc);
 }, true);
 
 // Zwraca markup ikony z SVG sprite'a (index.html → #i-*).
@@ -88,12 +91,35 @@ function getDominantColor(src, cb) {
   img.src = src;
 }
 
+let gradientSwapTimer = null;
+let lastGradientCss = '';
+
 function applyGradient(rgb) {
   const { r, g, b } = rgb;
   const c1 = `rgb(${r},${g},${b})`;
   const c2 = `rgb(${Math.round(r * 0.4)},${Math.round(g * 0.4)},${Math.round(b * 0.5)})`;
+  const gradient = `linear-gradient(135deg, ${c1} 0%, ${c2} 55%, #05060a 100%)`;
 
-  bgGradient.style.background = `linear-gradient(135deg, ${c1} 0%, ${c2} 55%, #05060a 100%)`;
+  // Crossfade zamiast skoku koloru: nowa warstwa wjeżdża opacity, po czym
+  // staje się warstwą bazową. Tło nie „mignie” przy każdej zmianie gry.
+  if (gradient !== lastGradientCss) {
+    lastGradientCss = gradient;
+
+    if (bgGradientNext) {
+      bgGradientNext.style.background = gradient;
+      void bgGradientNext.offsetWidth;
+      bgGradientNext.classList.add('is-visible');
+
+      clearTimeout(gradientSwapTimer);
+      gradientSwapTimer = setTimeout(() => {
+        bgGradient.style.background = gradient;
+        bgGradientNext.classList.remove('is-visible');
+      }, 540);
+    } else {
+      bgGradient.style.background = gradient;
+    }
+  }
+
   platTag.style.background = `rgba(${r},${g},${b},0.35)`;
   playBtn.style.background = c1;
   playBtn.style.color = (r + g + b) / 3 > 150 ? '#05060a' : '#fff';

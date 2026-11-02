@@ -2,9 +2,18 @@
 
 let wheelNavigationLocked = false;
 let wheelNavigationBound = false;
-let shelfInfoAnimating = false;
 let playtimeRefreshTimer = null;
 let playtimeCache = {};
+
+// Kierunek ostatniego ruchu — animacje info/paneli/gridu wjeżdżają z tej
+// strony, z której użytkownik faktycznie się poruszył.
+let navMotion = { x: 1, y: 0 };
+
+// Ostatnio animowany focus (tryb + gra) — chroni przed ponownym odtwarzaniem
+// animacji przy okazjonalnym renderze, np. po odświeżeniu czasu gry.
+let lastAnimatedFocusKey = null;
+let lastInfoKey = null;
+let gridFreshTimer = null;
 
 let gridColsCache = 0;
 let gridColsCacheTime = 0;
@@ -74,19 +83,85 @@ function bindViewModeSwitch() {
   switcher.dataset.bound = 'true';
 }
 
-function animateShelfInfoChange() {
-  const shelfInfo = document.getElementById('shelfInfo');
-  if (!shelfInfo || shelfInfoAnimating) return;
+function getShelfStageEl() {
+  return shelfViewport?.closest('.shelf-stage') || null;
+}
 
-  shelfInfoAnimating = true;
+function prefersReducedMotion() {
+  return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true;
+}
+
+function shelfScrollBehavior() {
+  return prefersReducedMotion() ? 'auto' : 'smooth';
+}
+
+// Ustawia kierunek animacji (CSS variables na scenie półki). x/y to -1, 0
+// albo 1. Dzięki temu keyframes mogą wjeżdżać z właściwej strony.
+function setNavMotion(x, y) {
+  const nx = Math.sign(Number(x) || 0);
+  const ny = Math.sign(Number(y) || 0);
+
+  navMotion = { x: nx, y: ny };
+
+  const stage = getShelfStageEl();
+  if (!stage) return;
+
+  stage.style.setProperty('--nav-x', String(nx));
+  stage.style.setProperty('--nav-y', String(ny));
+}
+
+// Kierunek wynikający z kroku po indeksie listy. Panele mają pionową listę,
+// więc tam animujemy w osi Y; carousel/grid w osi X.
+function setNavMotionForIndex(fromIdx, toIdx) {
+  const delta = toIdx - fromIdx;
+  if (PANE_VIEW_MODES.includes(viewMode)) {
+    setNavMotion(0, delta || 1);
+  } else {
+    setNavMotion(delta || 1, 0);
+  }
+}
+
+function animateShelfInfoChange(force = false) {
+  const shelfInfo = document.getElementById('shelfInfo');
+  if (!shelfInfo) return;
+
+  const game = filtered[current];
+  const key = `${viewMode}:${activePlatform}:${game?.id ?? ''}`;
+
+  // Ten sam tytuł (np. odświeżenie playtime) nie ma sensu animować ponownie.
+  if (!force && key === lastInfoKey) return;
+  lastInfoKey = key;
+
   shelfInfo.classList.remove('shelf-info-swap');
   void shelfInfo.offsetWidth;
   shelfInfo.classList.add('shelf-info-swap');
+}
 
-  setTimeout(() => {
-    shelfInfo.classList.remove('shelf-info-swap');
-    shelfInfoAnimating = false;
-  }, 320);
+// Prawy panel w detailed/hero — okładka i tekst wjeżdżają z kierunku ruchu.
+function animatePaneDetailChange() {
+  const info = shelf.querySelector('.pane-info');
+  if (!info) return;
+
+  info.classList.remove('pane-swap');
+  void info.offsetWidth;
+  info.classList.add('pane-swap');
+}
+
+// Krótki "bump" nowo focusowanej okładki w gridzie (animujemy img, żeby nie
+// kolidować z transformem kafla i z regułami motywów).
+function animateGridFocusBump(el) {
+  if (!el) return;
+
+  shelf.querySelectorAll('.sh-item.nav-bump').forEach(item => {
+    item.classList.remove('nav-bump');
+  });
+
+  void el.offsetWidth;
+  el.classList.add('nav-bump');
+
+  const clear = () => el.classList.remove('nav-bump');
+  el.addEventListener('animationend', clear, { once: true });
+  setTimeout(clear, 420);
 }
 
 function applyCoverGeometry(el, platformKey, focused = false) {
@@ -98,6 +173,28 @@ function applyCoverGeometry(el, platformKey, focused = false) {
 
   if (focused) el.classList.add('focus');
   else el.classList.remove('focus');
+}
+
+// Po pobraniu metadanych okładka gry zmienia się z placeholdera na plik
+// z cache. Elementy półki są reużywane, więc trzeba jawnie podmienić src —
+// inaczej do restartu zostaje stary obrazek.
+function refreshShelfCoverImages() {
+  const byId = new Map(games.map(game => [String(game.id), game]));
+
+  shelf.querySelectorAll('[data-game-id]').forEach(el => {
+    const game = byId.get(String(el.dataset.gameId));
+    if (!game) return;
+
+    const img = el.querySelector('img');
+    if (!img) return;
+
+    const nextSrc = getCoverForGame(game);
+    if (img.getAttribute('src') === nextSrc) return;
+
+    delete img.dataset.coverFallback;
+    img.classList.remove('is-placeholder');
+    img.src = nextSrc;
+  });
 }
 
 function bindGridScrollSync() {
@@ -231,13 +328,40 @@ function getGameBackgroundImage(game) {
   return game?.fanart || getCoverForGame(game);
 }
 
+let lastBackgroundImage = '';
+let backgroundSwapTimer = null;
+let backgroundColorToken = 0;
+
 function applyGameBackground(game) {
   const cover = getCoverForGame(game);
   const background = getGameBackgroundImage(game);
+  const blurNext = document.getElementById('bgBlurNext');
 
-  bgBlur.style.backgroundImage = `url('${background}')`;
-  // Gradient liczymy z okładki — fanart bywa zbyt ciemny lub zbyt jasny.
-  getDominantColor(cover, applyGradient);
+  if (background !== lastBackgroundImage) {
+    lastBackgroundImage = background;
+
+    if (blurNext) {
+      blurNext.style.backgroundImage = `url('${background}')`;
+      void blurNext.offsetWidth;
+      blurNext.classList.add('is-visible');
+
+      clearTimeout(backgroundSwapTimer);
+      backgroundSwapTimer = setTimeout(() => {
+        bgBlur.style.backgroundImage = `url('${background}')`;
+        blurNext.classList.remove('is-visible');
+      }, 540);
+    } else {
+      bgBlur.style.backgroundImage = `url('${background}')`;
+    }
+  }
+
+  // Spóźniony callback z poprzedniej okładki nie może nadpisać koloru
+  // nowszej gry przy szybkim przewijaniu.
+  const token = ++backgroundColorToken;
+  getDominantColor(cover, rgb => {
+    if (token !== backgroundColorToken) return;
+    applyGradient(rgb);
+  });
 }
 
 function stopModalTrailer() {
@@ -467,6 +591,7 @@ function buildPaneListRow(g, idx) {
 
   row.addEventListener('click', () => {
     if (current === idx) return;
+    setNavMotion(0, idx - current);
     current = idx;
     updatePaneFocusOnly();
     if (typeof sfxMove === 'function') sfxMove();
@@ -525,7 +650,7 @@ function updatePaneFocusOnly(skipScrollIntoView = false) {
 
   if (!skipScrollIntoView) {
     const focusRow = rows[current];
-    focusRow?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    focusRow?.scrollIntoView({ block: 'nearest', behavior: shelfScrollBehavior() });
   }
 
   const g = filtered[current];
@@ -598,6 +723,14 @@ function updatePaneFocusOnly(skipScrollIntoView = false) {
   const activeCover = getCoverForGame(g);
   applyGameBackground(g);
 
+  const focusKey = `pane:${g.id}`;
+  if (focusKey !== lastAnimatedFocusKey) {
+    lastAnimatedFocusKey = focusKey;
+    animatePaneDetailChange();
+  }
+
+  animateShelfInfoChange();
+
   refreshCurrentGamePlaytime();
   updateFavoriteButtons();
 }
@@ -618,9 +751,64 @@ function updatePaneFocusOnly(skipScrollIntoView = false) {
 //    razu finalny --offset, więc nie było z czego animować. Teraz nowy
 //    element startuje z offsetu "za krawędzią" i w następnej klatce
 //    dostaje docelowy --offset, więc transition ma z czego animować wjazd.
+// FLIP dla flat/framed: zapamiętujemy pozycje przed przebudową DOM, a po niej
+// animujemy elementy ze starych slotów do nowych. Bez tego zmiana gry w tych
+// trybach wyglądała jak natychmiastowe podmienienie obrazków.
+function captureShelfItemRects() {
+  const rects = new Map();
+  shelf.querySelectorAll('.sh-item').forEach(el => {
+    rects.set(el.dataset.gameId, el.getBoundingClientRect());
+  });
+  return rects;
+}
+
+function playShelfFlip(prevRects) {
+  if (!prevRects || !prevRects.size || prefersReducedMotion()) return;
+
+  // Wyłączamy transition na czas pomiaru, żeby getBoundingClientRect()
+  // zwracał docelowy layout, a nie stan w połowie animacji szerokości.
+  shelf.classList.add('flip-measure');
+  void shelf.offsetWidth;
+
+  const moves = [];
+  shelf.querySelectorAll('.sh-item').forEach(el => {
+    const prev = prevRects.get(el.dataset.gameId);
+    if (!prev) return;
+
+    const now = el.getBoundingClientRect();
+    const dx = prev.left - now.left;
+    const dy = prev.top - now.top;
+
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+    moves.push({ el, dx, dy });
+  });
+
+  if (!moves.length) {
+    shelf.classList.remove('flip-measure');
+    return;
+  }
+
+  moves.forEach(({ el, dx, dy }) => {
+    el.style.transition = 'none';
+    el.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
+  });
+
+  void shelf.offsetWidth;
+  shelf.classList.remove('flip-measure');
+
+  requestAnimationFrame(() => {
+    moves.forEach(({ el }) => {
+      el.style.transition = '';
+      el.style.transform = '';
+    });
+  });
+}
+
 function renderCarouselShelf() {
   const len = filtered.length;
   const range = 3;
+  const useFlip = (viewMode === 'flat' || viewMode === 'framed') && !prefersReducedMotion();
+  const prevRects = useFlip ? captureShelfItemRects() : null;
 
   // Gdy biblioteka jest mniejsza niż okno ±3, mod() powtarzałby te same
   // gry 7 razy (przy 1 grze wyglądało to jak 7 identycznych okładek).
@@ -689,6 +877,7 @@ function renderCarouselShelf() {
       el.addEventListener('click', () => {
         const liveIdx = filtered.indexOf(g);
         if (liveIdx === -1 || current === liveIdx) return;
+        setNavMotionForIndex(current, liveIdx);
         current = liveIdx;
         renderShelf();
       });
@@ -699,6 +888,9 @@ function renderCarouselShelf() {
       el.dataset.offset = startOffset;
       el.style.setProperty('--offset', startOffset);
       el.style.transition = 'none';
+
+      // Krótkie wejście nowej okładki na krawędzi zakresu.
+      el.classList.add('sh-item-enter');
 
       applyCarouselGeometry(el, g.platform, false);
       newlyCreated.push(el);
@@ -761,7 +953,13 @@ function renderCarouselShelf() {
         }
       });
     });
+
+    setTimeout(() => {
+      newlyCreated.forEach(el => el.classList.remove('sh-item-enter'));
+    }, 420);
   }
+
+  playShelfFlip(prevRects);
 }
 
 // ============================================================
@@ -824,10 +1022,13 @@ function bindCoversPill() {
 
     let done = 0;
     const total = targets.length;
+    let updatedTotal = 0;
+    let failedTotal = 0;
+    let lastError = '';
 
     try {
       for (const key of targets) {
-        await enrichPlatformMetadata(key, false, {
+        const summary = await enrichPlatformMetadata(key, false, {
           silent: true,
           onProgress: (processed, all) => {
             if (coversPillBusy) {
@@ -835,13 +1036,29 @@ function bindCoversPill() {
             }
           }
         });
+
+        if (summary) {
+          updatedTotal += summary.updated || 0;
+          failedTotal += summary.failed || 0;
+          lastError = summary.lastError || lastError;
+        }
+
         done += 1;
       }
-      showToast(
-        done > 1
-          ? (t('coversFetchedPlatforms') || 'Uzupełniono metadane dla platform') + ` (${done}/${total})`
-          : (t('coversFetchedDone') || 'Gotowe — odświeżono okładki i opisy')
-      );
+
+      if (!updatedTotal && failedTotal) {
+        showToast(
+          (t('coversFetchError') || 'Nie udało się pobrać metadanych') +
+            (lastError ? `: ${lastError}` : ''),
+          true
+        );
+      } else {
+        showToast(
+          done > 1
+            ? (t('coversFetchedPlatforms') || 'Uzupełniono metadane dla platform') + ` (${done}/${total})`
+            : (t('coversFetchedDone') || 'Gotowe — odświeżono okładki i opisy')
+        );
+      }
     } catch (e) {
       console.warn('coversPill enrich failed', e);
       showToast(t('coversFetchError') || 'Nie udało się pobrać metadanych', true);
@@ -870,6 +1087,7 @@ function renderShelf() {
   bindCoversPill();
   updateCoversPill();
   updateFavoriteButtons();
+  refreshShelfCoverImages();
 
   // shelf-info: grid dostaje własny pasek, panele ukrywają zdublowany
   // tytuł (jest już w panelu po prawej) i zostawiają same przyciski.
@@ -927,7 +1145,8 @@ function renderShelf() {
       stageEl.style.setProperty('--stage-accent', pf.color);
     }
 
-    animateShelfInfoChange();
+    // Animacja info odtwarzana jest w updatePaneFocusOnly(), żeby działała
+    // także przy klikaniu wiersza listy (bez pełnego renderShelf).
     refreshCurrentGamePlaytime();
     startPlaytimeAutoRefresh();
     lastBuiltShelfMode = viewMode;
@@ -938,6 +1157,14 @@ function renderShelf() {
   if (viewMode === 'grid') {
     if (shelf.children.length !== len) {
       shelf.innerHTML = '';
+
+      // Animacja wejścia tylko przy realnym zbudowaniu siatki. Wcześniej
+      // wisiała na każdym .sh-item i potrafiła odtwarzać się ponownie po
+      // zmianie klasy focusa.
+      shelf.classList.add('fresh-build');
+      clearTimeout(gridFreshTimer);
+      gridFreshTimer = setTimeout(() => shelf.classList.remove('fresh-build'), 700);
+
       filtered.forEach((g, idx) => {
         const el = document.createElement('div');
         el.className = 'sh-item' + (idx === current ? ' focus' : '');
@@ -952,6 +1179,7 @@ function renderShelf() {
 
         el.addEventListener('click', () => {
           if (current === idx) return;
+          setNavMotion(idx - current, 0);
           current = idx;
           updateGridFocusOnly();
         });
@@ -975,6 +1203,10 @@ function renderShelf() {
 
     const activeCover = getCoverForGame(g);
     applyGameBackground(g);
+
+    if (shelf.classList.contains('fresh-build')) {
+      animateShelfInfoChange();
+    }
 
     refreshCurrentGamePlaytime();
     startPlaytimeAutoRefresh();
@@ -1015,10 +1247,17 @@ function updateGridFocusOnly(skipScrollIntoView = false) {
     el.classList.toggle('focus', idx === current);
   });
 
+  const focusedGame = filtered[current];
+  const focusKey = focusedGame ? `grid:${focusedGame.id}` : null;
+  if (focusKey && focusKey !== lastAnimatedFocusKey) {
+    lastAnimatedFocusKey = focusKey;
+    animateGridFocusBump(items[current]);
+  }
+
   if (!skipScrollIntoView) {
     const focusEl = items[current];
     if (focusEl) {
-      focusEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      focusEl.scrollIntoView({ block: 'nearest', behavior: shelfScrollBehavior() });
     }
   }
 
@@ -1031,6 +1270,8 @@ function updateGridFocusOnly(skipScrollIntoView = false) {
     ratingMini.textContent = renderShelfSubinfo(g);
   }
 
+  animateShelfInfoChange();
+
   const activeCover = getCoverForGame(g);
   applyGameBackground(g);
 
@@ -1041,6 +1282,8 @@ function updateGridFocusOnly(skipScrollIntoView = false) {
 
 function next() {
   if (filtered.length) {
+    if (PANE_VIEW_MODES.includes(viewMode)) setNavMotion(0, 1);
+    else setNavMotion(1, 0);
     current = mod(current + 1, filtered.length);
     renderShelf();
     if (typeof sfxMove === 'function') sfxMove();
@@ -1049,6 +1292,8 @@ function next() {
 
 function prev() {
   if (filtered.length) {
+    if (PANE_VIEW_MODES.includes(viewMode)) setNavMotion(0, -1);
+    else setNavMotion(-1, 0);
     current = mod(current - 1, filtered.length);
     renderShelf();
     if (typeof sfxMove === 'function') sfxMove();
@@ -1115,6 +1360,7 @@ function moveGridSelection(dx, dy) {
 
   if (nextIdx === current) return;
 
+  setNavMotion(dx, dy);
   current = nextIdx;
   updateGridFocusOnly();
   if (typeof sfxMove === 'function') sfxMove();
@@ -1170,6 +1416,7 @@ function randomGame() {
   if (filtered.length > 1) {
     let idx = current;
     while (idx === current) idx = Math.floor(Math.random() * filtered.length);
+    setNavMotionForIndex(current, idx);
     current = idx;
   }
 
@@ -1192,6 +1439,7 @@ function jumpToLetter(char) {
   for (let step = 1; step <= filtered.length; step++) {
     const idx = mod(current + step, filtered.length);
     if (normalize(getDisplayTitle(filtered[idx])).startsWith(needle)) {
+      setNavMotionForIndex(current, idx);
       current = idx;
       renderShelf();
       return true;
@@ -1390,7 +1638,7 @@ function openDetails(g) {
   document.getElementById('modalDesc').textContent =
     g.desc || g.description || t('noDescription');
 
-  // Trailer ze ScreenScraper — odtwarzacz pojawia się tylko, gdy znamy URL.
+  // Trailer ze scraperów — odtwarzacz pojawia się tylko, gdy znamy URL.
   const trailerWrap = document.getElementById('modalTrailerWrap');
   const trailerVideo = document.getElementById('modalTrailer');
   if (trailerWrap && trailerVideo) {

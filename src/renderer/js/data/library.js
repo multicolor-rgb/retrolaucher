@@ -78,7 +78,7 @@ function buildLibraryGame(platform, rom, index) {
       meta.cover ||
       COVER_PLACEHOLDER,
 
-    // Dodatkowe media ze ScreenScraper (fanart jako tło, wheel/logo i trailer).
+    // Dodatkowe media ze scraperów (fanart jako tło, wheel/logo i trailer).
     fanart: meta.fanart || '',
     wheel: meta.wheel || '',
     trailer: meta.video || meta.trailer || '',
