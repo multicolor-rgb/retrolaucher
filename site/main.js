@@ -38,8 +38,8 @@
       'facts.pad': 'keyboard works too',
 
       'new.title': 'Smaller. Your library stays.',
-      'new.text': '2.1 is the Tauri port. The screen is the one you already know. The backend is Rust, and the data path did not move.',
-      'new.caption': 'Electron 1.x compared with Tauri 2.1',
+      'new.text': '2.2 builds on the Tauri port. The shelf and the data path are unchanged. The headline is IGDB: descriptions, genres, year and critic score, with smart matching and a local cover cache.',
+      'new.caption': 'Electron 1.x compared with Tauri 2.2',
       'new.row.size': 'Package',
       'new.row.ram': 'RAM at launch',
       'new.row.stop': 'Quit from the pad',
@@ -95,7 +95,7 @@
       'themes.default': 'Default',
       'themes.text': 'Pick one in Settings and the whole interface follows. The screenshots above are the default theme — there is no drawn mock of the others here.',
 
-      'download.title': 'Download 2.1',
+      'download.title': 'Download 2.2',
       'download.text': 'Free, MIT. Pick a package. Upgrading from 1.x keeps your platforms, covers and playtime.',
       'download.yours': 'Your system',
       'download.win.title': 'Installer',
@@ -174,8 +174,8 @@
       'facts.pad': 'klawiatura też działa',
 
       'new.title': 'Mniejszy. Biblioteka zostaje.',
-      'new.text': '2.1 to port na Tauri. Ekran jest ten, który już znasz. Backend jest w Ruście, a ścieżka danych się nie ruszyła.',
-      'new.caption': 'Electron 1.x wobec Tauri 2.1',
+      'new.text': '2.2 rozwija port na Tauri. Półka i ścieżka danych się nie zmieniły. Najważniejsza nowość to IGDB: opisy, gatunki, rok i ocena krytyków, z lepszym dopasowaniem i lokalnym cache\'em okładek.',
+      'new.caption': 'Electron 1.x wobec Tauri 2.2',
       'new.row.size': 'Pakiet',
       'new.row.ram': 'RAM przy starcie',
       'new.row.stop': 'Wyjście z pada',
@@ -231,7 +231,7 @@
       'themes.default': 'Domyślny',
       'themes.text': 'Wybierasz jeden w Ustawieniach i cały interfejs idzie za nim. Screenshoty wyżej są z motywu domyślnego — pozostałych tu nie udaję.',
 
-      'download.title': 'Pobierz 2.1',
+      'download.title': 'Pobierz 2.2',
       'download.text': 'Darmowy, MIT. Wybierz pakiet. Aktualizacja z 1.x zostawia platformy, okładki i czas gry.',
       'download.yours': 'Twój system',
       'download.win.title': 'Instalator',
@@ -305,8 +305,8 @@
     });
 
     document.title = lang === 'pl'
-      ? 'Retro Launcher 2.1 — Jedna półka. Wszystkie ROM-y.'
-      : 'Retro Launcher 2.1 — One shelf. Every ROM.';
+      ? 'Retro Launcher 2.2 — Jedna półka. Wszystkie ROM-y.'
+      : 'Retro Launcher 2.2 — One shelf. Every ROM.';
 
     if (lightbox && lightbox.classList.contains('is-open')) updateLightboxCaption();
   }
