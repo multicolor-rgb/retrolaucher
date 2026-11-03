@@ -605,9 +605,9 @@
               <div class="settings-card settings-card-wide">
                 <h3 data-i18n="metaSourcesTitle">Źródła metadanych i okładek</h3>
                 <p class="settings-note" data-i18n="metaSourcesNote">
-                  Skonfiguruj klucze API dla poszczególnych scraperów. SteamGridDB pobiera okładki, RAWG
-                  opisy, gatunki i rok, a TheGamesDB jest zapasowym źródłem dla niszowych ROM-ów.
-                  Możesz skonfigurować tylko te źródła, z których chcesz korzystać — pozostałe
+                  Skonfiguruj klucze API dla poszczególnych scraperów. SteamGridDB pobiera okładki, IGDB
+                  opisy, gatunki, rok i ocenę krytyków, a TheGamesDB jest zapasowym źródłem dla niszowych
+                  ROM-ów. Możesz skonfigurować tylko te źródła, z których chcesz korzystać — pozostałe
                   zostaną pominięte przy pobieraniu.
                 </p>
 
@@ -642,38 +642,63 @@
                   </div>
 
                   <div class="settings-card">
-                    <h4>RAWG</h4>
-                    <p class="settings-note" data-i18n="rawgNote">
-                      Klucz API RAWG służy do pobierania opisów, gatunków i oceny Metacritic. Klucz generujesz
-                      bezpłatnie na rawg.io/apidocs.
+                    <h4>IGDB</h4>
+                    <p class="settings-note" data-i18n="igdbNote">
+                      IGDB (Twitch) służy do pobierania opisów, gatunków, roku i oceny krytyków.
+                      Potrzebujesz Client ID i Client Secret z aplikacji utworzonej na
+                      dev.twitch.tv/console/apps.
                     </p>
 
                     <label class="field-row field-row-stack">
-                      <span class="field-label">Klucz RAWG API</span>
+                      <span class="field-label">Client ID</span>
                       <input
-                        id="rawg-api-key-input"
+                        id="igdb-client-id-input"
                         type="text"
                         class="field-textinput"
-                        placeholder="Wpisz klucz API"
-                        data-i18n-placeholder="apiKeyPlaceholder"
+                        placeholder="Wpisz Client ID"
+                        data-i18n-placeholder="igdbClientIdPlaceholder"
+                      />
+                    </label>
+
+                    <label class="field-row field-row-stack">
+                      <span class="field-label">Client Secret</span>
+                      <input
+                        id="igdb-client-secret-input"
+                        type="password"
+                        class="field-textinput"
+                        placeholder="Wpisz Client Secret"
+                        data-i18n-placeholder="igdbClientSecretPlaceholder"
                       />
                     </label>
 
                     <div class="settings-actions-row">
-                      <button type="button" id="save-rawg-api-key" class="btn-primary" data-i18n="saveKey">
-                        Zapisz klucz
+                      <button type="button" id="save-igdb-credentials" class="btn-primary" data-i18n="saveIgdbCredentials">
+                        Zapisz dane
                       </button>
-                      <button type="button" id="test-rawg-api-key" class="btn-secondary" data-i18n="testConnection">
+                      <button type="button" id="test-igdb-credentials" class="btn-secondary" data-i18n="testConnection">
                         Test połączenia
                       </button>
                     </div>
+
+                    <details class="settings-help">
+                      <summary data-i18n="igdbHelpTitle">Jak uzyskać Client ID i Client Secret?</summary>
+                      <ol>
+                        <li data-i18n="igdbStep1">Zaloguj się na Twitch i otwórz dev.twitch.tv/console/apps.</li>
+                        <li data-i18n="igdbStep2">Kliknij „Register Your Application”.</li>
+                        <li data-i18n="igdbStep3">Nazwa dowolna (np. Retro Launcher), OAuth Redirect URL: http://localhost, Category: Application Integration.</li>
+                        <li data-i18n="igdbStep4">Po utworzeniu aplikacji skopiuj Client ID.</li>
+                        <li data-i18n="igdbStep5">Kliknij „New Secret” i skopiuj Client Secret — pokazuje się tylko raz.</li>
+                        <li data-i18n="igdbStep6">Wklej oba pola powyżej i kliknij „Test połączenia”.</li>
+                      </ol>
+                      <a href="https://dev.twitch.tv/console/apps" target="_blank" rel="noopener" data-i18n="igdbOpenConsole">Otwórz konsolę aplikacji Twitch ↗</a>
+                    </details>
                   </div>
 
                   <div class="settings-card">
                     <h4>TheGamesDB</h4>
                     <p class="settings-note" data-i18n="gamesdbNote">
                       Zapasowe źródło okładek i podstawowych metadanych dla niszowych ROM-ów, gdy SteamGridDB
-                      i RAWG nie znajdą trafienia. Wymaga darmowego klucza API z thegamesdb.net.
+                      i IGDB nie znajdą trafienia. Wymaga darmowego klucza API z thegamesdb.net.
                     </p>
 
                     <label class="field-row field-row-stack">

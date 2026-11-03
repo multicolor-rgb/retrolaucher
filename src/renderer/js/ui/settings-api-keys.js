@@ -1,6 +1,6 @@
 // Obsługa zapisu i testowania kluczy API dla scraperów metadanych
 // (zakładka "Okładki"). Wartości trafiają do config.apiKeys, skąd czytają
-// je funkcje fetchSteamGridCoverByName / fetchRawgMetadataByName /
+// je funkcje fetchSteamGridCoverByName / fetchIgdbMetadataByName /
 // fetchTheGamesDbMetadataByName.
 
 function ensureApiKeysConfig() {
@@ -15,8 +15,11 @@ function fillApiKeyFields() {
   const steamgridInput = document.getElementById('steamgrid-api-key-input');
   if (steamgridInput) steamgridInput.value = config.apiKeys.steamgrid || '';
 
-  const rawgInput = document.getElementById('rawg-api-key-input');
-  if (rawgInput) rawgInput.value = config.apiKeys.rawg || '';
+  const igdbClientIdInput = document.getElementById('igdb-client-id-input');
+  if (igdbClientIdInput) igdbClientIdInput.value = config.apiKeys.igdbClientId || '';
+
+  const igdbClientSecretInput = document.getElementById('igdb-client-secret-input');
+  if (igdbClientSecretInput) igdbClientSecretInput.value = config.apiKeys.igdbClientSecret || '';
 
   const gamesDbInput = document.getElementById('thegamesdb-api-key-input');
   if (gamesDbInput) gamesDbInput.value = config.apiKeys.thegamesdb || '';
@@ -44,6 +47,21 @@ async function testApiKey(testFn, okFallback, failFallback) {
   }
 }
 
+async function saveIgdbCredentials() {
+  ensureApiKeysConfig();
+  const clientId = document.getElementById('igdb-client-id-input')?.value.trim() || '';
+  const clientSecret = document.getElementById('igdb-client-secret-input')?.value.trim() || '';
+
+  config.apiKeys.igdbClientId = clientId;
+  config.apiKeys.igdbClientSecret = clientSecret;
+
+  // Nowe dane = stary token jest nieważny.
+  if (typeof clearIgdbToken === 'function') clearIgdbToken();
+
+  await saveStoredConfig();
+  showToast(t('savedIgdbKeys') || 'Zapisano dane aplikacji IGDB');
+}
+
 document.getElementById('save-steamgrid-api-key')?.addEventListener('click', () => {
   saveApiKeyField('steamgrid-api-key-input', 'steamgrid', 'SteamGridDB');
 });
@@ -53,13 +71,13 @@ document.getElementById('test-steamgrid-api-key')?.addEventListener('click', asy
   await testApiKey(testSteamGridConnection, 'steamgridTestOk', 'steamgridTestFail');
 });
 
-document.getElementById('save-rawg-api-key')?.addEventListener('click', () => {
-  saveApiKeyField('rawg-api-key-input', 'rawg', 'RAWG');
+document.getElementById('save-igdb-credentials')?.addEventListener('click', () => {
+  saveIgdbCredentials();
 });
 
-document.getElementById('test-rawg-api-key')?.addEventListener('click', async () => {
-  await saveApiKeyField('rawg-api-key-input', 'rawg', 'RAWG');
-  await testApiKey(testRawgConnection, 'rawgTestOk', 'rawgTestFail');
+document.getElementById('test-igdb-credentials')?.addEventListener('click', async () => {
+  await saveIgdbCredentials();
+  await testApiKey(testIgdbConnection, 'igdbTestOk', 'igdbTestFail');
 });
 
 document.getElementById('save-thegamesdb-api-key')?.addEventListener('click', () => {

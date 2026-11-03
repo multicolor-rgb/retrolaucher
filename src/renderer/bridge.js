@@ -105,7 +105,7 @@
       return res;
     },
 
-    // Żądania HTTP do zewnętrznych API (SteamGridDB, RAWG, TheGamesDB).
+    // Żądania HTTP do zewnętrznych API (SteamGridDB, IGDB, TheGamesDB).
     // Idą przez backend, więc WebKit nie blokuje ich przez CORS.
     // Tauri przekazuje argumenty po nazwie parametru komendy (`req`).
     httpRequest: (payload) => invoke('http_proxy', { req: payload }),

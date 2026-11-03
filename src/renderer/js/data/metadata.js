@@ -1,4 +1,4 @@
-// Integracja ze SteamGridDB, RAWG i TheGamesDB.
+// Integracja ze SteamGridDB, IGDB i TheGamesDB.
 // Wszystkie żądania idą przez backend (launcherAPI.httpRequest), więc
 // WebKit nie blokuje ich przez CORS. ScreenScraper nie jest już używany:
 // wymagał czterech pól logowania i miał agresywne limity.
@@ -15,8 +15,16 @@ function getSteamGridDimensionsForAspect(aspect, custom) {
   return '600x900';
 }
 
-function getRawgApiKey() {
-  return config.apiKeys?.rawg?.trim() || '';
+function getIgdbCredentials() {
+  return {
+    clientId: config.apiKeys?.igdbClientId?.trim() || '',
+    clientSecret: config.apiKeys?.igdbClientSecret?.trim() || ''
+  };
+}
+
+function hasIgdbCredentials() {
+  const { clientId, clientSecret } = getIgdbCredentials();
+  return Boolean(clientId && clientSecret);
 }
 
 function getSteamGridApiKey() {
@@ -27,7 +35,7 @@ function getSteamGridApiKey() {
 // Wspólny transport HTTP dla scraperów.
 //
 // Wcześniej metadata.js wołało przeglądarkowy fetch. W Tauri/WebKit
-// żądania do SteamGridDB/RAWG/TheGamesDB są cross-origin i kończyły się
+// żądania do SteamGridDB/IGDB/TheGamesDB są cross-origin i kończyły się
 // błędem CORS, a awaryjny http_proxy nie zawsze był wywoływany. Teraz
 // każde żądanie idzie przez backend (launcherAPI.httpRequest), więc CORS
 // w ogóle nie dotyczy scraperów. W Electronie robi to proces main.
@@ -85,6 +93,92 @@ async function apiFetchJson(url, options = {}) {
   }
 }
 
+// ============================================================
+// IGDB (Twitch API) — wymaga Client ID + Client Secret.
+// Token OAuth trzymamy tylko w pamięci (ważny ~60 dni, ale i tak
+// odświeżamy go po restarcie aplikacji i przy HTTP 401).
+// ============================================================
+
+let igdbTokenCache = { clientId: '', token: '', expiresAt: 0 };
+
+function clearIgdbToken() {
+  igdbTokenCache = { clientId: '', token: '', expiresAt: 0 };
+}
+
+async function getIgdbAccessToken(force = false) {
+  const { clientId, clientSecret } = getIgdbCredentials();
+  if (!clientId || !clientSecret) {
+    throw new Error('Brak Client ID / Client Secret IGDB w ustawieniach.');
+  }
+
+  const now = Date.now();
+  if (
+    !force
+    && igdbTokenCache.clientId === clientId
+    && igdbTokenCache.token
+    && igdbTokenCache.expiresAt > now
+  ) {
+    return igdbTokenCache.token;
+  }
+
+  const url = new URL('https://id.twitch.tv/oauth2/token');
+  url.searchParams.set('client_id', clientId);
+  url.searchParams.set('client_secret', clientSecret);
+  url.searchParams.set('grant_type', 'client_credentials');
+
+  const data = await apiFetchJson(url.toString(), { method: 'POST' });
+  const token = String(data?.access_token || '');
+  if (!token) {
+    throw new Error(data?.message || 'IGDB nie zwróciło tokena dostępu.');
+  }
+
+  const ttl = Number(data?.expires_in) || 3600;
+  igdbTokenCache = {
+    clientId,
+    token,
+    // margines, żeby nie trafić w wygasły token w trakcie żądania
+    expiresAt: now + Math.max(60, ttl - 60) * 1000
+  };
+  return token;
+}
+
+async function igdbRequest(endpoint, body) {
+  const { clientId } = getIgdbCredentials();
+  if (!clientId) {
+    throw new Error('Brak Client ID IGDB w ustawieniach.');
+  }
+
+  const send = (token) => apiFetchResponse(`https://api.igdb.com/v4/${endpoint}`, {
+    method: 'POST',
+    headers: {
+      'Client-ID': clientId,
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json'
+    },
+    body
+  });
+
+  let token = await getIgdbAccessToken();
+  let res = await send(token);
+
+  if (res.status === 401) {
+    clearIgdbToken();
+    token = await getIgdbAccessToken(true);
+    res = await send(token);
+  }
+
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status || '?'}${text ? `: ${truncateApiBody(text)}` : ''}`);
+  }
+
+  try {
+    return JSON.parse(text || 'null');
+  } catch (_) {
+    throw new Error('Nieprawidłowa odpowiedź JSON z IGDB.');
+  }
+}
+
 function searchNameForApi(name) {
   return normalizeGameName(name)
     .replace(/([a-z])([0-9])/gi, '$1 $2')
@@ -119,20 +213,16 @@ async function testSteamGridConnection() {
   }
 }
 
-async function testRawgConnection() {
-  const apiKey = getRawgApiKey();
-  if (!apiKey) {
-    return { ok: false, error: 'Brak klucza RAWG API w ustawieniach.' };
+async function testIgdbConnection() {
+  if (!hasIgdbCredentials()) {
+    return { ok: false, error: 'Brak Client ID / Client Secret IGDB w ustawieniach.' };
   }
 
   try {
-    const url = new URL('https://api.rawg.io/api/games');
-    url.searchParams.set('key', apiKey);
-    url.searchParams.set('search', 'portal');
-    url.searchParams.set('page_size', '1');
-
-    const data = await apiFetchJson(url.toString());
-    const count = Array.isArray(data?.results) ? data.results.length : 0;
+    // Wymuś świeży token — test ma sprawdzić aktualnie wpisane dane.
+    clearIgdbToken();
+    const data = await igdbRequest('games', 'search "portal"; fields name; limit 1;');
+    const count = Array.isArray(data) ? data.length : 0;
     return { ok: true, message: `OK — ${count} wyników testowych` };
   } catch (e) {
     return { ok: false, error: apiErrorText(e) };
@@ -196,26 +286,137 @@ function getTheGamesDbPlatformId(platformKey) {
   return THEGAMESDB_PLATFORM_IDS[platformKey];
 }
 
-function normalizeRawgYear(dateString) {
-  if (!dateString) return '';
-  const d = new Date(dateString);
-  if (Number.isNaN(d.getTime())) return '';
-  return d.getFullYear();
+function normalizeIgdbYear(timestamp) {
+  const value = Number(timestamp);
+  if (!Number.isFinite(value) || value <= 0) return '';
+  return new Date(value * 1000).getFullYear();
 }
 
-function normalizeRawgGenres(genres) {
+function normalizeIgdbGenres(genres) {
   if (!Array.isArray(genres)) return [];
   return genres
     .map(g => g?.name)
     .filter(Boolean);
 }
 
-function pickRawgDeveloper(gameDetails) {
-  if (!gameDetails) return '';
-  if (Array.isArray(gameDetails.developers) && gameDetails.developers.length) {
-    return gameDetails.developers.map(d => d?.name).filter(Boolean).join(', ');
+function pickIgdbDeveloper(game) {
+  if (!game || !Array.isArray(game.involved_companies)) return '';
+  return game.involved_companies
+    .filter(company => company?.developer)
+    .map(company => company?.company?.name)
+    .filter(Boolean)
+    .join(', ');
+}
+
+function igdbCoverUrl(imageId) {
+  if (!imageId) return null;
+  return `https://images.igdb.com/igdb/image/upload/t_cover_big_2x/${imageId}.jpg`;
+}
+
+// Apicalypse nie ma escapowania parametrów — cudzysłowy i backslashe
+// w nazwie gry muszą być poprawnie poprzedzone znakiem ucieczki.
+function escapeIgdbSearch(value) {
+  return String(value || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/[\r\n]+/g, ' ')
+    .trim();
+}
+
+// platformKey -> ID platformy IGDB (https://api.igdb.com/v4/platforms).
+// Krótkie klucze to presety z Ustawień; długie to aliasy starszych
+// configów (np. Electron zapisywał `playstation2` zamiast `ps2`).
+const IGDB_PLATFORM_IDS = {
+  nes: 18,
+  snes: 19,
+  n64: 4,
+  gamecube: 21,
+  wii: 5,
+  wiiu: 41,
+  switch: 130,
+  gb: 33,
+  gbc: 22,
+  gba: 24,
+  nds: 20,
+  '3ds': 37,
+  psx: 7,
+  ps1: 7,
+  ps2: 8,
+  ps3: 9,
+  ps4: 48,
+  psp: 38,
+  psvita: 46,
+  megadrive: 29,
+  genesis: 29,
+  saturn: 32,
+  dreamcast: 23,
+  gamegear: 35,
+  mastersystem: 64,
+  xbox: 11,
+  xbox360: 12,
+  arcade: 52,
+  atari2600: 59,
+  amiga: 16,
+  dos: 13,
+  pc: 6,
+  neogeo: 80,
+
+  // aliasy starszych configów
+  nintendoentertainmentsystem: 18,
+  supernintendo: 19,
+  superfamicom: 19,
+  nintendo64: 4,
+  nintendogamecube: 21,
+  nintendowii: 5,
+  nintendowiiu: 41,
+  nintendoswitch: 130,
+  gameboy: 33,
+  gameboycolor: 22,
+  gameboyadvance: 24,
+  nintendods: 20,
+  nintendo3ds: 37,
+  playstation: 7,
+  playstation2: 8,
+  playstation3: 9,
+  playstation4: 48,
+  playstationportable: 38,
+  segamegadrive: 29,
+  segagenesis: 29,
+  segasaturn: 32,
+  segadreamcast: 23,
+  segagamegear: 35,
+  segamastersystem: 64
+};
+
+function getIgdbPlatformId(platformKey) {
+  const key = String(platformKey || '').toLowerCase().replace(/[\s_-]+/g, '');
+  return IGDB_PLATFORM_IDS[key] || IGDB_PLATFORM_IDS[platformKey];
+}
+
+// IGDB potrafi zwrócić kilka wpisów o tej samej nazwie (arcade, port,
+// remaster, edycja). Kolejność z API nie jest stabilna, dlatego poza
+// oceną nazwy sortujemy po: zgodności platformy, kanonicznym slug
+// (bez sufiksu --N) i kompletności danych.
+function igdbCandidateBonus(item, platformKey) {
+  let bonus = 0;
+
+  const platformId = getIgdbPlatformId(platformKey);
+  if (platformId && Array.isArray(item?.platforms)) {
+    if (item.platforms.some(p => Number(p?.id) === platformId)) {
+      bonus += 60;
+    }
   }
-  return '';
+
+  const slug = String(item?.slug || '');
+  if (slug && !/--\d+$/.test(slug)) {
+    bonus += 40;
+  }
+
+  if (item?.aggregated_rating != null) bonus += 15;
+  if (item?.summary) bonus += 10;
+  if (item?.cover?.image_id) bonus += 5;
+
+  return bonus;
 }
 
 function scoreCandidateMatch(query, candidateName) {
@@ -360,77 +561,97 @@ async function fetchSteamGridCoverByName(name, platformKey) {
   };
 }
 
-async function fetchRawgMetadataByName(name) {
-  const apiKey = getRawgApiKey();
-  if (!apiKey) {
-    return { ok: false, error: 'Brak klucza RAWG API w ustawieniach.' };
+async function fetchIgdbMetadataByName(name, platformKey) {
+  if (!hasIgdbCredentials()) {
+    return { ok: false, error: 'Brak Client ID / Client Secret IGDB w ustawieniach.' };
   }
 
   const rawName = String(name || '').trim();
   const normalizedName = searchNameForApi(rawName) || normalizeGameName(rawName);
 
-  const searchUrl = new URL('https://api.rawg.io/api/games');
-  searchUrl.searchParams.set('key', apiKey);
-  searchUrl.searchParams.set('search', normalizedName);
-  searchUrl.searchParams.set('page_size', '10');
-
-  let searchData;
-  try {
-    searchData = await apiFetchJson(searchUrl.toString());
-  } catch (e) {
-    return { ok: false, error: `RAWG: ${apiErrorText(e)}` };
+  if (!normalizedName) {
+    return { ok: false, error: 'Pusta nazwa gry.' };
   }
 
-  const candidates = Array.isArray(searchData?.results) ? searchData.results : [];
+  const query = [
+    `search "${escapeIgdbSearch(normalizedName)}";`,
+    'fields name,summary,slug,url,first_release_date,aggregated_rating,rating,cover.image_id,genres.name,platforms.id,platforms.name,involved_companies.company.name,involved_companies.developer;',
+    'limit 10;'
+  ].join('\n');
 
-  if (!candidates.length) {
-    return { ok: false, error: 'Nie znaleziono gry w RAWG.' };
+  let candidates;
+  try {
+    candidates = await igdbRequest('games', query);
+  } catch (e) {
+    return { ok: false, error: `IGDB: ${apiErrorText(e)}` };
+  }
+
+  if (!Array.isArray(candidates) || !candidates.length) {
+    return { ok: false, error: 'Nie znaleziono gry w IGDB.' };
   }
 
   const ranked = candidates
-    .map(item => ({
-      item,
-      score: scoreCandidateMatch(normalizedName, item?.name || '')
-    }))
+    .map(item => {
+      const nameScore = scoreCandidateMatch(normalizedName, item?.name || '');
+      return {
+        item,
+        nameScore,
+        score: nameScore + igdbCandidateBonus(item, platformKey)
+      };
+    })
+    .filter(entry => entry.nameScore >= 120)
     .sort((a, b) => b.score - a.score);
 
   const best = ranked[0];
-  if (!best || best.score < 120 || !best.item?.slug) {
-    return { ok: false, error: 'Nie udało się dobrać trafnego wyniku w RAWG.' };
+  if (!best?.item) {
+    return { ok: false, error: 'Nie udało się dobrać trafnego wyniku w IGDB.' };
   }
 
-  const detailsUrl = new URL(`https://api.rawg.io/api/games/${encodeURIComponent(best.item.slug)}`);
-  detailsUrl.searchParams.set('key', apiKey);
+  const game = best.item;
+  const remoteCover = igdbCoverUrl(game?.cover?.image_id);
+  let cover = remoteCover;
 
-  let details;
-  try {
-    details = await apiFetchJson(detailsUrl.toString());
-  } catch (e) {
-    return { ok: false, error: `RAWG: ${apiErrorText(e)}` };
-  }
+  if (remoteCover && window.launcherAPI?.cacheRemoteImage) {
+    const platform = getPlatform(platformKey);
+    const cached = await window.launcherAPI.cacheRemoteImage({
+      url: remoteCover,
+      platformKey,
+      gameTitle: game?.name || normalizedName,
+      aspect: platform?.aspect || 'standard'
+    });
 
-  return {
-    ok: true,
-    data: {
-      title: details?.name || normalizedName,
-      description: details?.description_raw || details?.description || '',
-      desc_en: details?.description_raw || details?.description || '',
-      desc_pl: '',
-      genres: normalizeRawgGenres(details?.genres),
-      developer: pickRawgDeveloper(details),
-      year: normalizeRawgYear(details?.released),
-      metacritic: Number.isFinite(Number(details?.metacritic))
-        ? Number(details.metacritic)
-        : null,
-      sourceMeta: 'RAWG',
-      sourceMetaUrl: details?.website || details?.reddit_url || ''
+    if (cached?.ok && cached.localUrl) {
+      cover = cached.localUrl;
     }
+  }
+
+  const rawRating = game?.aggregated_rating;
+  const aggregatedRating = rawRating == null ? null : Number(rawRating);
+  const data = {
+    title: game?.name || normalizedName,
+    description: game?.summary || '',
+    desc_en: game?.summary || '',
+    desc_pl: '',
+    genres: normalizeIgdbGenres(game?.genres),
+    developer: pickIgdbDeveloper(game),
+    year: normalizeIgdbYear(game?.first_release_date),
+    sourceMeta: 'IGDB',
+    sourceMetaUrl: game?.url || ''
   };
+
+  if (cover) data.cover = cover;
+  if (remoteCover) data.remoteCover = remoteCover;
+  // Bez tej oceny nie nadpisujemy starej wartości (np. z RAWG).
+  if (Number.isFinite(aggregatedRating)) {
+    data.metacritic = Math.round(aggregatedRating);
+  }
+
+  return { ok: true, data };
 }
 
 // ============================================================
 // TheGamesDB — fallback z jednym kluczem API. Używany głównie do
-// okładki + roku, gdy SteamGridDB i RAWG nie mają trafienia
+// okładki + roku, gdy SteamGridDB i IGDB nie mają trafienia
 // (rzadkie, niszowe ROMy).
 // ============================================================
 
@@ -572,10 +793,9 @@ async function fetchTheGamesDbMetadataByName(name, platformKey) {
 
 // ============================================================
 // Scalenie wszystkich źródeł. Priorytet dla coveru: SteamGridDB ->
-// TheGamesDB. Priorytet dla opisu/genres/rok: RAWG -> TheGamesDB.
-// ScreenScraper został usunięty — wymagał czterech pól logowania
-// i miał agresywne limity, a RAWG + TheGamesDB pokrywają to samo
-// bez dodatkowej konfiguracji aplikacji.
+// IGDB -> TheGamesDB. Priorytet dla opisu/gatunków/roku: IGDB ->
+// TheGamesDB. ScreenScraper został usunięty — wymagał czterech pól
+// logowania i miał agresywne limity.
 // ============================================================
 
 function settledSource(result) {
@@ -589,27 +809,27 @@ function settledSource(result) {
 }
 
 async function fetchCombinedGameMetadata(name, platformKey) {
-  const [coverResult, rawgResult, gamesDbResult] = await Promise.allSettled([
+  const [coverResult, igdbResult, gamesDbResult] = await Promise.allSettled([
     fetchSteamGridCoverByName(name, platformKey),
-    fetchRawgMetadataByName(name),
+    fetchIgdbMetadataByName(name, platformKey),
     fetchTheGamesDbMetadataByName(name, platformKey)
   ]);
 
   const coverSource = settledSource(coverResult);
-  const rawgSource = settledSource(rawgResult);
+  const igdbSource = settledSource(igdbResult);
   const gamesDbSource = settledSource(gamesDbResult);
 
   const coverData = coverSource.data;
-  const rawgData = rawgSource.data;
+  const igdbData = igdbSource.data;
   const gdbData = gamesDbSource.data;
 
-  const resolvedCover = coverData.cover || gdbData.cover || null;
-  const resolvedRemoteCover = coverData.remoteCover || gdbData.remoteCover || null;
-  const description = rawgData.description || gdbData.description || '';
-  const genres = (Array.isArray(rawgData.genres) && rawgData.genres.length)
-    ? rawgData.genres
+  const resolvedCover = coverData.cover || igdbData.cover || gdbData.cover || null;
+  const resolvedRemoteCover = coverData.remoteCover || igdbData.remoteCover || gdbData.remoteCover || null;
+  const description = igdbData.description || gdbData.description || '';
+  const genres = (Array.isArray(igdbData.genres) && igdbData.genres.length)
+    ? igdbData.genres
     : (Array.isArray(gdbData.genres) ? gdbData.genres : []);
-  const year = rawgData.year || gdbData.year || '';
+  const year = igdbData.year || gdbData.year || '';
 
   // Sam tytuł z wyszukiwarki nie jest jeszcze przydatnym metadanym.
   // Sukces liczymy tylko wtedy, gdy przyszła okładka, opis, gatunki,
@@ -619,11 +839,11 @@ async function fetchCombinedGameMetadata(name, platformKey) {
     description ||
     genres.length ||
     year ||
-    rawgData.metacritic != null ||
+    igdbData.metacritic != null ||
     gdbData.communityRating != null
   );
 
-  const errors = [coverSource.error, rawgSource.error, gamesDbSource.error].filter(Boolean);
+  const errors = [coverSource.error, igdbSource.error, gamesDbSource.error].filter(Boolean);
 
   if (!hasRealData) {
     return {
@@ -634,31 +854,36 @@ async function fetchCombinedGameMetadata(name, platformKey) {
   }
 
   const merged = {
-    title: rawgData.title || coverData.title || gdbData.title || normalizeGameName(name),
+    title: igdbData.title || coverData.title || gdbData.title || normalizeGameName(name),
     description,
     desc_pl: gdbData.desc_pl || '',
-    desc_en: rawgData.desc_en || gdbData.desc_en || '',
+    desc_en: igdbData.desc_en || gdbData.desc_en || '',
     cover: resolvedCover,
     remoteCover: resolvedRemoteCover,
     fanart: '',
     wheel: '',
     video: '',
     genres,
-    dev: rawgData.developer || '',
+    dev: igdbData.developer || '',
     year,
-    metacritic: rawgData.metacritic ?? null,
     communityRating: gdbData.communityRating ?? null,
     players: gdbData.players || '',
     hltb: null,
     source: [
       coverData.source,
-      rawgData.sourceMeta,
+      igdbData.sourceMeta,
       gdbData.source
     ].filter(Boolean).join(' + '),
     sourceUrl: coverData.sourceUrl || gdbData.sourceUrl || '',
-    sourceMetaUrl: rawgData.sourceMetaUrl || '',
+    sourceMetaUrl: igdbData.sourceMetaUrl || '',
     dimensions: coverData.dimensions || null
   };
+
+  // Ocena z IGDB ma pierwszeństwo, ale gdy jej brak, zostawiamy starą
+  // wartość z configu (spread w enrichPlatformMetadata).
+  if (igdbData.metacritic != null) {
+    merged.metacritic = igdbData.metacritic;
+  }
 
   return { ok: true, data: merged, errors };
 }
@@ -716,7 +941,7 @@ async function enrichPlatformMetadata(platformKey, force = false, opts = {}) {
       platformKey
     );
 
-    // SteamGridDB i RAWG nie mają tak agresywnego limitu jak dawny
+    // IGDB ma limit 4 żądań/s, a SteamGridDB/TheGamesDB są łagodniejsze;
     // ScreenScraper, ale 350 ms nadal chroni przed 429 przy dużej bibliotece.
     await delay(350);
 
@@ -777,7 +1002,7 @@ async function autoFetchMetadataInBackground() {
   if (config.uiState?.autoFetchOnStart !== true) return;
 
   // Bez żadnych kluczy nie ma czego robić w sieci — odpuść od razu.
-  if (!getSteamGridApiKey() && !getRawgApiKey() && !getTheGamesDbApiKey()) {
+  if (!getSteamGridApiKey() && !hasIgdbCredentials() && !getTheGamesDbApiKey()) {
     return;
   }
 

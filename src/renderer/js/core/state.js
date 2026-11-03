@@ -90,12 +90,12 @@ let config = {
   // ale nadal są dostępne w menedżerze gier, żeby można je było odkryć.
   hiddenGames: {},
 
-  // Klucze API do scraperów metadanych. Każde źródło ma jeden klucz —
-  // SteamGridDB (okładki), RAWG (opisy/gatunki/rok) i opcjonalny
-  // TheGamesDB (retro fallback).
+  // Klucze API do scraperów metadanych. SteamGridDB (okładki),
+  // IGDB (opisy/gatunki/rok/ocena) i opcjonalny TheGamesDB (retro fallback).
   apiKeys: {
     steamgrid: '',
-    rawg: '',
+    igdbClientId: '',
+    igdbClientSecret: '',
     thegamesdb: ''
   },
 
@@ -225,7 +225,7 @@ const I18N = {
     saveStartup: 'Zapisz ustawienia startu',
 
     metaSourcesTitle: 'Źródła metadanych i okładek',
-    metaSourcesNote: 'Skonfiguruj klucze API dla poszczególnych scraperów. SteamGridDB pobiera okładki, RAWG opisy, gatunki i rok, a TheGamesDB jest zapasowym źródłem dla niszowych ROM-ów. Możesz skonfigurować tylko te źródła, z których chcesz korzystać — pozostałe zostaną pominięte przy pobieraniu.',
+    metaSourcesNote: 'Skonfiguruj klucze API dla poszczególnych scraperów. SteamGridDB pobiera okładki, IGDB opisy, gatunki, rok i ocenę krytyków, a TheGamesDB jest zapasowym źródłem dla niszowych ROM-ów. Możesz skonfigurować tylko te źródła, z których chcesz korzystać — pozostałe zostaną pominięte przy pobieraniu.',
 
     steamgridNote: 'Wpisz własny klucz API, aby pobierać okładki automatycznie. Klucz generujesz na steamgriddb.com w ustawieniach konta.',
     apiKeyPlaceholder: 'Wpisz klucz API',
@@ -234,9 +234,20 @@ const I18N = {
     steamgridTestOk: 'SteamGridDB działa ✓',
     steamgridTestFail: 'Test SteamGridDB nieudany',
 
-    rawgNote: 'Klucz API RAWG służy do pobierania opisów, gatunków i oceny Metacritic. Klucz generujesz bezpłatnie na rawg.io/apidocs.',
-    rawgTestOk: 'RAWG działa ✓',
-    rawgTestFail: 'Test RAWG nieudany',
+    igdbNote: 'IGDB (Twitch) służy do pobierania opisów, gatunków, roku i oceny krytyków. Potrzebujesz Client ID i Client Secret z aplikacji utworzonej na dev.twitch.tv/console/apps.',
+    igdbTestOk: 'IGDB działa ✓',
+    igdbTestFail: 'Test IGDB nieudany',
+    igdbHelpTitle: 'Jak uzyskać Client ID i Client Secret?',
+    igdbStep1: 'Zaloguj się na Twitch i otwórz dev.twitch.tv/console/apps.',
+    igdbStep2: 'Kliknij „Register Your Application”.',
+    igdbStep3: 'Nazwa dowolna (np. Retro Launcher), OAuth Redirect URL: http://localhost, Category: Application Integration.',
+    igdbStep4: 'Po utworzeniu aplikacji skopiuj Client ID.',
+    igdbStep5: 'Kliknij „New Secret” i skopiuj Client Secret — pokazuje się tylko raz.',
+    igdbStep6: 'Wklej oba pola powyżej i kliknij „Test połączenia”.',
+    igdbOpenConsole: 'Otwórz konsolę aplikacji Twitch ↗',
+    igdbClientIdPlaceholder: 'Wpisz Client ID',
+    igdbClientSecretPlaceholder: 'Wpisz Client Secret',
+    saveIgdbCredentials: 'Zapisz dane',
 
     autoFetchOnStart: 'Auto-uzupełnianie po starcie',
     autoFetchOnStartNote: 'Po starcie launcher cicho uzupełni brakujące okładki i opisy w tle. Wymaga skonfigurowanych kluczy API. Domyślnie wyłączone.',
@@ -257,7 +268,7 @@ const I18N = {
     playtimeLabel: 'Czas gry',
     noDescription: 'Brak opisu — użyj „Pobierz okładki i opisy” w Ustawieniach.',
 
-    gamesdbNote: 'Zapasowe źródło okładek i podstawowych metadanych dla niszowych ROM-ów, gdy SteamGridDB i RAWG nie znajdą trafienia. Wymaga darmowego klucza API z thegamesdb.net.',
+    gamesdbNote: 'Zapasowe źródło okładek i podstawowych metadanych dla niszowych ROM-ów, gdy SteamGridDB i IGDB nie znajdą trafienia. Wymaga darmowego klucza API z thegamesdb.net.',
     thegamesdbTestOk: 'TheGamesDB działa ✓',
     thegamesdbTestFail: 'Test TheGamesDB nieudany',
 
@@ -415,7 +426,7 @@ const I18N = {
     testFailed: 'Test nieudany',
     platformRemoved: 'Usunięto platformę',
     savedSteamgridKey: 'Zapisano klucz SteamGridDB API',
-    savedRawgKey: 'Zapisano klucz RAWG API',
+    savedIgdbKeys: 'Zapisano dane aplikacji IGDB',
     savedGamesDbKey: 'Zapisano klucz TheGamesDB API',
     languageSavedEn: 'Language saved ✓',
     languageSavedPl: 'Zapisano język ✓',
@@ -541,7 +552,7 @@ const I18N = {
     gamelistNoMatch: 'bez dopasowania',
     gamelistUpdated: 'zaktualizowano',
 
-    artworkWarning: 'Okładki i opisy są pobierane z zewnętrznych baz (SteamGridDB, RAWG, TheGamesDB). Pobieranie możesz uruchomić dla jednej platformy albo dla wszystkich naraz. Dla każdej platformy ustawisz też własny typ proporcji okładki oraz ręcznie podmienisz cover wybranej gry.'
+    artworkWarning: 'Okładki i opisy są pobierane z zewnętrznych baz (SteamGridDB, IGDB, TheGamesDB). Pobieranie możesz uruchomić dla jednej platformy albo dla wszystkich naraz. Dla każdej platformy ustawisz też własny typ proporcji okładki oraz ręcznie podmienisz cover wybranej gry.'
   },
 
   en: {
@@ -575,7 +586,7 @@ const I18N = {
     saveStartup: 'Save startup settings',
 
     metaSourcesTitle: 'Metadata and cover sources',
-    metaSourcesNote: 'Configure API keys for each scraper. SteamGridDB fetches covers, RAWG descriptions, genres and release year, and TheGamesDB is a backup for niche ROMs. You can configure only the sources you want to use — the rest will be skipped when fetching.',
+    metaSourcesNote: 'Configure API keys for each scraper. SteamGridDB fetches covers, IGDB descriptions, genres, release year and critic score, and TheGamesDB is a backup for niche ROMs. You can configure only the sources you want to use — the rest will be skipped when fetching.',
 
     steamgridNote: 'Enter your API key to fetch covers automatically. Generate a key at steamgriddb.com in your account settings.',
     apiKeyPlaceholder: 'Enter API key',
@@ -584,9 +595,20 @@ const I18N = {
     steamgridTestOk: 'SteamGridDB works ✓',
     steamgridTestFail: 'SteamGridDB test failed',
 
-    rawgNote: 'The RAWG API key is used to fetch descriptions, genres and Metacritic score. Generate a free key at rawg.io/apidocs.',
-    rawgTestOk: 'RAWG works ✓',
-    rawgTestFail: 'RAWG test failed',
+    igdbNote: 'IGDB (Twitch) is used to fetch descriptions, genres, release year and critic score. You need a Client ID and Client Secret from an app created at dev.twitch.tv/console/apps.',
+    igdbTestOk: 'IGDB works ✓',
+    igdbTestFail: 'IGDB test failed',
+    igdbHelpTitle: 'How to get a Client ID and Client Secret',
+    igdbStep1: 'Sign in to Twitch and open dev.twitch.tv/console/apps.',
+    igdbStep2: 'Click “Register Your Application”.',
+    igdbStep3: 'Pick any name (e.g. Retro Launcher), OAuth Redirect URL: http://localhost, Category: Application Integration.',
+    igdbStep4: 'After creating the app, copy the Client ID.',
+    igdbStep5: 'Click “New Secret” and copy the Client Secret — it is shown only once.',
+    igdbStep6: 'Paste both fields above and click “Test connection”.',
+    igdbOpenConsole: 'Open the Twitch developer console ↗',
+    igdbClientIdPlaceholder: 'Enter Client ID',
+    igdbClientSecretPlaceholder: 'Enter Client Secret',
+    saveIgdbCredentials: 'Save details',
 
     autoFetchOnStart: 'Auto-fetch on startup',
     autoFetchOnStartNote: 'On startup the launcher silently fills missing covers and descriptions in the background. Requires configured API keys. Off by default.',
@@ -607,7 +629,7 @@ const I18N = {
     playtimeLabel: 'Playtime',
     noDescription: 'No description yet — use “Fetch covers and descriptions” in Settings.',
 
-    gamesdbNote: 'Backup cover and basic metadata source for niche ROMs when SteamGridDB and RAWG find no match. Requires a free API key from thegamesdb.net.',
+    gamesdbNote: 'Backup cover and basic metadata source for niche ROMs when SteamGridDB and IGDB find no match. Requires a free API key from thegamesdb.net.',
     thegamesdbTestOk: 'TheGamesDB works ✓',
     thegamesdbTestFail: 'TheGamesDB test failed',
 
@@ -762,7 +784,7 @@ const I18N = {
     testFailed: 'Test failed',
     platformRemoved: 'Platform removed',
     savedSteamgridKey: 'Saved SteamGridDB API key',
-    savedRawgKey: 'Saved RAWG API key',
+    savedIgdbKeys: 'Saved IGDB application credentials',
     savedGamesDbKey: 'Saved TheGamesDB API key',
     languageSavedEn: 'Language saved ✓',
     languageSavedPl: 'Zapisano język ✓',
@@ -888,7 +910,7 @@ const I18N = {
     gamelistNoMatch: 'no match',
     gamelistUpdated: 'updated',
 
-    artworkWarning: 'Covers and descriptions are fetched from external databases (SteamGridDB, RAWG, TheGamesDB). You can fetch for a single platform or for all at once. Each platform can also have its own cover aspect ratio, and any game cover can be replaced manually.'
+    artworkWarning: 'Covers and descriptions are fetched from external databases (SteamGridDB, IGDB, TheGamesDB). You can fetch for a single platform or for all at once. Each platform can also have its own cover aspect ratio, and any game cover can be replaced manually.'
   }
 };
 
@@ -1022,8 +1044,12 @@ function ensureConfigDefaults() {
     config.apiKeys.steamgrid = '';
   }
 
-  if (typeof config.apiKeys.rawg !== 'string') {
-    config.apiKeys.rawg = '';
+  if (typeof config.apiKeys.igdbClientId !== 'string') {
+    config.apiKeys.igdbClientId = '';
+  }
+
+  if (typeof config.apiKeys.igdbClientSecret !== 'string') {
+    config.apiKeys.igdbClientSecret = '';
   }
 
   if (typeof config.apiKeys.thegamesdb !== 'string') {

@@ -18,7 +18,7 @@ Retro Launcher to desktopowy launcher gier retro inspirowany trybem Steam Big Pi
 - Obsługuje wiele platform jednocześnie, każdą z własnym folderem ROM-ów, emulatorem i argumentami startowymi.
 - Uruchamia gry przez skonfigurowane emulatory.
 - Pozwala testować polecenie uruchomieniowe emulatora z poziomu ustawień.
-- Pobiera okładki i opisy z wielu źródeł: SteamGridDB, RAWG i TheGamesDB — z automatycznym cache'owaniem grafik.
+- Pobiera okładki i opisy z wielu źródeł: SteamGridDB, IGDB i TheGamesDB — z automatycznym cache'owaniem grafik.
 - Pozwala ręcznie ustawić okładkę gry przez URL albo plik lokalny.
 - Używa lokalnego, płaskiego placeholdera okładki dla gier bez grafiki oraz gdy zapisany obrazek nie wczyta się.
 - Prowadzi statystyki: czas gry, liczbę uruchomień i datę ostatniej rozgrywki.
@@ -121,10 +121,12 @@ Launcher wspiera dwa sposoby zarządzania grafikami:
 Launcher korzysta z kilku źródeł metadanych (w zależności od skonfigurowanych kluczy):
 
 - **SteamGridDB** — okładki i grafiki (klucz API),
-- **RAWG** — opisy, gatunki i ocena Metacritic (klucz API),
+- **IGDB** — opisy, gatunki, rok i ocena krytyków (Client ID + Client Secret z [dev.twitch.tv/console/apps](https://dev.twitch.tv/console/apps)),
 - **TheGamesDB** — zapasowe okładki i podstawowe metadane dla niszowych ROM-ów (klucz API).
 
 Można pobierać dane dla jednej platformy albo dla wszystkich naraz. Pobrane okładki są cache'owane lokalnie, a opisy zapisywane w wersji polskiej i angielskiej.
+
+IGDB wymaga darmowej aplikacji Twitch: wejdź na [dev.twitch.tv/console/apps](https://dev.twitch.tv/console/apps), kliknij **Register Your Application**, ustaw OAuth Redirect URL na `http://localhost`, skopiuj **Client ID** i wygeneruj **Client Secret**. Oba pola wklejasz w Ustawienia → Okładki.
 
 #### Ręczne
 
@@ -373,7 +375,7 @@ Retro Launcher is a desktop launcher for retro games, inspired by Steam's Big Pi
 - Support multiple platforms simultaneously, each with its own ROM folder, emulator, and launch arguments.
 - Launch games through configured emulators.
 - Test the emulator launch command directly from the settings panel.
-- Fetch cover art and descriptions from multiple sources: SteamGridDB, RAWG, and TheGamesDB — with automatic image caching.
+- Fetch cover art and descriptions from multiple sources: SteamGridDB, IGDB, and TheGamesDB — with automatic image caching.
 - Manually set a game's cover art via URL or a local file.
 - Use a local flat-color cover placeholder for games without artwork and for images that fail to load.
 - Track playtime, launch count, and last played date for every game.
@@ -476,10 +478,12 @@ The launcher supports two ways of managing artwork:
 The launcher uses several metadata sources (depending on the configured keys):
 
 - **SteamGridDB** — covers and artwork (API key),
-- **RAWG** — descriptions, genres, and Metacritic score (API key),
+- **IGDB** — descriptions, genres, release year, and critic score (Client ID + Client Secret from [dev.twitch.tv/console/apps](https://dev.twitch.tv/console/apps)),
 - **TheGamesDB** — fallback covers and basic metadata for niche ROMs (API key).
 
 You can fetch data for a single platform or for all platforms at once. Downloaded covers are cached locally, and descriptions are stored in both Polish and English.
+
+IGDB requires a free Twitch application: open [dev.twitch.tv/console/apps](https://dev.twitch.tv/console/apps), click **Register Your Application**, set the OAuth Redirect URL to `http://localhost`, copy the **Client ID** and generate a **Client Secret**. Paste both into Settings → Artwork.
 
 #### Manual
 

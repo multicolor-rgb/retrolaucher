@@ -594,7 +594,7 @@ fn download_to_buffer(url: &str) -> Result<Vec<u8>, String> {
 
 // Wspólne wyjście HTTP dla scraperów. Renderer nie używa już
 // przeglądarkowego fetch do zewnętrznych API (WebKit blokuje je przez CORS),
-// tylko tego polecenia — dzięki temu działa SteamGridDB, RAWG i TheGamesDB.
+// tylko tego polecenia — dzięki temu działa SteamGridDB, IGDB i TheGamesDB.
 #[derive(serde::Deserialize)]
 struct ProxyRequest {
     url: String,

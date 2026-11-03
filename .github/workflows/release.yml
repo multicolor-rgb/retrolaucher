@@ -116,18 +116,23 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: Retro Launcher 2.1.1
+          name: Retro Launcher 2.2.0
           draft: false
           prerelease: false
           generate_release_notes: true
           body: |
-            Retro Launcher 2.1.1 — bugfix release.
+            Retro Launcher 2.2.0 — IGDB replaces RAWG.
 
-            - Fixed returning to the launcher after closing a game (application
-              state was never registered, so the launcher aborted on launch).
-            - Gamepad stop combo (L3 + R3 + LB + RB) now works for the whole
-              game session and survives pad reconnects.
-            - Stop shortcut unified between the UI and the renderer.
+            - Descriptions, genres, release year and critic score now come from
+              IGDB (Twitch): Client ID + Client Secret in Settings -> Artwork,
+              with built-in step-by-step instructions.
+            - Smart matching handles IGDB duplicate entries (arcade, port,
+              remaster, edition) by platform, canonical slug and data quality.
+            - IGDB covers are downloaded and cached locally.
+            - TheGamesDB stays as the fallback source; old RAWG keys are left
+              untouched in the config.
+            - Includes the 2.1.1 fixes: returning to the launcher after a game
+              and the gamepad stop combo (L3 + R3 + LB + RB).
 
             - **Linux:** `.deb` (Debian / Ubuntu / Mint) and portable `.AppImage`
             - **Windows:** NSIS installer (WebView2 handled automatically)

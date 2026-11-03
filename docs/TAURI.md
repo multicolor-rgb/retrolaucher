@@ -24,7 +24,7 @@ Do szybkiego testu można też odpalić binarkę bezpośrednio:
 - **Linux** buduje się lokalnie: `npm run dist` → `.deb` + `.AppImage`.
 - **Windows** nie da się cross-kompilować z Linuksa — build NSIS robi
   GitHub Actions na `windows-latest` (`.github/workflows/release.yml`).
-- Publikacja: push taga `rel/*`, np. `git tag rel/2.1.1 && git push origin rel/2.1.1`.
+- Publikacja: push taga `rel/*`, np. `git tag rel/2.2.0 && git push origin rel/2.2.0`.
   Workflow zbuduje oba systemy i utworzy release z plikami `.deb`,
   `.AppImage`, `-setup.exe` oraz `SHA256SUMS.txt`.
 

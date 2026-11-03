@@ -1,6 +1,6 @@
 [package]
 name = "retro-launcher"
-version = "2.1.1"
+version = "2.2.0"
 description = "Retro game launcher with gamepad support and emulator integration"
 authors = ["Gramodrana <gramodrana1@gmail.com>"]
 edition = "2021"
