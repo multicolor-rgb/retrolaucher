@@ -30,6 +30,7 @@
       'hero.s2': 'Play',
       'hero.s3': 'Platform',
       'hero.s4': 'Covers',
+      'hero.s5': 'Details',
 
       'facts.size': 'package, was ~90 MB',
       'facts.ram': 'RAM at launch, was ~300 MB',
@@ -55,7 +56,7 @@
       'new.watchdog.text': 'L3 + R3 + LB + RB closes the game at once, including fullscreen. The watcher lives in Rust, not in a hidden window.',
 
       'screens.title': 'What you actually see',
-      'screens.text': 'Four screens from the app. Click any of them to enlarge.',
+      'screens.text': 'Five screens from the app. Click any of them to enlarge.',
       'screens.s1.title': 'The shelf',
       'screens.s1.text': 'Left and right on the pad. The cover sits in the middle, the name under it, Play underneath. The background takes its colour from the artwork.',
       'screens.s2.title': 'Play',
@@ -64,6 +65,8 @@
       'screens.s3.text': 'LB and RB jump between systems. Or leave the filter on All and keep PS2, SNES and Game Boy on the same shelf.',
       'screens.s4.title': 'Covers, once',
       'screens.s4.text': 'Pull artwork for one platform or the whole library. SteamGridDB, IGDB and TheGamesDB — or point at your own file. It is cached locally.',
+      'screens.s5.title': 'Details',
+      'screens.s5.text': 'Description, genres, release year, critic score and file size, without leaving the shelf. The backdrop follows the cover.',
 
       'couch.title': 'For the couch',
       'couch.lead': 'Set each platform up once. After that the pad is enough.',
@@ -166,6 +169,7 @@
       'hero.s2': 'Uruchom',
       'hero.s3': 'Platforma',
       'hero.s4': 'Okładki',
+      'hero.s5': 'Szczegóły',
 
       'facts.size': 'pakiet, było ~90 MB',
       'facts.ram': 'RAM przy starcie, było ~300 MB',
@@ -191,7 +195,7 @@
       'new.watchdog.text': 'L3 + R3 + LB + RB zamyka grę od razu, także w pełnym ekranie. Nasłuch jest w Ruście, nie w ukrytym oknie.',
 
       'screens.title': 'To, co naprawdę widzisz',
-      'screens.text': 'Cztery ekrany z aplikacji. Kliknij, żeby powiększyć.',
+      'screens.text': 'Pięć ekranów z aplikacji. Kliknij, żeby powiększyć.',
       'screens.s1.title': 'Półka',
       'screens.s1.text': 'Lewo i prawo na padzie. Okładka na środku, tytuł pod nią, Uruchom poniżej. Tło bierze kolor z grafiki.',
       'screens.s2.title': 'Uruchom',
@@ -200,6 +204,8 @@
       'screens.s3.text': 'LB i RB przeskakują między systemami. Albo zostaw filtr na Wszystkie i trzymaj PS2, SNES i Game Boya na jednej półce.',
       'screens.s4.title': 'Okładki, raz',
       'screens.s4.text': 'Pobierz grafiki dla jednej platformy albo całej biblioteki. SteamGridDB, IGDB i TheGamesDB — albo wskaż własny plik. Cache jest lokalny.',
+      'screens.s5.title': 'Szczegóły',
+      'screens.s5.text': 'Opis, gatunki, rok wydania, ocena krytyków i rozmiar pliku — bez wychodzenia z półki. Tło idzie za okładką.',
 
       'couch.title': 'Na kanapę',
       'couch.lead': 'Każdą platformę ustawiasz raz. Potem wystarczy pad.',

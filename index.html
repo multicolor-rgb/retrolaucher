@@ -15,16 +15,16 @@
   <meta property="og:title" content="Retro Launcher 2.2 — One shelf. Every ROM." />
   <meta property="og:description" content="Pad-first retro launcher. Nine shelf modes, covers from four sources, Windows and Linux. Now on Tauri 2." />
   <meta property="og:url" content="https://retrolaucher.multidev.ovh/" />
-  <meta property="og:image" content="https://retrolaucher.multidev.ovh/site/img/screens/HOezHH0WQAAJZzK.jpg" />
+  <meta property="og:image" content="https://retrolaucher.multidev.ovh/site/img/screens/shelf-arc.jpg" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Retro Launcher 2.2 — One shelf. Every ROM." />
   <meta name="twitter:description" content="Pad-first retro launcher with covers, themes and a Tauri 2 core. Free for Windows and Linux." />
-  <meta name="twitter:image" content="https://retrolaucher.multidev.ovh/site/img/screens/HOezHH0WQAAJZzK.jpg" />
+  <meta name="twitter:image" content="https://retrolaucher.multidev.ovh/site/img/screens/shelf-arc.jpg" />
 
-  <link rel="preload" as="image" href="site/img/screens/HOezHH0WQAAJZzK.jpg" fetchpriority="high" />
+  <link rel="preload" as="image" href="site/img/screens/shelf-arc.jpg" fetchpriority="high" />
   <link rel="preload" href="site/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="site/fonts/manrope-latin-ext.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="stylesheet" href="site/style.css?v=2.2.0" />
+  <link rel="stylesheet" href="site/style.css?v=2.2.1" />
 
   <noscript>
     <style>
@@ -121,16 +121,18 @@
 
           <div class="stage" id="stage">
             <button class="stage__frame" type="button" id="stageOpen" data-i18n-aria="hero.open" aria-label="Open screenshot">
-              <img class="is-active" src="site/img/screens/HOezHH0WQAAJZzK.jpg" alt="Cover shelf with Jak and Daxter selected" width="1280" height="793" fetchpriority="high" />
-              <img src="site/img/screens/HOezHH2X0AApPr6.jpg" alt="Cover shelf with a game ready to launch" width="1920" height="1080" />
-              <img src="site/img/screens/HOezHICWgAAenEx.jpg" alt="Library filtered to PlayStation 2" width="680" height="420" />
-              <img src="site/img/screens/HOezHIKWgAAUm6p.jpg" alt="Settings screen for downloading covers" width="1920" height="1080" />
+              <img class="is-active" src="site/img/screens/shelf-arc.jpg" alt="Arc shelf with Star Wars: The Clone Wars selected" width="1920" height="1080" fetchpriority="high" />
+              <img src="site/img/screens/play-spotlight.jpg" alt="Spotlight view with Shrek 2 and Play / Details buttons" width="1920" height="1080" />
+              <img src="site/img/screens/platform-frame.jpg" alt="Platform frame view with Spartan: Total Warrior" width="1920" height="1080" />
+              <img src="site/img/screens/library-list.jpg" alt="List view with game details and SteamGridDB metadata" width="1920" height="1080" />
+              <img src="site/img/screens/game-details.jpg" alt="Game details with description, genres and Metacritic score" width="1938" height="1006" />
             </button>
             <div class="stage__dots" role="tablist" aria-label="Screenshots">
               <button type="button" data-slide="0" aria-selected="true" data-i18n-aria="hero.s1" aria-label="Shelf"></button>
               <button type="button" data-slide="1" aria-selected="false" data-i18n-aria="hero.s2" aria-label="Play"></button>
               <button type="button" data-slide="2" aria-selected="false" data-i18n-aria="hero.s3" aria-label="Platform"></button>
               <button type="button" data-slide="3" aria-selected="false" data-i18n-aria="hero.s4" aria-label="Covers"></button>
+              <button type="button" data-slide="4" aria-selected="false" data-i18n-aria="hero.s5" aria-label="Details"></button>
             </div>
             <p class="stage-caption"><span><i aria-hidden="true"></i><span data-i18n="hero.capture">A real screen from the app</span></span><span>RETRO LAUNCHER · 2.2</span></p>
           </div>
@@ -225,13 +227,13 @@
         <div class="container">
           <div class="section-head reveal">
             <h2 data-i18n="screens.title">What you actually see</h2>
-            <p data-i18n="screens.text">Four screens from the app. Click any of them to enlarge.</p>
+            <p data-i18n="screens.text">Five screens from the app. Click any of them to enlarge.</p>
           </div>
 
           <div class="walk">
             <article class="walk__row reveal">
-              <button class="shot" type="button" data-full="site/img/screens/HOezHH0WQAAJZzK.jpg" data-caption-en="The shelf" data-caption-pl="Półka">
-                <img src="site/img/screens/HOezHH0WQAAJZzK.jpg" alt="Cover shelf with Jak and Daxter in the centre" width="1280" height="793" />
+              <button class="shot" type="button" data-full="site/img/screens/shelf-arc.jpg" data-caption-en="The shelf" data-caption-pl="Półka">
+                <img src="site/img/screens/shelf-arc.jpg" alt="Arc shelf with Star Wars: The Clone Wars in the centre" width="1920" height="1080" />
               </button>
               <div class="walk__copy">
                 <span class="walk__n">01</span>
@@ -241,8 +243,8 @@
             </article>
 
             <article class="walk__row reveal">
-              <button class="shot" type="button" data-full="site/img/screens/HOezHH2X0AApPr6.jpg" data-caption-en="Play" data-caption-pl="Uruchom">
-                <img src="site/img/screens/HOezHH2X0AApPr6.jpg" alt="A selected game with Play and Details buttons" width="1920" height="1080" />
+              <button class="shot" type="button" data-full="site/img/screens/play-spotlight.jpg" data-caption-en="Play" data-caption-pl="Uruchom">
+                <img src="site/img/screens/play-spotlight.jpg" alt="A selected game with Play and Details buttons" width="1920" height="1080" />
               </button>
               <div class="walk__copy">
                 <span class="walk__n">02</span>
@@ -252,8 +254,8 @@
             </article>
 
             <article class="walk__row reveal">
-              <button class="shot" type="button" data-full="site/img/screens/HOezHICWgAAenEx.jpg" data-caption-en="One platform" data-caption-pl="Jedna platforma">
-                <img src="site/img/screens/HOezHICWgAAenEx.jpg" alt="Shelf filtered to PlayStation 2" width="680" height="420" />
+              <button class="shot" type="button" data-full="site/img/screens/platform-frame.jpg" data-caption-en="One platform" data-caption-pl="Jedna platforma">
+                <img src="site/img/screens/platform-frame.jpg" alt="Platform frame view with Spartan: Total Warrior" width="1920" height="1080" />
               </button>
               <div class="walk__copy">
                 <span class="walk__n">03</span>
@@ -263,13 +265,24 @@
             </article>
 
             <article class="walk__row reveal">
-              <button class="shot" type="button" data-full="site/img/screens/HOezHIKWgAAUm6p.jpg" data-caption-en="Covers" data-caption-pl="Okładki">
-                <img src="site/img/screens/HOezHIKWgAAUm6p.jpg" alt="Cover download settings for a PlayStation 2 library" width="1920" height="1080" />
+              <button class="shot" type="button" data-full="site/img/screens/library-list.jpg" data-caption-en="Covers" data-caption-pl="Okładki">
+                <img src="site/img/screens/library-list.jpg" alt="List view with game details and SteamGridDB metadata" width="1920" height="1080" />
               </button>
               <div class="walk__copy">
                 <span class="walk__n">04</span>
                 <h3 data-i18n="screens.s4.title">Covers, once</h3>
                 <p data-i18n="screens.s4.text">Pull artwork for one platform or the whole library. SteamGridDB, IGDB and TheGamesDB — or point at your own file. It is cached locally.</p>
+              </div>
+            </article>
+
+            <article class="walk__row reveal">
+              <button class="shot" type="button" data-full="site/img/screens/game-details.jpg" data-caption-en="Details" data-caption-pl="Szczegóły">
+                <img src="site/img/screens/game-details.jpg" alt="Game details with description, genres and Metacritic score" width="1938" height="1006" />
+              </button>
+              <div class="walk__copy">
+                <span class="walk__n">05</span>
+                <h3 data-i18n="screens.s5.title">Details</h3>
+                <p data-i18n="screens.s5.text">Description, genres, release year, critic score and file size, without leaving the shelf. The backdrop follows the cover.</p>
               </div>
             </article>
           </div>
@@ -510,6 +523,6 @@
     </div>
   </div>
 
-  <script src="site/main.js?v=2.2.0" defer></script>
+  <script src="site/main.js?v=2.2.1" defer></script>
 </body>
 </html>
