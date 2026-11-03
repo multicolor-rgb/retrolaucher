@@ -613,7 +613,7 @@ h2 { margin: 0 0 13px; font-size: clamp(30px, 3.2vw, 43px); font-weight: 800; li
   .cmp tbody th { padding-top: 8px; color: var(--text); }
   .cmp td::before { display: block; margin-bottom: 1px; color: var(--faint); font-size: 9px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; }
   .cmp td:first-of-type::before { content: "Electron 1.x"; }
-  .cmp td:last-child::before { content: "Tauri 2.1"; color: var(--cyan); }
+  .cmp td:last-child::before { content: "Tauri 2.2"; color: var(--cyan); }
   .walk { gap: 16px; }
   .walk__copy { padding: 18px 20px 21px; }
   .split > .reveal { padding: 23px 20px; }
